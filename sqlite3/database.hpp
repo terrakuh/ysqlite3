@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "sqlite3_connection.hpp"
+
 
 namespace sqlite3
 {
@@ -32,6 +34,8 @@ public:
 	}
 };
 
+class statement;
+
 class database
 {
 public:
@@ -57,12 +61,12 @@ public:
 	void execute(const char * _sql);
 
 protected:
+	friend statement;
+
+	/** Holds all relevant information about the underlying sqlite3 connection. */
+	std::shared_ptr<sqlite3_connection> _connection;
+
 	virtual bool open(const char * _filename, int _mode);
-
-private:
-	struct impl;
-
-	std::unique_ptr<impl> _impl;
 };
 
 }

@@ -116,16 +116,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />
+    <ClCompile Include="handle.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="sqlite3.c" />
-    <ClCompile Include="sqlite3_connection.cpp" />
     <ClCompile Include="statement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />
-    <ClInclude Include="sqlite3_connection.hpp" />
     <ClInclude Include="statement.hpp" />
+    <ClInclude Include="handle.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

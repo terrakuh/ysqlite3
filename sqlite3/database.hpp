@@ -5,6 +5,7 @@
 #include <string>
 
 #include "handle.hpp"
+#include "exception.hpp"
 
 
 namespace sqlite3
@@ -21,17 +22,6 @@ enum SQLITE3_OPEN
 	SO_FULLMUTEX = 0x00010000,
 	SO_SHAREDCACHE = 0x00020000,
 	SO_PRIVATECACHE = 0x00040000,
-};
-
-class database_error : public std::runtime_error
-{
-public:
-	database_error(const std::string & _message) : std::runtime_error(_message)
-	{
-	}
-	database_error(const char * _message) : std::runtime_error(_message)
-	{
-	}
 };
 
 class statement;
@@ -58,6 +48,16 @@ public:
 	 * @date 29-Sep-18
 	*/
 	virtual ~database() noexcept = default;
+	/**
+	 * Executes the SQL query.
+	 *
+	 * @since 1.0.0.2
+	 * @date 29-Sep-18
+	 *
+	 * @param _sql The UTF-8 SQL query.
+	 *
+	 * @throws programming_error If the query if invalid.
+	*/
 	void execute(const char * _sql);
 
 protected:

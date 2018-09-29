@@ -15,7 +15,7 @@ public:
 	template<typename Type>
 	Type *& get()
 	{
-		return reinterpret_cast<Type*>(_handle);
+		return *reinterpret_cast<Type**>(&_handle);
 	}
 
 private:

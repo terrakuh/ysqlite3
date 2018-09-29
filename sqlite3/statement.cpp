@@ -26,6 +26,18 @@ void statement::clear_bindings() noexcept
 	sqlite3_clear_bindings(_statement->get<sqlite3_stmt>());
 }
 
+void statement::execute()
+{
+	reset();
+
+	finish();
+}
+
+void statement::finish()
+{
+	while (step());
+}
+
 void statement::bind(const char * _name, const std::string & _text)
 {
 	bind(parameter_index(_name), _text);

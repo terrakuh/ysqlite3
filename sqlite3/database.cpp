@@ -17,7 +17,7 @@ void database::execute(const char * _sql)
 	char * _error_msg = nullptr;
 
 	if (sqlite3_exec(_connection->get<sqlite3>(), _sql, nullptr, nullptr, &_error_msg) != SQLITE_OK) {
-		std::logic_error _exception(_error_msg);
+		programming_error _exception(_error_msg);
 
 		// Free message
 		sqlite3_free(_error_msg);

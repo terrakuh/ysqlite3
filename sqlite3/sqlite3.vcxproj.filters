@@ -21,10 +21,13 @@
     <ClCompile Include="database.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sqlite3_connection.cpp">
+    <ClCompile Include="statement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="statement.cpp">
+    <ClCompile Include="handle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,7 +44,7 @@
     <ClInclude Include="statement.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sqlite3_connection.hpp">
+    <ClInclude Include="handle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

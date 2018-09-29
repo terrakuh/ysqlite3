@@ -3,23 +3,13 @@
 #include <memory>
 #include <string>
 
+#include "exception.hpp"
 #include "database.hpp"
 #include "handle.hpp"
 
 
 namespace sqlite3
 {
-
-class programming_error : public database_error
-{
-public:
-	programming_error(const std::string & _message) : database_error(_message)
-	{
-	}
-	programming_error(const char * _message) : database_error(_message)
-	{
-	}
-};
 
 class statement
 {
@@ -38,14 +28,16 @@ public:
 	 * @since 1.0.0.1
 	 * @date 29-Sep-18
 	*/
-	virtual void reset() noexcept;
+	void reset() noexcept;
 	/**
 	 * Clears all bindings.
 	 *
 	 * @since 1.0.0.1
 	 * @date 29-Sep-18
 	*/
-	virtual void clear_bindings() noexcept;
+	void clear_bindings() noexcept;
+	void execute();
+	void finish();
 	template<typename Type>
 	void bind(const char * _name, Type _value)
 	{

@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 
+#include "config.hpp"
 #include "exception.hpp"
 #include "database.hpp"
 #include "handle.hpp"
@@ -15,20 +16,20 @@ namespace sqlite3
 class statement
 {
 public:
-	class column_index
+	class parameter_indexer
 	{
 	public:
-		column_index(int _index) noexcept
+		parameter_indexer(int _index) noexcept
 		{
 			_type = TYPE::INDEX;
 			_value.index = _index;
 		}
-		column_index(const char * _name) noexcept
+		parameter_indexer(const char * _name) noexcept
 		{
 			_type = TYPE::NAME;
 			_value.name = _name;
 		}
-		int index(statement * _this)
+		virtual int index(statement * _this)
 		{
 			if (_type == TYPE::NAME) {
 				return _this->parameter_index(_value.name);
@@ -37,7 +38,7 @@ public:
 			return _value.index;
 		}
 
-	private:
+	protected:
 		enum class TYPE
 		{
 			INDEX,
@@ -49,8 +50,8 @@ public:
 			const char * name;
 		} _value;
 	};
-
-	statement(const char * _sql, database & _database);
+	
+	SQLITE3_API statement(const char * _sql, database & _database);
 	/**
 	 * Destructor.
 	 *
@@ -64,30 +65,30 @@ public:
 	 * @since 1.0.0.1
 	 * @date 29-Sep-18
 	*/
-	void reset() noexcept;
+	SQLITE3_API void reset() noexcept;
 	/**
 	 * Clears all bindings.
 	 *
 	 * @since 1.0.0.1
 	 * @date 29-Sep-18
 	*/
-	void clear_bindings() noexcept;
-	void execute();
-	void finish();
+	SQLITE3_API void clear_bindings() noexcept;
+	SQLITE3_API void execute();
+	SQLITE3_API void finish();
 	template<typename Type>
-	typename std::enable_if<std::is_integral<Type>::value>::type bind(column_index _index, Type _value)
+	typename std::enable_if<std::is_integral<Type>::value>::type bind(parameter_indexer _index, Type _value)
 	{
 		bind(_index, static_cast<long long>(_value));
 	}
-	void bind(column_index _index);
-	void bind(column_index _index, long long _value);
-	void bind(column_index _index, double _value);
-	void bind(column_index _index, const std::string & _text);
-	void bind(column_index _index, const char * _text, size_t _size = 0);
-	void bind(column_index _index, const void * _blob, size_t _size);
-	void bind_reference(column_index _index, const std::string & _text);
-	void bind_reference(column_index _index, const char * _text, size_t _size = 0);
-	void bind_reference(column_index _index, const void * _blob, size_t _size);
+	SQLITE3_API void bind(parameter_indexer _index);
+	SQLITE3_API void bind(parameter_indexer _index, long long _value);
+	SQLITE3_API void bind(parameter_indexer _index, double _value);
+	SQLITE3_API void bind(parameter_indexer _index, const std::string & _text);
+	SQLITE3_API void bind(parameter_indexer _index, const char * _text, int _size = -1);
+	SQLITE3_API void bind(parameter_indexer _index, const void * _blob, int _size);
+	SQLITE3_API void bind_reference(parameter_indexer _index, const std::string & _text);
+	SQLITE3_API void bind_reference(parameter_indexer _index, const char * _text, int _size = -1);
+	SQLITE3_API void bind_reference(parameter_indexer _index, const void * _blob, int _size);
 	/**
 	 * Executes a step.
 	 *
@@ -100,8 +101,20 @@ public:
 	 *
 	 * @return true if another row is available, otherwise false.
 	*/
-	bool step();
-	bool is_null(int _index);
+	SQLITE3_API bool step();
+	/**
+	 * Checks whether the column in the result set is null.
+	 *
+	 * @since 1.0.0.2
+	 * @date 29-Sep-18
+	 *
+	 * @param _index The column index.
+	 *
+	 * @throws See column_index::index().
+	 *
+	 * @return true if the set is null.
+	*/
+	SQLITE3_API bool is_null(int _index);
 	/**
 	 * Returns the number of columns in the result set.
 	 *
@@ -110,7 +123,7 @@ public:
 	 *
 	 * @return The number of columns.
 	*/
-	int column_count() const noexcept;
+	SQLITE3_API int column_count() const noexcept;
 	/**
 	 * Returns the index of the named parameter.
 	 *
@@ -123,7 +136,7 @@ public:
 	 *
 	 * @return The index.
 	*/
-	int parameter_index(const char * _name) const; 
+	SQLITE3_API int parameter_index(const char * _name) const;
 	/**
 	 * Returns a copy of the SQL used to create this statement.
 	 *
@@ -132,14 +145,13 @@ public:
 	 *
 	 * @return The SQL.
 	*/
-	const char * sql() const noexcept;
-	//const char * column_name(int _index) const noexcept;
+	SQLITE3_API const char * sql() const noexcept;
 
-	long long get_int(int _index);
-	double get_double(int _index);
-	std::string get_string(int _index);
-	std::pair<const char*, size_t> get_text(int _index);
-	std::pair<const void*, size_t> get_blob(int _index);
+	SQLITE3_API long long get_int(int _index);
+	SQLITE3_API double get_double(int _index);
+	SQLITE3_API std::string get_string(int _index);
+	SQLITE3_API std::pair<const char*, int> get_text(int _index);
+	SQLITE3_API std::pair<const void*, int> get_blob(int _index);
 
 protected:
 	/** The underlying sqlite3 statement. */
@@ -147,12 +159,12 @@ protected:
 	/** Holds all relevant information about the underlying sqlite3 connection. */
 	std::shared_ptr<handle> _connection;
 
-	virtual bool prepare(const char * _sql);
+	SQLITE3_API virtual bool prepare(const char * _sql);
 
 private:
-	void bind_text(column_index _index, const char * _text, size_t _size, void(*_destructor)(void*));
-	void bind_blob(column_index _index, const void * _blob, size_t _size, void(*_destructor)(void*));
-	void check_bind_result(int _result);
+	SQLITE3_API void bind_text(parameter_indexer _index, const char * _text, int _size, void(*_destructor)(void*));
+	SQLITE3_API void bind_blob(parameter_indexer _index, const void * _blob, int _size, void(*_destructor)(void*));
+	SQLITE3_API void check_bind_result(int _result);
 };
 
 }

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "config.hpp"
 #include "handle.hpp"
 #include "exception.hpp"
 
@@ -40,7 +41,7 @@ public:
 	 *
 	 * @throws database_error When the specified file couldn't be opened.
 	*/
-	database(const char * _filename, int _mode = SO_READWRITE | SO_CREATE);
+	SQLITE3_API database(const char * _filename, int _mode = SO_READWRITE | SO_CREATE);
 	/**
 	 * Destructor.
 	 *
@@ -58,7 +59,7 @@ public:
 	 *
 	 * @throws programming_error If the query if invalid.
 	*/
-	void execute(const char * _sql);
+	SQLITE3_API void execute(const char * _sql);
 
 protected:
 	friend statement;
@@ -66,7 +67,7 @@ protected:
 	/** Holds all relevant information about the underlying sqlite3 connection. */
 	std::shared_ptr<handle> _connection;
 
-	virtual bool open(const char * _filename, int _mode);
+	SQLITE3_API virtual bool open(const char * _filename, int _mode);
 };
 
 }

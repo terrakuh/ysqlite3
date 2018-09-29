@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include "config.hpp"
+
 
 namespace sqlite3
 {
@@ -9,9 +11,9 @@ namespace sqlite3
 class handle
 {
 public:
-	handle(std::function<void(void*)> && _destructor) noexcept;
-	handle(const std::function<void(void*)> & _destructor) noexcept;
-	~handle();
+	SQLITE3_API handle(std::function<void(void*)> && _destructor) noexcept;
+	SQLITE3_API handle(const std::function<void(void*)> & _destructor) noexcept;
+	SQLITE3_API ~handle();
 	template<typename Type>
 	Type *& get()
 	{

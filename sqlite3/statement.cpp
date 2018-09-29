@@ -38,12 +38,12 @@ void statement::finish()
 	while (step());
 }
 
-void statement::bind(column_index _index)
+void statement::bind(parameter_indexer _index)
 {
 	check_bind_result(sqlite3_bind_null(_statement->get<sqlite3_stmt>(), _index.index(this)));
 }
 
-void statement::bind(column_index _index, long long _value)
+void statement::bind(parameter_indexer _index, long long _value)
 {
 	if (_value >= std::numeric_limits<int>::min() && _value <= std::numeric_limits<int>::max()) {
 		check_bind_result(sqlite3_bind_int(_statement->get<sqlite3_stmt>(), _index.index(this), static_cast<int>(_value)));
@@ -52,37 +52,37 @@ void statement::bind(column_index _index, long long _value)
 	}
 }
 
-void statement::bind(column_index _index, double _value)
+void statement::bind(parameter_indexer _index, double _value)
 {
 	check_bind_result(sqlite3_bind_double(_statement->get<sqlite3_stmt>(), _index.index(this), _value));
 }
 
-void statement::bind(column_index _index, const std::string & _text)
+void statement::bind(parameter_indexer _index, const std::string & _text)
 {
 	bind(_index, _text.c_str(), _text.size());
 }
 
-void statement::bind(column_index _index, const char * _text, size_t _size)
+void statement::bind(parameter_indexer _index, const char * _text, int _size)
 {
 	bind_text(_index, _text, _size, SQLITE_TRANSIENT);
 }
 
-void statement::bind(column_index _index, const void * _blob, size_t _size)
+void statement::bind(parameter_indexer _index, const void * _blob, int _size)
 {
 	bind_blob(_index, _blob, _size, SQLITE_TRANSIENT);
 }
 
-void statement::bind_reference(column_index _index, const std::string & _text)
+void statement::bind_reference(parameter_indexer _index, const std::string & _text)
 {
 	bind_reference(_index, _text.c_str(), _text.size());
 }
 
-void statement::bind_reference(column_index _index, const char * _text, size_t _size)
+void statement::bind_reference(parameter_indexer _index, const char * _text, int _size)
 {
 	bind_text(_index, _text, _size, SQLITE_STATIC);
 }
 
-void statement::bind_reference(column_index _index, const void * _blob, size_t _size)
+void statement::bind_reference(parameter_indexer _index, const void * _blob, int _size)
 {
 	bind_blob(_index, _blob, _size, SQLITE_STATIC);
 }
@@ -98,6 +98,11 @@ bool statement::step()
 	}
 
 	throw programming_error(sqlite3_errmsg(_connection->get<sqlite3>()));
+}
+
+bool statement::is_null(int _index)
+{
+	return sqlite3_column_blob(_statement->get<sqlite3_stmt>(), _index) == nullptr;
 }
 
 int statement::column_count() const noexcept
@@ -121,39 +126,48 @@ const char * statement::sql() const noexcept
 	return sqlite3_sql(_statement->get<sqlite3_stmt>());
 }
 
+long long statement::get_int(int _index)
+{
+	return sqlite3_column_int64(_statement->get<sqlite3_stmt>(), _index);
+}
+
+double statement::get_double(int _index)
+{
+	return sqlite3_column_double(_statement->get<sqlite3_stmt>(), _index);
+}
+
+std::string statement::get_string(int _index)
+{
+	return std::string();
+}
+
+std::pair<const char*, int> statement::get_text(int _index)
+{
+	return { reinterpret_cast<const char*>(sqlite3_column_text(_statement->get<sqlite3_stmt>(), _index)), sqlite3_column_bytes(_statement->get<sqlite3_stmt>(), _index) };
+}
+
+std::pair<const void*, int> statement::get_blob(int _index)
+{
+	return { reinterpret_cast<const char*>(sqlite3_column_blob(_statement->get<sqlite3_stmt>(), _index)), sqlite3_column_bytes(_statement->get<sqlite3_stmt>(), _index) };
+}
+
 bool statement::prepare(const char * _sql)
 {
 	return sqlite3_prepare_v2(_connection->get<sqlite3>(), _sql, -1, &_statement->get<sqlite3_stmt>(), nullptr) == SQLITE_OK;
 }
 
-void statement::bind_text(column_index _index, const char * _text, size_t _size, void(*_destructor)(void *))
+void statement::bind_text(parameter_indexer _index, const char * _text, int _size, void(*_destructor)(void *))
 {
-	if (!_size) {
-		_size = std::char_traits<char>::length(_text);
-	}
-
-	if (_size < std::numeric_limits<int>::max()) {
-		check_bind_result(sqlite3_bind_text(_statement->get<sqlite3_stmt>(), _index.index(this), _text, static_cast<int>(_size), _destructor));
-	} else {
-		check_bind_result(sqlite3_bind_text64(_statement->get<sqlite3_stmt>(), _index.index(this), _text, _size, _destructor, SQLITE_UTF8));
-	}
+	check_bind_result(sqlite3_bind_text(_statement->get<sqlite3_stmt>(), _index.index(this), _text, _size, _destructor));
 }
 
-void statement::bind_blob(column_index _index, const void * _blob, size_t _size, void(*_destructor)(void *))
+void statement::bind_blob(parameter_indexer _index, const void * _blob, int _size, void(*_destructor)(void *))
 {
 	if (_blob) {
-		if (_size < std::numeric_limits<int>::max()) {
-			check_bind_result(sqlite3_bind_blob(_statement->get<sqlite3_stmt>(), _index.index(this), _blob, static_cast<int>(_size), _destructor));
-		} else {
-			check_bind_result(sqlite3_bind_blob64(_statement->get<sqlite3_stmt>(), _index.index(this), _blob, _size, _destructor));
-		}
+		check_bind_result(sqlite3_bind_blob(_statement->get<sqlite3_stmt>(), _index.index(this), _blob, _size, _destructor));
 	} // Bind zero blob
 	else {
-		if (_size < std::numeric_limits<int>::max()) {
-			check_bind_result(sqlite3_bind_zeroblob(_statement->get<sqlite3_stmt>(), _index.index(this), static_cast<int>(_size)));
-		} else {
-			check_bind_result(sqlite3_bind_zeroblob64(_statement->get<sqlite3_stmt>(), _index.index(this), _size));
-		}
+		check_bind_result(sqlite3_bind_zeroblob(_statement->get<sqlite3_stmt>(), _index.index(this), _size));
 	}
 }
 

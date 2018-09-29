@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "sqlite3_connection.hpp"
+#include "handle.hpp"
 
 
 namespace sqlite3
@@ -64,7 +64,7 @@ protected:
 	friend statement;
 
 	/** Holds all relevant information about the underlying sqlite3 connection. */
-	std::shared_ptr<sqlite3_connection> _connection;
+	std::shared_ptr<handle> _connection;
 
 	virtual bool open(const char * _filename, int _mode);
 };

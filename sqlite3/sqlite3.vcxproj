@@ -118,6 +118,7 @@
     <ClCompile Include="database.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="sqlite3_connection.cpp" />
+    <ClCompile Include="statement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.hpp" />

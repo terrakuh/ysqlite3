@@ -115,6 +115,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="database.cpp" />
+    <ClCompile Include="sqlite3.c" />
+    <ClCompile Include="sqlite3_connection.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="database.hpp" />
+    <ClInclude Include="sqlite3.h" />
+    <ClInclude Include="sqlite3ext.h" />
+    <ClInclude Include="sqlite3_connection.hpp" />
+    <ClInclude Include="statement.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

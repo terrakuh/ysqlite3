@@ -4,11 +4,11 @@
 namespace sqlite3
 {
 
-class sqlite3_dataholder
+class sqlite3_connection
 {
 public:
-	sqlite3_dataholder();
-	~sqlite3_dataholder();
+	sqlite3_connection();
+	~sqlite3_connection();
 	template<typename Type>
 	Type *& handle() noexcept
 	{

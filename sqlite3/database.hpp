@@ -60,6 +60,8 @@ public:
 	 * @throws programming_error If the query if invalid.
 	*/
 	SQLITE3_API void execute(const char * _sql);
+	SQLITE3_API void enable_foreign_keys(bool _enable);
+	SQLITE3_API long long last_insert_rowid() const noexcept;
 
 protected:
 	friend statement;

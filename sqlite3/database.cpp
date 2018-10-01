@@ -26,6 +26,16 @@ void database::execute(const char * _sql)
 	}
 }
 
+void database::enable_foreign_keys(bool _enable)
+{
+	execute(_enable ? "PRAGMA foreign_keys=ON" : "PRAGMA foreign_keys=OFF");
+}
+
+long long database::last_insert_rowid() const noexcept
+{
+	return sqlite3_last_insert_rowid(_connection->get<sqlite3>());
+}
+
 bool database::open(const char * _filename, int _mode)
 {
 	return sqlite3_open_v2(_filename, &_connection->get<sqlite3>(), _mode, nullptr) == SQLITE_OK;

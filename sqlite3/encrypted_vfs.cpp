@@ -3,8 +3,11 @@
 
 #include <cstring>
 #include <cstdint>
+#include <cstdio>
 #include <algorithm>
 #include <memory>
+#include <sstream>
+#include <iomanip>
 
 
 namespace sqlite3
@@ -113,6 +116,34 @@ inline int xsync_derived(sqlite3_file * _file, int _flags)
 
 inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags)
 {
+	// Extract filename and context address
+	auto _address = std::strrchr(_name, '/');
+
+	if (!_address) {
+		_address = std::strrchr(_name, '\\');
+
+		if (!_address) {
+			_address = _name;
+		} else {
+			++_address;
+		}
+	} else {
+		++_address;
+	}
+
+	intptr_t _addr = 0;
+	std::string _real_path(_name, _address);
+
+	{
+		std::stringstream _s(_address);
+
+		_s >> std::hex >> _addr;
+
+		_real_path.append(_address + _s.tellg() + 1);
+	}
+
+	_name = _real_path.c_str();
+
 	auto _result = xopen_base(_vfs, _name, _file, _flags, _out_flags);
 
 	// Override I/O functions
@@ -120,7 +151,7 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 		auto _methods = new sqlite3_io_methods(*_file->pMethods);
 
 		// Save context and base methods
-		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = nullptr;
+		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = reinterpret_cast<encryption_context*>(_addr);
 		*reinterpret_cast<base_method_type*>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*)) = _file->pMethods;
 
 		printf("open %s with %s and save to %p\n", _name, _vfs->zName, _file);

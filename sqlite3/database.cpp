@@ -5,9 +5,9 @@ namespace sqlite3
 
 #include "sqlite3.h"
 
-database::database(const char * _filename, int _mode) : _connection(new handle([](void * _connection) { sqlite3_close_v2(reinterpret_cast<sqlite3*>(_connection)); }))
+database::database(const char * _filename, int _mode) : database()
 {
-	if (!open(_filename, _mode)) {
+	if (sqlite3_open_v2(_filename, &_connection->get<sqlite3>(), _mode, nullptr) != SQLITE_OK) {
 		throw database_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
 }
@@ -36,9 +36,8 @@ long long database::last_insert_rowid() const noexcept
 	return sqlite3_last_insert_rowid(_connection->get<sqlite3>());
 }
 
-bool database::open(const char * _filename, int _mode)
+database::database() : _connection(new handle([](void * _connection) { sqlite3_close_v2(reinterpret_cast<sqlite3*>(_connection)); }))
 {
-	return sqlite3_open_v2(_filename, &_connection->get<sqlite3>(), _mode, "encrypted-vfs") == SQLITE_OK;
 }
 
 }

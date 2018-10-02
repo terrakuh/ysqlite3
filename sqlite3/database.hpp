@@ -69,7 +69,8 @@ protected:
 	/** Holds all relevant information about the underlying sqlite3 connection. */
 	std::shared_ptr<handle> _connection;
 
-	SQLITE3_API virtual bool open(const char * _filename, int _mode);
+
+	database();
 };
 
 }

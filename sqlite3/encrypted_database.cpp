@@ -11,7 +11,7 @@ namespace sqlite3
 #include "sqlite3.h"
 
 
-encrypted_database::encrypted_database(encryption_context _context, const char * _filename, int _mode) : database(_filename, _mode)
+encrypted_database::encrypted_database(encryption_context _context, const char * _filename, int _mode) : database(_filename, _mode | SO_FULLMUTEX)
 {
 }
 

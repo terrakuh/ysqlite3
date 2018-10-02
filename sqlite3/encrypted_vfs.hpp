@@ -1,6 +1,6 @@
 #pragma once
 
-#define SQLITE3_ENCRYPTED_VFS_NAME "en"
+#define SQLITE3_ENCRYPTED_VFS_NAME "encrypted-vfs"
 
 
 namespace sqlite3

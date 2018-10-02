@@ -38,7 +38,7 @@ long long database::last_insert_rowid() const noexcept
 
 bool database::open(const char * _filename, int _mode)
 {
-	return sqlite3_open_v2(_filename, &_connection->get<sqlite3>(), _mode, nullptr) == SQLITE_OK;
+	return sqlite3_open_v2(_filename, &_connection->get<sqlite3>(), _mode, "encrypted-vfs") == SQLITE_OK;
 }
 
 }

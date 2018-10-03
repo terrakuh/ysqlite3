@@ -62,7 +62,9 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 	}*/
 
 	// Decrypt
-	_context->decrypt(_offset / _size, _buffer, _size, _buffer, std::bind(&xread_base, _file, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	if (_context->does_something()) {
+		_context->decrypt(_offset / _size, _buffer, _size, _buffer);
+	}
 
 	return _result;
 }
@@ -79,14 +81,18 @@ inline int xwrite_derived(sqlite3_file * _file, const void * _buffer, int _size,
 	auto _context = *reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2);
 
 	// Encrypt
-	std::unique_ptr<int8_t[]> _encrypted(new int8_t[_size]);
+	if (_context->does_something()) {
+		std::unique_ptr<int8_t[]> _encrypted(new int8_t[_size]);
 
-	printf("[%p]: write %i bytes at %lli sectorsize: %i\n", _file, _size, _offset, _file->pMethods->xSectorSize(_file));
+		printf("[%p]: write %i bytes at %lli sectorsize: %i\n", _file, _size, _offset, _file->pMethods->xSectorSize(_file));
 
-	_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get());
-	
+		_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get());
+
+		return xwrite_base(_file, _encrypted.get(), _size, _offset + _context->last_encryption_offset());
+	}
+
 	// Write
-	return xwrite_base(_file, _encrypted.get(), _size, _offset /* + TODO*/);
+	return xwrite_base(_file, _buffer, _size, _offset);
 }
 
 inline int xsync_base(sqlite3_file * _file, int _flags)
@@ -102,13 +108,10 @@ inline int xsync_derived(sqlite3_file * _file, int _flags)
 
 	printf("[%p]: syncing\n", _file);
 
-	// Get all overhead pages
-	for (auto & _sector : _context->modified_overhead_sectors()) {
-		auto _result = xwrite_base(_file, std::get<0>(_sector), std::get<1>(_sector), std::get<2>(_sector));
+	auto _result = _context->sync();
 
-		if (_result != SQLITE_OK) {
-			return _result;
-		}
+	if (_result != SQLITE_OK) {
+		return _result;
 	}
 
 	return xsync_base(_file, _flags);
@@ -154,9 +157,13 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 	// Override I/O functions
 	if (_file->pMethods) {
 		auto _methods = new sqlite3_io_methods(*_file->pMethods);
+		auto _context = reinterpret_cast<encryption_context*>(_addr);
+
+		_context->set_read_callback(std::bind(&xread_base, _file, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		_context->set_sector_size(_file->pMethods->xSectorSize(_file));
 
 		// Save context and base methods
-		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = reinterpret_cast<encryption_context*>(_addr);
+		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = _context;
 		*reinterpret_cast<base_method_type*>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*)) = _file->pMethods;
 
 		printf("open %s with %s and save to %p\n", _name, _vfs->zName, _file);

@@ -23,6 +23,8 @@ encrypted_database::encrypted_database(encryption_context * _context, const char
 	if (sqlite3_open_v2(_s.str().c_str(), &_connection->get<sqlite3>(), _mode, SQLITE3_ENCRYPTED_VFS_NAME) != SQLITE_OK) {
 		throw database_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
+
+	execute("PRAGMA journal_mode=MEMORY;");
 }
 
 encrypted_database::encrypted_database()

@@ -81,7 +81,7 @@ inline int xwrite_derived(sqlite3_file * _file, const void * _buffer, int _size,
 	// Encrypt
 	std::unique_ptr<int8_t[]> _encrypted(new int8_t[_size]);
 
-	printf("[%p]: write %i bytes at %lli\n", _file, _size, _offset);
+	printf("[%p]: write %i bytes at %lli sectorsize: %i\n", _file, _size, _offset, _file->pMethods->xSectorSize(_file));
 
 	_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get());
 	
@@ -116,6 +116,11 @@ inline int xsync_derived(sqlite3_file * _file, int _flags)
 
 inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags)
 {
+	// Don't allow any non main db files
+	if (!(_flags & SQLITE_OPEN_MAIN_DB)) {
+		return SQLITE_MISUSE;
+	}
+
 	// Extract filename and context address
 	auto _address = std::strrchr(_name, '/');
 

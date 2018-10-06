@@ -9,8 +9,6 @@
 #include <sstream>
 #include <iomanip>
 
-#define PRINT_OUTPUT
-
 
 namespace sqlite3
 {
@@ -56,6 +54,7 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 	printf("[%p]: read %i bytes from %lli\n", _file, _size, _offset);
 #endif
 
+	auto _context = *reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2);
 	auto _header = *reinterpret_cast<int8_t**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 3);
 
 	// Read header
@@ -64,6 +63,10 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 
 		if (_result != SQLITE_OK) {
 			return _result;
+		}
+
+		if (!_context->decrypt(0, _header, 100)) {
+			return SQLITE_IOERR;
 		}
 
 		_header[header_control_byte] |= header_read;
@@ -76,12 +79,13 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 		return SQLITE_OK;
 	}
 
-	auto _context = *reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2);
 	auto _result = xread_base(_file, _buffer, _size, _offset);
 
 	// Decrypt
 	if (_context->does_something()) {
-		_context->decrypt(_offset / _size, _buffer, _size);
+		if (!_context->decrypt(_offset / _size, _buffer, _size)) {
+			return SQLITE_IOERR;
+		}
 	}
 
 	return _result;
@@ -117,7 +121,9 @@ inline int xwrite_derived(sqlite3_file * _file, const void * _buffer, int _size,
 	if (_context->does_something()) {
 		_encrypted.reset(new int8_t[_size]);
 
-		_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get());
+		if (!_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get())) {
+			return SQLITE_IOERR;
+		}
 
 		_buffer = _encrypted.get();
 	}

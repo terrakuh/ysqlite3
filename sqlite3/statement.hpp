@@ -73,7 +73,6 @@ public:
 	 * @date 29-Sep-18
 	*/
 	SQLITE3_API void clear_bindings() noexcept;
-	SQLITE3_API void execute();
 	SQLITE3_API void finish();
 	template<typename Type>
 	typename std::enable_if<std::is_integral<Type>::value>::type bind(parameter_indexer _index, Type _value)

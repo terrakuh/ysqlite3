@@ -26,13 +26,6 @@ void statement::clear_bindings() noexcept
 	sqlite3_clear_bindings(_statement->get<sqlite3_stmt>());
 }
 
-void statement::execute()
-{
-	reset();
-
-	finish();
-}
-
 void statement::finish()
 {
 	while (step());

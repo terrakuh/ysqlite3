@@ -83,7 +83,7 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 
 	// Decrypt
 	if (_context->does_something()) {
-		if (!_context->decrypt(_offset / _size, _buffer, _size)) {
+		if (_size != _context->required_output_size(_size) || !_context->decrypt(_offset / _size, _buffer, _size)) {
 			return SQLITE_IOERR;
 		}
 	}
@@ -119,6 +119,10 @@ inline int xwrite_derived(sqlite3_file * _file, const void * _buffer, int _size,
 
 	// Encrypt
 	if (_context->does_something()) {
+		if (_size != _context->required_output_size(_size)) {
+			return SQLITE_IOERR;
+		}
+
 		_encrypted.reset(new int8_t[_size]);
 
 		if (!_context->encrypt(_offset / _size, _buffer, _size, _encrypted.get())) {

@@ -1,9 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
-#include <tuple>
-#include <functional>
 
 
 namespace sqlite3

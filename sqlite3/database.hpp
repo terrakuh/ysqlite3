@@ -61,6 +61,9 @@ public:
 	*/
 	SQLITE3_API void execute(const char * _sql);
 	SQLITE3_API void enable_foreign_keys(bool _enable);
+	SQLITE3_API void begin_transaction();
+	SQLITE3_API void commit();
+	SQLITE3_API void rollback();
 	SQLITE3_API long long last_insert_rowid() const noexcept;
 
 protected:

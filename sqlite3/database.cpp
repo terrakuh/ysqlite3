@@ -31,6 +31,21 @@ void database::enable_foreign_keys(bool _enable)
 	execute(_enable ? "PRAGMA foreign_keys=ON" : "PRAGMA foreign_keys=OFF");
 }
 
+void database::begin_transaction()
+{
+	execute("BEGIN TRANSACTION;");
+}
+
+void database::commit()
+{
+	execute("COMMIT;");
+}
+
+void database::rollback()
+{
+	execute("ROLLBACK;");
+}
+
 long long database::last_insert_rowid() const noexcept
 {
 	return sqlite3_last_insert_rowid(_connection->get<sqlite3>());

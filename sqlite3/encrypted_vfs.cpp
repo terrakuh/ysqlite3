@@ -65,7 +65,7 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 			return _result;
 		}
 
-		if (!_context->decrypt(0, _header, 100)) {
+		if (_context->does_something() && !_context->decrypt(0, _header, 100)) {
 			return SQLITE_IOERR;
 		}
 
@@ -82,11 +82,10 @@ inline int xread_derived(sqlite3_file * _file, void * _buffer, int _size, sqlite
 	auto _result = xread_base(_file, _buffer, _size, _offset);
 
 	// Decrypt
-	if (_context->does_something()) {
-		if (_size != _context->required_output_size(_size) || !_context->decrypt(_offset / _size, _buffer, _size)) {
-			return SQLITE_IOERR;
-		}
+	if (_context->does_something() && (_size != _context->required_output_size(_size) || !_context->decrypt(_offset / _size, _buffer, _size))) {
+		return SQLITE_IOERR;
 	}
+
 
 	return _result;
 }
@@ -195,7 +194,7 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 		auto _context = reinterpret_cast<encryption_context*>(_addr);
 
 		// Save context and base methods
-		*reinterpret_cast<int8_t**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 3) = new int8_t[sqlite_header_size + 1]{} + 1;
+		*reinterpret_cast<int8_t**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 3) = new int8_t[sqlite_header_size + 1]{} +1;
 		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = _context;
 		*reinterpret_cast<base_method_type*>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*)) = _file->pMethods;
 

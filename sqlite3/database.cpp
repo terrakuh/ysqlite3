@@ -46,6 +46,17 @@ void database::rollback()
 	execute("ROLLBACK;");
 }
 
+bool database::is_readonly() const
+{
+	auto _result = sqlite3_db_readonly(_connection->get<sqlite3>(), "main");
+
+	if (_result < 0) {
+		throw database_error("invalid database");
+	}
+
+	return _result;
+}
+
 long long database::last_insert_rowid() const noexcept
 {
 	return sqlite3_last_insert_rowid(_connection->get<sqlite3>());

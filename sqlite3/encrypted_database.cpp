@@ -20,8 +20,8 @@ encrypted_database::encrypted_database(encryption_context * _context, const char
 	const char * _ptr;
 
 	if ((_ptr = std::strrchr(_path, '\\')) || (_ptr = std::strrchr(_path, '/'))) {
-		_s.write(_path, _ptr - _path);
-		_path = _ptr + 1;
+		_s.write(_path, ++_ptr - _path);
+		_path = _ptr;
 	}
 
 	_s << std::hex << reinterpret_cast<intptr_t>(_context) << '-' << _path;

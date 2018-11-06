@@ -131,7 +131,9 @@ double statement::get_double(int _index)
 
 std::string statement::get_string(int _index)
 {
-	return std::string();
+	auto _text = get_text(_index);
+
+	return std::string(_text.first, _text.second);
 }
 
 std::pair<const char*, int> statement::get_text(int _index)

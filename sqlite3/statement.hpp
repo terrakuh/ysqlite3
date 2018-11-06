@@ -52,6 +52,7 @@ public:
 	};
 	
 	SQLITE3_API statement(const char * _sql, database & _database);
+	statement(statement && _move) = default;
 	/**
 	 * Destructor.
 	 *
@@ -151,6 +152,7 @@ public:
 	SQLITE3_API std::string get_string(int _index);
 	SQLITE3_API std::pair<const char*, int> get_text(int _index);
 	SQLITE3_API std::pair<const void*, int> get_blob(int _index);
+	statement & operator=(statement && _move) = default;
 
 protected:
 	/** The underlying sqlite3 statement. */

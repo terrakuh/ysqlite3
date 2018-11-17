@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdint>
-#include <boost\lexical_cast.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 namespace sqlite3

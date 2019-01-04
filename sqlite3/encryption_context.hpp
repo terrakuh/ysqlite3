@@ -4,7 +4,7 @@
 #include <cstddef>
 
 
-namespace sqlite3
+namespace ysqlite3
 {
 
 class encryption_context

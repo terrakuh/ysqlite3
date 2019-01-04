@@ -3,7 +3,7 @@
 #include <utility>
 
 
-namespace sqlite3
+namespace ysqlite3
 {
 
 handle::handle(std::function<void(void*)> && _destructor) noexcept : _destructor(std::move(_destructor))

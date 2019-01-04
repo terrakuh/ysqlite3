@@ -1,5 +1,6 @@
 #include "encrypted_vfs.hpp"
 #include "encryption_context.hpp"
+#include "sqlite3.h"
 
 #include <cstring>
 #include <cstdint>
@@ -10,10 +11,8 @@
 #include <iomanip>
 
 
-namespace sqlite3
+namespace ysqlite3
 {
-
-#include "sqlite3.h"
 
 typedef decltype(sqlite3_vfs::xOpen) xopen_signature;
 typedef const sqlite3_io_methods * base_method_type;
@@ -159,7 +158,7 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 	}
 
 	// Extract filename and context address
-	auto _address = std::strrchr(_name, '/');
+	/*auto _address = std::strrchr(_name, '/');
 
 	if (!_address) {
 		_address = std::strrchr(_name, '\\');
@@ -184,8 +183,19 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 		_real_path.append(_address + _s.tellg() + 1);
 	}
 
-	_name = _real_path.c_str();
+	_name = _real_path.c_str();*/
+	std::string _real_path;
+	intptr_t _addr = 0;
 
+	if (auto _seperator = std::strrchr(_name, '-')) {
+		_real_path.assign(_name, _seperator - _name);
+		_name = _real_path.c_str();
+
+		std::stringstream _s(_seperator + 1);
+
+		_s >> std::hex >> _addr;
+	}
+	
 	auto _result = xopen_base(_vfs, _name, _file, _flags, _out_flags);
 
 	// Override I/O functions
@@ -194,7 +204,7 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 		auto _context = reinterpret_cast<encryption_context*>(_addr);
 
 		// Save context and base methods
-		*reinterpret_cast<int8_t**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 3) = new int8_t[sqlite_header_size + 1]{} +1;
+		*reinterpret_cast<int8_t**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 3) = new int8_t[sqlite_header_size + 1]{} + 1;
 		*reinterpret_cast<encryption_context**>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*) * 2) = _context;
 		*reinterpret_cast<base_method_type*>(reinterpret_cast<int8_t*>(_file) + encrypted_vfs.szOsFile - sizeof(void*)) = _file->pMethods;
 
@@ -218,6 +228,7 @@ inline int xopen_derived(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * 
 void register_encrypted_vfs()
 {
 	sqlite3_initialize();
+
 	// Get default VFS
 	auto _default = sqlite3_vfs_find(nullptr);
 

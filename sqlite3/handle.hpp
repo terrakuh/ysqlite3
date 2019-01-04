@@ -5,7 +5,7 @@
 #include "config.hpp"
 
 
-namespace sqlite3
+namespace ysqlite3
 {
 
 class handle

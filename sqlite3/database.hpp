@@ -9,7 +9,7 @@
 #include "exception.hpp"
 
 
-namespace sqlite3
+namespace ysqlite3
 {
 
 enum SQLITE3_OPEN

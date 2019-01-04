@@ -6,7 +6,7 @@
 #include "encryption_context.hpp"
 
 
-namespace sqlite3
+namespace ysqlite3
 {
 
 class encrypted_database : public database

@@ -1,13 +1,11 @@
 #include "statement.hpp"
+#include "sqlite3.h"
 
 #include <limits>
 
 
-namespace sqlite3
+namespace ysqlite3
 {
-
-#include "sqlite3.h"
-
 
 statement::statement(const char * _sql, database & _database) : _statement(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); })), _connection(_database._connection)
 {
@@ -29,6 +27,17 @@ void statement::clear_bindings() noexcept
 void statement::finish()
 {
 	while (step());
+}
+
+void statement::set_sql(const char * _sql)
+{
+	std::unique_ptr<handle> _new(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); }));
+
+	if (!prepare(_sql)) {
+		throw programming_error(sqlite3_errmsg(_connection->get<sqlite3>()));
+	}
+
+	_statement.swap(_new);
 }
 
 void statement::bind(parameter_indexer _index)

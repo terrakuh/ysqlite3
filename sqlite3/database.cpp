@@ -1,9 +1,9 @@
 #include "database.hpp"
-
-namespace sqlite3
-{
-
 #include "sqlite3.h"
+
+
+namespace ysqlite3
+{
 
 database::database(const char * _filename, int _mode) : database()
 {

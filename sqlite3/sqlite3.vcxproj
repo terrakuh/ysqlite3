@@ -254,6 +254,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="no_encryption_context.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="statement.cpp" />
   </ItemGroup>

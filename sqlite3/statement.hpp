@@ -161,7 +161,7 @@ protected:
 	/** Holds all relevant information about the underlying sqlite3 connection. */
 	std::shared_ptr<handle> _connection;
 
-	SQLITE3_API virtual bool prepare(const char * _sql);
+	SQLITE3_API virtual bool prepare(const char * _sql, handle * _statement);
 
 private:
 	SQLITE3_API void bind_text(parameter_indexer _index, const char * _text, int _size, void(*_destructor)(void*));

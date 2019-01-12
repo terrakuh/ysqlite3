@@ -9,7 +9,7 @@ namespace ysqlite3
 
 statement::statement(const char * _sql, database & _database) : _statement(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); })), _connection(_database._connection)
 {
-	if (!prepare(_sql)) {
+	if (!prepare(_sql, _statement.get())) {
 		throw programming_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
 }
@@ -33,7 +33,7 @@ void statement::set_sql(const char * _sql)
 {
 	std::unique_ptr<handle> _new(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); }));
 
-	if (!prepare(_sql)) {
+	if (!prepare(_sql, _new.get())) {
 		throw programming_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
 
@@ -155,7 +155,7 @@ std::pair<const void*, int> statement::get_blob(int _index)
 	return { reinterpret_cast<const char*>(sqlite3_column_blob(_statement->get<sqlite3_stmt>(), _index)), sqlite3_column_bytes(_statement->get<sqlite3_stmt>(), _index) };
 }
 
-bool statement::prepare(const char * _sql)
+bool statement::prepare(const char * _sql, handle * _statement)
 {
 	return sqlite3_prepare_v2(_connection->get<sqlite3>(), _sql, -1, &_statement->get<sqlite3_stmt>(), nullptr) == SQLITE_OK;
 }

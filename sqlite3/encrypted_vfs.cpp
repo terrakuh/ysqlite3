@@ -27,7 +27,7 @@ std::regex path_pattern(R"((.*?)-([0-9a-fA-F]+)-(.*))");
 class encrypted_sub_class
 {
 public:
-	encrypted_sub_class(encryption_context * _context) : _derived_methods{}
+	encrypted_sub_class(encryption_context * _context) : _derived_methods{}, _header({})
 	{
 		_base_methods = nullptr;
 		this->_context = _context;
@@ -35,7 +35,6 @@ public:
 	}
 	~encrypted_sub_class()
 	{
-		puts("destroy");
 	}
 	static int xopen_link(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags)
 	{
@@ -74,7 +73,7 @@ private:
 	enum FLAGS
 	{
 		F_HEADER_LOADED = 0x1,
-		F_HEADER_MODIFIED = 0x2
+		F_HEADER_MODIFIED = 0x2,
 	};
 
 	constexpr static auto header_size = 100;
@@ -112,6 +111,7 @@ private:
 		_derived_methods.xSync = &encrypted_sub_class::xsync_link;
 		_derived_methods.xRead = &encrypted_sub_class::xread_link;
 		_derived_methods.xWrite = &encrypted_sub_class::xwrite_link;
+		_derived_methods.xFileControl = &encrypted_sub_class::xfile_control_link;
 
 		_file->pMethods = &_derived_methods;
 
@@ -139,41 +139,12 @@ private:
 		printf("[%p]: read %i bytes from %lli\n", this, _size, _offset);
 #endif
 
-		// Read header only once
-		if (!(_flags & F_HEADER_LOADED)) {
-			auto _result = _base_methods->xRead(_file, _header.data(), header_size, 0);
+		auto _r = _base_methods->xRead(_file, _buffer, _size, _offset);
+		auto _encryption_buffer = (char*)_buffer;
+		printf("lll: %i\n", int(_encryption_buffer[16] << 8 | _encryption_buffer[17]));
+		printf("code: %i\n", _r);
 
-			if (_result != SQLITE_OK) {
-				return _result;
-			}
-
-			// Decrypt header
-			if (!_context->decrypt(0, _header.data(), header_size)) {
-				return SQLITE_IOERR;
-			}
-
-			_flags |= F_HEADER_LOADED;
-
-#if defined(PRINT_OUTPUT)
-			printf("[%p]: read header from disk\n", this);
-#endif
-		}
-
-		// Read from header
-		if (_size + _offset <= header_size) {
-			std::memcpy(_buffer, _header.data() + _offset, _size);
-
-			return SQLITE_OK;
-		}
-
-		auto _result = _base_methods->xRead(_file, _buffer, _size, _offset);
-
-		// Decrypt
-		if (!_context->decrypt(_offset / _size, _buffer, _size)) {
-			return SQLITE_IOERR;
-		}
-
-		return _result;
+		return _r;
 	}
 	int xwrite(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset)
 	{
@@ -181,24 +152,42 @@ private:
 		printf("[%p]: write %i bytes at %lli\n", this, _size, _offset);
 #endif
 
-		// Write into the SQLite header
-		if (_size + _offset <= header_size) {
-			std::memcpy(_header.data() + _offset, _buffer, _size);
+		_encryption_buffer.resize(_size);
+		std::memcpy(_encryption_buffer.data(), _buffer, _size);
+			_buffer = _encryption_buffer.data();
 
-			_flags |= F_HEADER_MODIFIED;
+			if (_offset == 0) {
+				printf("lll: %i\n", int(_encryption_buffer[16] << 8 | _encryption_buffer[17]));
+			//_encryption_buffer[20] = 32;
+		} else {
+		}
+			std::memcpy(_encryption_buffer.data() + _size - 32, "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", 32);
+
+		// Write
+		auto _r = _base_methods->xWrite(_file, _buffer, _size, _offset);
+
+		printf("code: %i\n", _r);
+
+		return _r;
+	}
+	int xfile_control(sqlite3_file * _file, int _op, void * _arg)
+	{
+		if (_op == SQLITE_FCNTL_PRAGMA) {
+			auto _pragma = reinterpret_cast<char**>(_arg);
+
+			if (!std::strcmp(_pragma[1], "key")) {
+				printf("key: %s\n", _pragma[2]);
+				_pragma[0] = sqlite3_mprintf("hi");
+			} else if (!std::strcmp(_pragma[1], "mode")) {
+			} else if (!std::strcmp(_pragma[1], "rekey")) {
+			} else {
+				return _base_methods->xFileControl(_file, _op, _arg);
+			}
 
 			return SQLITE_OK;
 		}
-		
-		// Encrypt
-		_encryption_buffer.resize(_size);
 
-		if (!(_buffer = _context->encrypt(_offset / _size, _buffer, _size, _encryption_buffer.data()))) {
-			return SQLITE_IOERR;
-		}
-
-		// Write
-		return _base_methods->xWrite(_file, _buffer, _size, _offset);
+		return _base_methods->xFileControl(_file, _op, _arg);
 	}
 	static int xclose_link(sqlite3_file * _file)
 	{
@@ -215,6 +204,10 @@ private:
 	static int xwrite_link(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset)
 	{
 		return instance(_file)->xwrite(_file, _buffer, _size, _offset);
+	}
+	static int xfile_control_link(sqlite3_file * _file, int _op, void * _arg)
+	{
+		return instance(_file)->xfile_control(_file, _op, _arg);
 	}
 	static encrypted_sub_class * instance(sqlite3_file * _file)
 	{
@@ -240,7 +233,7 @@ void register_encrypted_vfs()
 	encrypted_vfs.pNext = nullptr;
 	encrypted_vfs.zName = SQLITE3_ENCRYPTED_VFS_NAME;
 	encrypted_vfs.xOpen = &encrypted_sub_class::xopen_link;
-	
+
 	sqlite3_vfs_register(&encrypted_vfs, 0);
 }
 

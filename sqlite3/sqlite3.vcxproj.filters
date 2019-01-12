@@ -36,6 +36,9 @@
     <ClCompile Include="encrypted_vfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="no_encryption_context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sqlite3.h">

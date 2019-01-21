@@ -26,7 +26,7 @@ encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _cont
 	if (this->_context->newly_created()) {
 		sqlite3_test_control(SQLITE_TESTCTRL_RESERVE, _connection->get<sqlite3>(), SQLITE3_MAX_USER_DATA_SIZE);
 
-		execute("PRAGMA page_size=8192;");
+		execute("PRAGMA page_size=4096;");
 	}
 }
 

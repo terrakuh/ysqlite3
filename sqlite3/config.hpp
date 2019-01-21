@@ -8,3 +8,6 @@
 #define SQLITE3_API
 #endif
 #endif
+
+
+#define SQLITE3_MAX_USER_DATA_SIZE 240

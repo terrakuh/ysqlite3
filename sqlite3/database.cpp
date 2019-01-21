@@ -46,6 +46,38 @@ void database::rollback()
 	execute("ROLLBACK;");
 }
 
+void database::journal_mode(JOURNAL_MODE _mode)
+{
+	switch (_mode) {
+	case JOURNAL_MODE::DELETE:
+		execute("PRAGMA journal_mode=DELETE;");
+
+		break;
+	case JOURNAL_MODE::TRUNCATE:
+		execute("PRAGMA journal_mode=TRUNCATE;");
+
+		break;
+	case JOURNAL_MODE::PERSIST:
+		execute("PRAGMA journal_mode=PERSIST;");
+
+		break;
+	case JOURNAL_MODE::MEMORY:
+		execute("PRAGMA journal_mode=MEMORY;");
+
+		break;
+	case JOURNAL_MODE::WAL:
+		execute("PRAGMA journal_mode=WAL;");
+
+		break;
+	case JOURNAL_MODE::OFF:
+		execute("PRAGMA journal_mode=OFF;");
+
+		break;
+	default:
+		break;
+	}
+}
+
 bool database::is_readonly() const
 {
 	auto _result = sqlite3_db_readonly(_connection->get<sqlite3>(), "main");

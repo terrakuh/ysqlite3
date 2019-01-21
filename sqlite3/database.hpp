@@ -12,24 +12,34 @@
 namespace ysqlite3
 {
 
-enum SQLITE3_OPEN
-{
-	SO_READONLY = 0x00000001,
-	SO_READWRITE = 0x00000002,
-	SO_CREATE = 0x00000004,
-	SO_URI = 0x00000040,
-	SO_MEMORY = 0x00000080,
-	SO_NOMUTEX = 0x00008000,
-	SO_FULLMUTEX = 0x00010000,
-	SO_SHAREDCACHE = 0x00020000,
-	SO_PRIVATECACHE = 0x00040000,
-};
-
 class statement;
 
 class database
 {
 public:
+	enum OPEN
+	{
+		O_READONLY = 0x00000001,
+		O_READWRITE = 0x00000002,
+		O_CREATE = 0x00000004,
+		O_URI = 0x00000040,
+		O_MEMORY = 0x00000080,
+		O_NOMUTEX = 0x00008000,
+		O_FULLMUTEX = 0x00010000,
+		O_SHAREDCACHE = 0x00020000,
+		O_PRIVATECACHE = 0x00040000,
+	};
+
+	enum class JOURNAL_MODE
+	{
+		DELETE,
+		TRUNCATE,
+		PERSIST,
+		MEMORY,
+		WAL,
+		OFF
+	};
+
 	/**
 	 * Opens a SQLite3 database connection.
 	 *
@@ -37,11 +47,11 @@ public:
 	 * @date 29-Sep-18
 	 *
 	 * @param _filename A UTF-8 encoded file.
-	 * @param _mode The flags the database should be opened with. See @ref SQLITE3_OPEN.
+	 * @param _mode The flags the database should be opened with. See @ref OPEN.
 	 *
 	 * @throws database_error When the specified file couldn't be opened.
 	*/
-	SQLITE3_API database(const char * _filename, int _mode = SO_READWRITE | SO_CREATE);
+	SQLITE3_API database(const char * _filename, int _mode = O_READWRITE | O_CREATE);
 	/**
 	 * Destructor.
 	 *
@@ -64,6 +74,7 @@ public:
 	SQLITE3_API void begin_transaction();
 	SQLITE3_API void commit();
 	SQLITE3_API void rollback();
+	SQLITE3_API void journal_mode(JOURNAL_MODE _mode);
 	SQLITE3_API bool is_readonly() const;
 	SQLITE3_API long long last_insert_rowid() const noexcept;
 

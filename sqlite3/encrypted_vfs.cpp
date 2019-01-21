@@ -113,6 +113,11 @@ private:
 		auto _result = _base_methods->xRead(_file, _output, _size, _offset);
 
 		if (_result != SQLITE_OK) {
+			// Database was newly created
+			if (_result == SQLITE_IOERR_SHORT_READ) {
+				_context->newly_created(true);
+			}
+
 			return _result;
 		}
 

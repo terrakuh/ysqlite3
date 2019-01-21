@@ -12,19 +12,22 @@
 namespace ysqlite3
 {
 
-encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _context, const char * _path, int _mode)
+encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _context, const char * _path, int _mode) : _context(std::move(_context))
 {
 	std::stringstream _stream;
 
-	_stream << _path << '-' << std::hex << reinterpret_cast<intptr_t>(&_context) << '-';
+	_stream << _path << '-' << std::hex << reinterpret_cast<intptr_t>(&this->_context) << '-';
 
 	if (sqlite3_open_v2(_stream.str().c_str(), &_connection->get<sqlite3>(), _mode, SQLITE3_ENCRYPTED_VFS_NAME) != SQLITE_OK) {
 		throw database_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
 
-	sqlite3_test_control(SQLITE_TESTCTRL_RESERVE, _connection->get<sqlite3>(), SQLITE3_MAX_USER_DATA_SIZE);
-	
-	execute("PRAGMA page_size=8192; PRAGMA journal_mode=MEMORY;");
+	// Set some options if newly created
+	if (this->_context->newly_created()) {
+		sqlite3_test_control(SQLITE_TESTCTRL_RESERVE, _connection->get<sqlite3>(), SQLITE3_MAX_USER_DATA_SIZE);
+
+		execute("PRAGMA page_size=8192;");
+	}
 }
 
 encrypted_database::encrypted_database()

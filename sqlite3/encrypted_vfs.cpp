@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <memory>
 #include <sstream>
@@ -295,7 +296,16 @@ private:
 				_pragma[0] = sqlite3_mprintf("hi");
 			} else if (!std::strcmp(_pragma[1], "mode")) {
 			} else if (!std::strcmp(_pragma[1], "rekey")) {
+			} else if (!std::strcmp(_pragma[1], "page_size") && _pragma[2]) {
+				// Invalid page size
+				if (std::atoi(_pragma[2]) <= 512) {
+					_pragma[0] = sqlite3_mprintf("invalid size for an encrypted database. minimum page is 1024.");
+				} else {
+					goto gt_pass;
+				}
 			} else {
+			gt_pass:;
+
 				return _base_methods->xFileControl(_file, _op, _arg);
 			}
 

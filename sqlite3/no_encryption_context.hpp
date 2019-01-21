@@ -23,11 +23,7 @@ public:
 	{
 		return false;
 	}
-	virtual bool encrypts() const override
-	{
-		return false;
-	}
-	virtual bool decrypts() const override
+	virtual bool does_something() const override
 	{
 		return false;
 	}

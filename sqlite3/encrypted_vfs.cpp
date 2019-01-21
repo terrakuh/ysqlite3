@@ -27,14 +27,13 @@ std::regex path_pattern(R"((.*?)-([0-9a-fA-F]+)-(.*))");
 class encrypted_sub_class
 {
 public:
-	encrypted_sub_class(const std::shared_ptr<encryption_context> & _context) : _derived_methods{}, _header({}), _context(_context)
+	encrypted_sub_class(const std::shared_ptr<encryption_context> & _context) : _derived_methods{}, _context(_context)
 	{
 #if defined(PRINT_OUTPUT)
 		printf("[%p]: creating\n", this);
 #endif
 
 		_base_methods = nullptr;
-		_flags = 0;
 		_page_size = 0;
 	}
 	~encrypted_sub_class()
@@ -81,31 +80,118 @@ public:
 	}
 
 private:
-	enum FLAGS
-	{
-		F_HEADER_LOADED = 0x1,
-		F_HEADER_MODIFIED = 0x2,
-	};
-
 	constexpr static auto header_size = 100;
 
 	const sqlite3_io_methods * _base_methods;
 	sqlite3_io_methods _derived_methods;
 	std::shared_ptr<encryption_context> _context;
-	/** Holds the SQLite3 header with a constant header size*/
-	std::array<int8_t, header_size> _header;
 	/** Buffer used for encryption. */
 	std::vector<int8_t> _encryption_buffer;
-	/** Holds same status information about this class. */
-	int8_t _flags;
 	/** The page size. */
 	uint16_t _page_size;
 
+	void update_parameter(const int8_t * _buffer, int _size, sqlite3_int64 _offset)
+	{
+		// Page size updated
+		if (_offset <= 16 && _offset + _size >= 18) {
+			_page_size = read<uint16_t>(_buffer + 16 - _offset);
+
+#if defined(PRINT_OUTPUT)
+			printf("[%p]: loaded page size at %i\n", this, static_cast<int>(_page_size));
+#endif
+		}
+	}
 	static bool little_endian() noexcept
 	{
 		int _test = 1;
 
 		return *reinterpret_cast<char*>(&_test);
+	}
+	int read_from_header(sqlite3_file * _file, int8_t * _output, int _size, sqlite3_int64 _offset)
+	{
+		auto _result = _base_methods->xRead(_file, _output, _size, _offset);
+
+		if (_result != SQLITE_OK) {
+			return _result;
+		}
+
+		// Update parameters
+		update_parameter(_output, _size, _offset);
+
+		// Load and overwrite app data
+		if (_offset == 0) {
+			_context->load_app_data(_output);
+
+			std::memcpy(_output, "SQLite format 3", 16);
+		}
+
+		return SQLITE_OK;
+	}
+	int read_encrypted_page(encryption_context::id_t _page_id, sqlite3_file * _file, int8_t * _output, int _size, sqlite3_int64 _offset)
+	{
+#if defined(PRINT_OUTPUT)
+		printf("[%p]: encrypted read %i bytes from %lli\n", this, _size, _offset);
+#endif
+
+		// Reserve space
+		_encryption_buffer.resize(_size);
+
+		// Read encrypted page
+		auto _result = _base_methods->xRead(_file, _encryption_buffer.data(), _size, _offset);
+
+		if (_result != SQLITE_OK) {
+			return _result;
+		}
+
+		// Special page because of header
+		if (_page_id == 0) {
+			update_parameter(_encryption_buffer.data(), _size, _offset);
+
+			_context->load_app_data(_encryption_buffer.data());
+		}
+
+		// Decrypt
+		_size -= SQLITE3_MAX_USER_DATA_SIZE;
+
+		if (!_context->decrypt(_page_id, _encryption_buffer.data(), _size, _output, _encryption_buffer.data() + _size)) {
+			return SQLITE_IOERR_AUTH;
+		}
+
+		// Overwrite app data for SQLite
+		if (_page_id == 0) {
+			std::memcpy(_output, "SQLite format 3", 16);
+		}
+
+		return SQLITE_OK;
+	}
+	int write_encrypted_page(encryption_context::id_t _page_id, sqlite3_file * _file, const int8_t * _input, sqlite3_int64 _offset)
+	{
+		_encryption_buffer.resize(header_size);
+
+		// Special page because of header
+		if (_page_id == 0) {
+			update_parameter(_input, header_size, _offset);
+
+			// Store app data
+			_context->store_app_data(_encryption_buffer.data());
+		}
+
+#if defined(PRINT_OUTPUT)
+		printf("[%p]: encrypted write %i bytes to %lli\n", this, _page_size, _offset);
+#endif
+
+		// Reserve space
+		_encryption_buffer.resize(_page_size);
+
+		// Encrypt
+		auto _size = _page_size - SQLITE3_MAX_USER_DATA_SIZE;
+
+		if (!_context->encrypt(_page_id, _input, _size, _encryption_buffer.data(), _encryption_buffer.data() + _size)) {
+			return SQLITE_IOERR_AUTH;
+		}
+
+		// Write encrypted page to file
+		return _base_methods->xWrite(_file, _encryption_buffer.data(), _size + SQLITE3_MAX_USER_DATA_SIZE, _offset);
 	}
 	int xopen(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags)
 	{
@@ -162,67 +248,13 @@ private:
 		printf("[%p]: read %i bytes from %lli\n", this, _size, _offset);
 #endif
 
-		// Load header
-		if (!(_flags & F_HEADER_LOADED)) {
-			auto _result = _base_methods->xRead(_file, _header.data(), _header.size(), 0);
-
-			if (_result != SQLITE_OK) {
-				return _result;
+		if (_context->does_something()) {
+			// Read from header
+			if (_size + _offset <= header_size) {
+				return read_from_header(_file, reinterpret_cast<int8_t*>(_buffer), _size, _offset);
 			}
 
-			// Read page size
-			_page_size = read<uint16_t>(_header.data() + 16);
-
-			_context->load_app_data(_header.data());
-
-			_flags |= F_HEADER_LOADED;
-
-#if defined(PRINT_OUTPUT)
-			printf("[%p]: loaded header. page size at %i\n", this, static_cast<int>(_page_size));
-#endif
-		}
-
-		// Read from header
-		if (_size + _offset <= header_size) {
-			// Overwrite app data
-			if (_offset < 16) {
-				std::memcpy(reinterpret_cast<int8_t*>(_buffer), "SQLite format 3" + _offset, 16 - _offset);
-
-				_buffer = reinterpret_cast<int8_t*>(_buffer) + 16 - _offset;
-				_size -= 16 - _offset;
-				_offset = 16;
-			}
-
-			std::memcpy(_buffer, _header.data() + _offset, _size);
-
-			return SQLITE_OK;
-		} // Error read
-		else if (_offset < header_size) {
-			puts("invalid read operation. read from header and page.");
-
-			return SQLITE_MISUSE;
-		} // Decrypts
-		else if (_context->decrypts()) {
-			_encryption_buffer.resize(_size);
-
-			// Read
-			auto _result = _base_methods->xRead(_file, _encryption_buffer.data(), _size, _offset);
-
-			if (_result != SQLITE_OK) {
-				return _result;
-			}
-
-			_size -= SQLITE3_MAX_USER_DATA_SIZE;
-
-			// Decrypt failed
-			if (!_context->decrypt(_offset / _page_size, _encryption_buffer.data(), _size, _buffer, _encryption_buffer.data() + _size)) {
-				return SQLITE_IOERR_AUTH;
-			}
-
-			// Copy encryption data
-			std::memcpy(reinterpret_cast<int8_t*>(_buffer) + _size, _encryption_buffer.data() + _size, SQLITE3_MAX_USER_DATA_SIZE);
-
-			return SQLITE_OK;
+			return read_encrypted_page(_page_size == 0 ? 0 : _offset / _page_size, _file, reinterpret_cast<int8_t*>(_buffer), _size, _offset);
 		}
 
 		return _base_methods->xRead(_file, _buffer, _size, _offset);
@@ -230,51 +262,25 @@ private:
 	int xwrite(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset)
 	{
 #if defined(PRINT_OUTPUT)
-		printf("[%p]: write %i bytes at %lli\n", this, _size, _offset);
+		printf("[%p]: write %i bytes to %lli\n", this, _size, _offset);
 #endif
 
-		// Write header
-		if (_size >= header_size && !_offset && !(_flags & F_HEADER_LOADED)) {
-			std::memcpy(_header.data() + 16, reinterpret_cast<const int8_t*>(_buffer) + 16, _header.size() - 16);
+		if (_context->does_something()) {
+			auto _ptr = reinterpret_cast<const int8_t*>(_buffer);
 
-			// Load page size
-			_page_size = read<uint16_t>(_header.data() + 16);
+			while (_size > 0) {
+				auto _result = write_encrypted_page(_page_size == 0 ? 0 : _offset / _page_size, _file, _ptr, _offset);
 
-			// No data available
-			_context->load_app_data(nullptr);
+				if (_result != SQLITE_OK) {
+					return _result;
+				}
 
-			_flags |= F_HEADER_LOADED | F_HEADER_MODIFIED;
-		} // Write to header
-		else if (_offset < header_size) {
-			std::memcpy(_header.data() + 16, reinterpret_cast<const int8_t*>(_buffer) + std::max<int>(_offset, 16), std::min<int>(_size, _header.size()) - std::max<int>(_offset, 16));
-
-			_flags |= F_HEADER_MODIFIED;
-		}
-		
-		// Header not loaded
-		if (!(_flags & F_HEADER_LOADED)) {
-			return SQLITE_MISUSE;
-		} // Encrypts
-		else if (_context->encrypts()) {
-			_encryption_buffer.resize(_size);
-
-			_size -= SQLITE3_MAX_USER_DATA_SIZE;
-
-			std::memcpy(_encryption_buffer.data() + _size, reinterpret_cast<const int8_t*>(_buffer) + _size, SQLITE3_MAX_USER_DATA_SIZE);
-
-			// Encrypt failed
-			if (!_context->encrypt(_offset / _page_size, _buffer, _size, _encryption_buffer.data(), _encryption_buffer.data() + _size)) {
-				return SQLITE_IOERR_AUTH;
+				_ptr += _page_size;
+				_size -= _page_size;
+				_offset += _page_size;
 			}
 
-			// Write header data
-			if (!_offset) {
-				_context->store_app_data(_header.data());
-
-				std::memcpy(_encryption_buffer.data(), _header.data(), 16);
-			}
-
-			return _base_methods->xWrite(_file, _encryption_buffer.data(), _size + SQLITE3_MAX_USER_DATA_SIZE, _offset);
+			return SQLITE_OK;
 		}
 
 		return _base_methods->xWrite(_file, _buffer, _size, _offset);
@@ -324,7 +330,7 @@ private:
 		if (little_endian()) {
 			Type _value = Type();
 			auto _ptr = reinterpret_cast<const uint8_t*>(_buffer);
-			
+
 			for (auto i = 0; i < sizeof(Type); ++i) {
 				_value = static_cast<Type>(_value | static_cast<Type>(_ptr[i]) << 8 * (sizeof(Type) - i - 1));
 			}

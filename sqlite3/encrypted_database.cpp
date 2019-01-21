@@ -21,8 +21,9 @@ encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _cont
 	if (sqlite3_open_v2(_stream.str().c_str(), &_connection->get<sqlite3>(), _mode, SQLITE3_ENCRYPTED_VFS_NAME) != SQLITE_OK) {
 		throw database_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
+	puts("update");
+	sqlite3_test_control(SQLITE_TESTCTRL_RESERVE, _connection->get<sqlite3>(), SQLITE3_MAX_USER_DATA_SIZE);
 
-	//sqlite3_test_control(SQLITE_TESTCTRL_RESERVE, _connection->get<sqlite3>(), SQLITE3_MAX_USER_DATA_SIZE);
 	execute("PRAGMA journal_mode=MEMORY;");
 }
 

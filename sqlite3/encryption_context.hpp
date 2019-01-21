@@ -27,8 +27,7 @@ public:
 	virtual void store_app_data(data_t _data) = 0;
 	virtual bool encrypt(id_t _id, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data) = 0;
 	virtual bool decrypt(id_t _id, const_buffer_t _input, size_t _size, buffer_t _output, const_data_t _data) = 0;
-	virtual bool encrypts() const = 0;
-	virtual bool decrypts() const = 0;
+	virtual bool does_something() const = 0;
 };
 
 }

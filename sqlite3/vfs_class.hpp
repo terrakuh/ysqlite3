@@ -4,6 +4,7 @@
 #include <functional>
 #include <vector>
 #include <type_traits>
+#include <stdexcept>
 
 #include "sqlite3.h"
 #include "config.hpp"
@@ -28,8 +29,11 @@ public:
 protected:
 	typedef std::function<void(void*)> factory_t;
 
-	const sqlite3_io_methods * _base_methods;
-	sqlite3_io_methods _derived_methods;
+	class factory_error : public std::runtime_error
+	{
+	public:
+		using std::runtime_error::runtime_error;
+	};
 
 	template<typename Type>
 	static typename std::enable_if<std::is_base_of<vfs_class, Type>::value>::type register_vfs_class()
@@ -69,6 +73,8 @@ private:
 	static sqlite3_vfs _vfs;
 	static size_t _max_class_size;
 	static std::vector<factory_t> _factories;
+	const sqlite3_io_methods * _base_methods;
+	sqlite3_io_methods _derived_methods;
 
 	static int xclose_link(sqlite3_file * _file);
 	static int xsync_link(sqlite3_file * _file, int _flags);

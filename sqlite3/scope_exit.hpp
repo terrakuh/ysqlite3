@@ -27,6 +27,7 @@ public:
 	 * @throws See @a _exit.
 	*/
 	~scope_exit();
+	void cancel() noexcept;
 
 private:
 	/** The function that is called on destruction. */

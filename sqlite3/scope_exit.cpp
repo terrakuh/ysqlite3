@@ -17,4 +17,11 @@ scope_exit::~scope_exit()
 	}
 }
 
+void scope_exit::cancel() noexcept
+{
+	function_t _tmp;
+
+	_exit.swap(_tmp);
+}
+
 }

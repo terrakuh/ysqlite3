@@ -1,4 +1,5 @@
 #include "vfs_class.hpp"
+#include "scope_exit.hpp"
 
 
 namespace ysqlite3
@@ -7,7 +8,7 @@ namespace ysqlite3
 vfs_class::xopen_signature_t vfs_class::_xopen_base = nullptr;
 sqlite3_vfs vfs_class::_vfs;
 size_t vfs_class::_max_class_size = sizeof(vfs_class);
-std::vector<vfs_class::factory_t> vfs_class::_factories({ [](void * _buffer) { new(_buffer) vfs_class(); } });
+std::vector<vfs_class::factory_t> vfs_class::_factories;
 
 vfs_class::vfs_class() noexcept : _derived_methods{}
 {
@@ -52,13 +53,18 @@ int vfs_class::xopen_link(sqlite3_vfs * _vfs, const char * _name, sqlite3_file *
 		try {
 			_factory(_ptr);
 
-			return _ptr->xopen(_vfs, _name, _file, _flags, _out_flags);
-		} catch (...) {
+			scope_exit _exit([_ptr]() { _ptr->~vfs_class(); });
 
+			auto _result = _ptr->xopen(_vfs, _name, _file, _flags, _out_flags);
+
+			_exit.cancel();
+
+			return _result;
+		} catch (const factory_error & e) {
 		}
 	}
 
-	throw;
+	return (new(_ptr) vfs_class())->xopen(_vfs, _name, _file, _flags, _out_flags);
 }
 
 bool vfs_class::little_endian() noexcept

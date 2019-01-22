@@ -18,4 +18,10 @@ public:
 	using database_error::database_error;
 };
 
+class key_error : public database_error
+{
+public:
+	using database_error::database_error;
+};
+
 }

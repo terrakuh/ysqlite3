@@ -1,30 +1,25 @@
 #pragma once
 
-#include <cstdint>
-#include <cstring>
-#include <vector>
+#include <cstddef>
+#include <string>
+
+#include "base64.hpp"
 
 
 namespace ysqlite3
 {
 
-typedef std::vector<int8_t> key_t;
+typedef std::string key_t;
 
 namespace key_literals
 {
 
-key_t operator""_key(const char * _value, size_t _size)
+inline key_t operator""_key(const char * _value, size_t _size)
 {
-	key_t _key;
-
-	_key.resize(_size);
-
-	std::memcpy(_key.data(), _value, _size);
-
-	return _key;
+	return base64::encode(_value, _size);
 }
 
-key_t operator""_hex(const char * _value, size_t _size)
+inline key_t operator""_hex(const char * _value, size_t _size)
 {
 	throw;
 }

@@ -148,7 +148,7 @@ std::pair<const void*, int> statement::get_blob(int _index)
 	return { reinterpret_cast<const char*>(sqlite3_column_blob(_statement->get<sqlite3_stmt>(), _index)), sqlite3_column_bytes(_statement->get<sqlite3_stmt>(), _index) };
 }
 
-statement::statement(const std::shared_ptr<handle> & _connection) : _connection(_database._connection)
+statement::statement(const std::shared_ptr<handle> & _connection) noexcept : _connection(_connection)
 {
 }
 

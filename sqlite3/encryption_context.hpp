@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "config.hpp"
+#include "key.hpp"
 
 
 namespace ysqlite3
@@ -18,7 +19,6 @@ public:
 	typedef uint32_t id_t;
 	typedef int8_t* buffer_t;
 	typedef const int8_t* const_buffer_t;
-	typedef std::vector<int8_t> key_t;
 	typedef int size_t;
 
 	constexpr static auto page_data_size = SQLITE3_MAX_USER_DATA_SIZE;

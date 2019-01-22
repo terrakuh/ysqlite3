@@ -8,7 +8,6 @@ namespace ysqlite3
 encrypted_main_vfs_class::encrypted_main_vfs_class() noexcept
 {
 	_page_size = 0;
-	_flags = 0;
 }
 
 void encrypted_main_vfs_class::update_parameter(const int8_t * _buffer, int _size, sqlite3_int64 _offset)
@@ -76,9 +75,7 @@ int encrypted_main_vfs_class::read_encrypted_page(encryption_context::id_t _page
 	_size -= SQLITE3_MAX_USER_DATA_SIZE;
 
 	if (!_context->decrypt(_page_id, _encryption_buffer.data(), _size, _output, _encryption_buffer.data() + _size)) {
-		_flags |= F_DECRYPT_FAILED;
-
-		return SQLITE_IOERR_AUTH;
+		return SQLITE_CERR_DECRYPTION_FAILED;
 	}
 
 	// Overwrite app data for SQLite
@@ -112,9 +109,7 @@ int encrypted_main_vfs_class::write_encrypted_page(encryption_context::id_t _pag
 	auto _size = _page_size - SQLITE3_MAX_USER_DATA_SIZE;
 
 	if (!_context->encrypt(_page_id, _input, _size, _encryption_buffer.data(), _encryption_buffer.data() + _size)) {
-		_flags |= F_ENCRYPT_FAILED;
-
-		return SQLITE_IOERR_AUTH;
+		return SQLITE_CERR_ENCRYPTION_FAILED;
 	}
 
 	// Write encrypted page to file
@@ -187,17 +182,42 @@ int encrypted_main_vfs_class::xfile_control(sqlite3_file * _file, int _op, void 
 {
 	if (_op == SQLITE_FCNTL_PRAGMA) {
 		auto _pragma = reinterpret_cast<char**>(_arg);
-
-		if (!std::strcmp(_pragma[1], "try_unlock")) {
-			_flags &= ~F_DECRYPT_FAILED;
+		const auto _try_unlock = [&]() {
+			auto _decrypted = true;
 
 			if (_page_size) {
 				_encryption_buffer.reserve(_page_size);
 
-				xread(_file, _encryption_buffer.data(), _page_size, 0);
+				_decrypted = xread(_file, _encryption_buffer.data(), _page_size, 0) != SQLITE_CERR_DECRYPTION_FAILED;
 			}
 
-			_pragma[0] = sqlite3_mprintf(_flags & F_DECRYPT_FAILED ? "failed." : "ok.");
+			return _decrypted;
+		};
+
+		if (!std::strcmp(_pragma[1], "key")) {
+			if (_pragma[2]) {
+				auto _key = _pragma[2];
+
+				try {
+					_context->set_key(_key, true);
+					_context->set_key(_key, false);
+				} catch (...) {
+					goto gt_key_failed;
+				}
+
+				if (_try_unlock()) {
+					_pragma[0] = sqlite3_mprintf("ok.");
+					_context->apply_key();
+				} else {
+				gt_key_failed:;
+					_pragma[0] = sqlite3_mprintf("failed.");
+					_context->revert_key();
+				}
+			} else {
+				_pragma[0] = sqlite3_mprintf("key required.");
+			}
+		} else if (!std::strcmp(_pragma[1], "try_unlock")) {
+			_pragma[0] = sqlite3_mprintf(_try_unlock() ? "ok." : "failed.");
 		} else if (!std::strcmp(_pragma[1], "page_size") && _pragma[2]) {
 			// Invalid page size
 			if (std::atoi(_pragma[2]) < 1024) {

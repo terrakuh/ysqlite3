@@ -18,18 +18,11 @@ public:
 protected:
 	constexpr static auto header_size = 100;
 
-	enum FLAGS
-	{
-		F_ENCRYPT_FAILED = 0x1,
-		F_DECRYPT_FAILED = 0x2
-	};
-
 	std::shared_ptr<encryption_context> _context;
 	/** Buffer used for encryption. */
 	std::vector<int8_t> _encryption_buffer;
 	/** The page size. */
 	uint16_t _page_size;
-	int _flags;
 
 	SQLITE3_API void update_parameter(const int8_t * _buffer, int _size, sqlite3_int64 _offset);
 	SQLITE3_API int read_from_header(sqlite3_file * _file, int8_t * _output, int _size, sqlite3_int64 _offset);

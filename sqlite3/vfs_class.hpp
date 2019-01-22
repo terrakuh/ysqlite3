@@ -9,8 +9,6 @@
 #include "sqlite3.h"
 #include "config.hpp"
 
-#define SQLITE3_CUSTOM_VFS_NAME "ycvfs"
-
 
 namespace ysqlite3
 {
@@ -21,9 +19,9 @@ public:
 	typedef decltype(sqlite3_vfs::xOpen) xopen_signature_t;
 
 
-	vfs_class() noexcept;
-	virtual ~vfs_class() noexcept;
-	static void register_vfs();
+	SQLITE3_API vfs_class() noexcept;
+	SQLITE3_API virtual ~vfs_class() noexcept;
+	SQLITE3_API static void register_vfs();
 	template<typename Type>
 	static typename std::enable_if<std::is_base_of<vfs_class, Type>::value>::type register_vfs_class()
 	{
@@ -35,7 +33,7 @@ public:
 
 		_factories.push_back([](void * _buffer) { new(_buffer) Type(); });
 	}
-	static int xopen_link(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
+	SQLITE3_API static int xopen_link(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
 
 protected:
 	typedef std::function<void(void*)> factory_t;
@@ -46,13 +44,13 @@ protected:
 		using std::runtime_error::runtime_error;
 	};
 
-	static bool little_endian() noexcept;
-	virtual int xopen(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
-	virtual int xclose(sqlite3_file * _file);
-	virtual int xsync(sqlite3_file * _file, int _flags);
-	virtual int xread(sqlite3_file * _file, void * _buffer, int _size, sqlite3_int64 _offset);
-	virtual int xwrite(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset);
-	virtual int xfile_control(sqlite3_file * _file, int _op, void * _arg);
+	SQLITE3_API static bool little_endian() noexcept;
+	SQLITE3_API virtual int xopen(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
+	SQLITE3_API virtual int xclose(sqlite3_file * _file);
+	SQLITE3_API virtual int xsync(sqlite3_file * _file, int _flags);
+	SQLITE3_API virtual int xread(sqlite3_file * _file, void * _buffer, int _size, sqlite3_int64 _offset);
+	SQLITE3_API virtual int xwrite(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset);
+	SQLITE3_API virtual int xfile_control(sqlite3_file * _file, int _op, void * _arg);
 	template<typename Type>
 	static Type read(const void * _buffer)
 	{
@@ -78,12 +76,12 @@ private:
 	const sqlite3_io_methods * _base_methods;
 	sqlite3_io_methods _derived_methods;
 
-	static int xclose_link(sqlite3_file * _file);
-	static int xsync_link(sqlite3_file * _file, int _flags);
-	static int xread_link(sqlite3_file * _file, void * _buffer, int _size, sqlite3_int64 _offset);
-	static int xwrite_link(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset);
-	static int xfile_control_link(sqlite3_file * _file, int _op, void * _arg);
-	static vfs_class * instance(sqlite3_file * _file);
+	SQLITE3_API static int xclose_link(sqlite3_file * _file);
+	SQLITE3_API static int xsync_link(sqlite3_file * _file, int _flags);
+	SQLITE3_API static int xread_link(sqlite3_file * _file, void * _buffer, int _size, sqlite3_int64 _offset);
+	SQLITE3_API static int xwrite_link(sqlite3_file * _file, const void * _buffer, int _size, sqlite3_int64 _offset);
+	SQLITE3_API static int xfile_control_link(sqlite3_file * _file, int _op, void * _arg);
+	SQLITE3_API static vfs_class * instance(sqlite3_file * _file);
 };
 
 }

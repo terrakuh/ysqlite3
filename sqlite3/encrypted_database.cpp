@@ -1,5 +1,4 @@
 #include "encrypted_database.hpp"
-#include "vfs_class.hpp"
 #include "sqlite3.h"
 #include "address_transporter.hpp"
 

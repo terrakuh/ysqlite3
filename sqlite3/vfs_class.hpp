@@ -24,6 +24,15 @@ public:
 	vfs_class() noexcept;
 	virtual ~vfs_class() noexcept;
 	static void register_vfs();
+	template<typename Type>
+	static typename std::enable_if<std::is_base_of<vfs_class, Type>::value>::type register_vfs_class()
+	{
+		if (_xopen_base) {
+			throw std::runtime_error("vfs was already registered.");
+		}
+
+		_factories.push_back([](void * _buffer) { new(_buffer) Type(); });
+	}
 	static int xopen_link(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
 
 protected:
@@ -35,15 +44,6 @@ protected:
 		using std::runtime_error::runtime_error;
 	};
 
-	template<typename Type>
-	static typename std::enable_if<std::is_base_of<vfs_class, Type>::value>::type register_vfs_class()
-	{
-		if (_xopen_base) {
-			throw;
-		}
-
-		_factories.push_back([](void * _buffer) { new(_buffer) Type(); });
-	}
 	static bool little_endian() noexcept;
 	virtual int xopen(sqlite3_vfs * _vfs, const char * _name, sqlite3_file * _file, int _flags, int * _out_flags);
 	virtual int xclose(sqlite3_file * _file);

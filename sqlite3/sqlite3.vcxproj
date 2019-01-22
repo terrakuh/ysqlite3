@@ -271,6 +271,7 @@
     <ClInclude Include="encrypted_main_vfs_class.hpp" />
     <ClInclude Include="encryption_context.hpp" />
     <ClInclude Include="exception.hpp" />
+    <ClInclude Include="key.hpp" />
     <ClInclude Include="no_encryption_context.hpp" />
     <ClInclude Include="scope_exit.hpp" />
     <ClInclude Include="sqlite3.h" />

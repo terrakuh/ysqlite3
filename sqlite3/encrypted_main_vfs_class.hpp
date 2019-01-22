@@ -2,9 +2,6 @@
 
 #include <cstdio>
 #include <memory>
-#include <string>
-#include <regex>
-#include <sstream>
 
 #include "vfs_class.hpp"
 #include "encryption_context.hpp"
@@ -21,7 +18,6 @@ public:
 protected:
 	constexpr static auto header_size = 100;
 
-	const static std::regex _path_pattern;
 	std::shared_ptr<encryption_context> _context;
 	/** Buffer used for encryption. */
 	std::vector<int8_t> _encryption_buffer;

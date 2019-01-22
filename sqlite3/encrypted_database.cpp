@@ -1,24 +1,17 @@
 #include "encrypted_database.hpp"
 #include "vfs_class.hpp"
 #include "sqlite3.h"
-
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <cstdint>
-#include <boost/lexical_cast.hpp>
+#include "address_transporter.hpp"
 
 
 namespace ysqlite3
 {
 
-encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _context, const char * _path, int _mode) : _context(std::move(_context))
+encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _context, std::string _path, int _mode) : _context(std::move(_context))
 {
-	std::stringstream _stream;
+	address_transporter::encode_address(_path, &this->_context);
 
-	_stream << _path << '-' << std::hex << reinterpret_cast<intptr_t>(&this->_context) << '-';
-
-	if (sqlite3_open_v2(_stream.str().c_str(), &_connection->get<sqlite3>(), _mode, SQLITE3_CUSTOM_VFS_NAME) != SQLITE_OK) {
+	if (sqlite3_open_v2(_path.c_str(), &_connection->get<sqlite3>(), _mode, SQLITE3_CUSTOM_VFS_NAME) != SQLITE_OK) {
 		throw database_error(sqlite3_errmsg(_connection->get<sqlite3>()));
 	}
 

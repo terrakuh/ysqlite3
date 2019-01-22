@@ -36,6 +36,15 @@
     <ClCompile Include="vfs_class.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="encrypted_main_vfs_class.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scope_exit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="address_transporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sqlite3.h">
@@ -68,10 +77,18 @@
     <ClInclude Include="no_encryption_context.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="encrypted_sub_class.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vfs_class.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="encrypted_main_vfs_class.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scope_exit.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="address_transporter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

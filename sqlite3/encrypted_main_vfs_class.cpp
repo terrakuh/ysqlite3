@@ -1,11 +1,9 @@
 #include "encrypted_main_vfs_class.hpp"
+#include "address_transporter.hpp"
 
 
 namespace ysqlite3
 {
-
-const std::regex encrypted_main_vfs_class::_path_pattern(R"((.*?)-([0-9a-fA-F]+)-(.*))");
-
 
 encrypted_main_vfs_class::encrypted_main_vfs_class() noexcept
 {
@@ -127,16 +125,7 @@ int encrypted_main_vfs_class::xopen(sqlite3_vfs * _vfs, const char * _name, sqli
 
 	// Extract filename and context address
 	std::string _path = _name;
-	std::smatch _match;
-	uintptr_t _address = 0;
-
-	if (std::regex_search(_path, _match, _path_pattern)) {
-		std::stringstream _stream(_match[2].str());
-
-		_stream >> std::hex >> _address;
-
-		_path = _match[1].str() + _match[3].str();
-	}
+	auto _address = address_transporter::decode_address(_path);
 
 	// No context given
 	if (!_address || _path.empty()) {

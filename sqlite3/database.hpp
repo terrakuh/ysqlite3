@@ -74,7 +74,7 @@ public:
 	SQLITE3_API void begin_transaction();
 	SQLITE3_API void commit();
 	SQLITE3_API void rollback();
-	SQLITE3_API void journal_mode(JOURNAL_MODE _mode);
+	SQLITE3_API void set_journal_mode(JOURNAL_MODE _mode);
 	SQLITE3_API bool is_readonly() const;
 	SQLITE3_API long long last_insert_rowid() const noexcept;
 

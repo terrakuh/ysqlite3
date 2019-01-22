@@ -46,7 +46,7 @@ void database::rollback()
 	execute("ROLLBACK;");
 }
 
-void database::journal_mode(JOURNAL_MODE _mode)
+void database::set_journal_mode(JOURNAL_MODE _mode)
 {
 	switch (_mode) {
 	case JOURNAL_MODE::DELETE:

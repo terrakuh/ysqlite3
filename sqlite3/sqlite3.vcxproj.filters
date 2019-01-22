@@ -33,7 +33,7 @@
     <ClCompile Include="encrypted_database.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="encrypted_vfs.cpp">
+    <ClCompile Include="vfs_class.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,13 +62,16 @@
     <ClInclude Include="encrypted_database.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="encrypted_vfs.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="encryption_context.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="no_encryption_context.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="encrypted_sub_class.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vfs_class.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

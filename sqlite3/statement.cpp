@@ -29,7 +29,7 @@ void statement::finish()
 	while (step());
 }
 
-void statement::sql(const char * _sql)
+void statement::set_sql(const char * _sql)
 {
 	std::unique_ptr<handle> _new(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); }));
 

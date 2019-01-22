@@ -249,7 +249,6 @@
   <ItemGroup>
     <ClCompile Include="database.cpp" />
     <ClCompile Include="encrypted_database.cpp" />
-    <ClCompile Include="encrypted_vfs.cpp" />
     <ClCompile Include="handle.cpp" />
     <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'">true</ExcludedFromBuild>
@@ -259,12 +258,13 @@
     </ClCompile>
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="statement.cpp" />
+    <ClCompile Include="vfs_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.hpp" />
     <ClInclude Include="database.hpp" />
     <ClInclude Include="encrypted_database.hpp" />
-    <ClInclude Include="encrypted_vfs.hpp" />
+    <ClInclude Include="encrypted_sub_class.hpp" />
     <ClInclude Include="encryption_context.hpp" />
     <ClInclude Include="exception.hpp" />
     <ClInclude Include="no_encryption_context.hpp" />
@@ -272,6 +272,7 @@
     <ClInclude Include="sqlite3ext.h" />
     <ClInclude Include="statement.hpp" />
     <ClInclude Include="handle.hpp" />
+    <ClInclude Include="vfs_class.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

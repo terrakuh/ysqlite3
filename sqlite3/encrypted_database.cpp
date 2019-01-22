@@ -21,6 +21,21 @@ encrypted_database::encrypted_database(std::shared_ptr<encryption_context> _cont
 	}
 }
 
+void encrypted_database::rekey(const encryption_context::key_t & _new_key)
+{
+	_context->set_key(_new_key, true);
+
+	execute("VACUUM;");
+
+	_context->set_key(_new_key, false);
+}
+
+void encrypted_database::unlock(const encryption_context::key_t & _key)
+{
+	_context->set_key(_key, true);
+	_context->set_key(_key, false);
+}
+
 const std::shared_ptr<encryption_context> & encrypted_database::context() noexcept
 {
 	return _context;

@@ -11,3 +11,4 @@
 
 
 #define SQLITE3_MAX_USER_DATA_SIZE 144
+#define SQLITE3_CUSTOM_VFS_NAME "ycvfs"

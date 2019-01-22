@@ -36,6 +36,8 @@ public:
 	}
 	virtual void load_app_data(const_data_t _data) = 0;
 	virtual void store_app_data(data_t _data) = 0;
+	virtual void apply_key() = 0;
+	virtual void revert_key() = 0;
 	virtual void set_key(const key_t & _key, bool _encrypt) = 0;
 	virtual void set_alogrithm(const char * _algorithm, bool _encrypt) = 0;
 	virtual bool encrypt(id_t _id, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data) = 0;

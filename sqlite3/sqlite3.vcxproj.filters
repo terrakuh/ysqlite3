@@ -92,5 +92,8 @@
     <ClInclude Include="address_transporter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="base64.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

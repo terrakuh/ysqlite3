@@ -265,6 +265,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="address_transporter.hpp" />
+    <ClInclude Include="base64.hpp" />
     <ClInclude Include="config.hpp" />
     <ClInclude Include="database.hpp" />
     <ClInclude Include="encrypted_database.hpp" />

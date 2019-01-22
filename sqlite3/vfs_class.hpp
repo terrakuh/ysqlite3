@@ -29,6 +29,8 @@ public:
 	{
 		if (_xopen_base) {
 			throw std::runtime_error("vfs was already registered.");
+		} else if (_max_class_size < sizeof(Type)) {
+			_max_class_size = sizeof(Type);
 		}
 
 		_factories.push_back([](void * _buffer) { new(_buffer) Type(); });

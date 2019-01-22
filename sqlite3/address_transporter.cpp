@@ -12,9 +12,9 @@ const std::regex address_transporter::_pattern(R"((.*?)-([0-9a-fA-F]+)-(.*))");
 
 void address_transporter::encode_address(std::string & _str, void * _adderss)
 {
-	std::stringstream _stream(_str);
+	std::stringstream _stream;
 
-	_stream << '-' << std::hex << reinterpret_cast<intptr_t>(_adderss) << '-';
+	_stream << _str << '-' << std::hex << reinterpret_cast<intptr_t>(_adderss) << '-';
 	
 	_str = _stream.str();
 }

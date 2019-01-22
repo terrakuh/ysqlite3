@@ -19,8 +19,8 @@ public:
 	typedef const int8_t* const_buffer_t;
 	typedef int size_t;
 
-	constexpr static auto max_page_data_size = SQLITE3_MAX_USER_DATA_SIZE;
-	constexpr static auto max_app_data_size = 16;
+	constexpr static auto page_data_size = SQLITE3_MAX_USER_DATA_SIZE;
+	constexpr static auto app_data_size = 16;
 	constexpr static auto header_size = 100;
 
 	encryption_context() noexcept

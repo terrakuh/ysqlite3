@@ -140,7 +140,7 @@ private:
 #endif
 
 		// Reserve space
-		_encryption_buffer.resize(_size);
+		_encryption_buffer.reserve(_size);
 
 		// Read encrypted page
 		auto _result = _base_methods->xRead(_file, _encryption_buffer.data(), _size, _offset);
@@ -172,11 +172,11 @@ private:
 	}
 	int write_encrypted_page(encryption_context::id_t _page_id, sqlite3_file * _file, const int8_t * _input, sqlite3_int64 _offset)
 	{
-		_encryption_buffer.resize(header_size);
-
 		// Special page because of header
 		if (_page_id == 0) {
 			update_parameter(_input, header_size, _offset);
+
+			_encryption_buffer.reserve(_page_size);
 
 			// Store app data
 			_context->store_app_data(_encryption_buffer.data());
@@ -187,7 +187,7 @@ private:
 #endif
 
 		// Reserve space
-		_encryption_buffer.resize(_page_size);
+		_encryption_buffer.reserve(_page_size);
 
 		// Encrypt
 		auto _size = _page_size - SQLITE3_MAX_USER_DATA_SIZE;

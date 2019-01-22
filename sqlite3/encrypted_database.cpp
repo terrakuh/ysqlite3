@@ -1,6 +1,7 @@
 #include "encrypted_database.hpp"
 #include "sqlite3.h"
 #include "address_transporter.hpp"
+#include "statement.hpp"
 
 
 namespace ysqlite3
@@ -24,15 +25,34 @@ void encrypted_database::rekey(const encryption_context::key_t & _new_key)
 {
 	_context->set_key(_new_key, true);
 
-	execute("VACUUM;");
+	try {
+		execute("VACUUM;");
+	} catch (...) {
+		_context->revert_key();
+
+		throw;
+	}
 
 	_context->set_key(_new_key, false);
+	_context->apply_key();
 }
 
 void encrypted_database::unlock(const encryption_context::key_t & _key)
 {
 	_context->set_key(_key, true);
 	_context->set_key(_key, false);
+
+	auto _stmt = create_statement("PRAGMA try_unlock;");
+
+	_stmt.step();
+
+	if (_stmt.get_string(0) != "ok.") {
+		_context->revert_key();
+
+		throw key_error("invalid key.");
+	}
+
+	_context->apply_key();
 }
 
 const std::shared_ptr<encryption_context> & encrypted_database::context() noexcept

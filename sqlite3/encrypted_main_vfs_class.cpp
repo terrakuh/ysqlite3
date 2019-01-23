@@ -1,5 +1,6 @@
 #include "encrypted_main_vfs_class.hpp"
 #include "address_transporter.hpp"
+#include "scope_exit.hpp"
 
 
 namespace ysqlite3
@@ -30,6 +31,7 @@ int encrypted_main_vfs_class::read_from_header(sqlite3_file * _file, int8_t * _o
 		// Database was newly created
 		if (_result == SQLITE_IOERR_SHORT_READ) {
 			_context->set_newly_created(true);
+			_context->load_app_data(nullptr);
 		}
 
 		return _result;
@@ -54,7 +56,7 @@ int encrypted_main_vfs_class::read_encrypted_page(encryption_context::id_t _page
 	printf("[%p]: encrypted read %i bytes from %lli\n", this, _size, _offset);
 #endif
 
-		// Reserve space
+	// Reserve space
 	_encryption_buffer.reserve(_size);
 
 	// Read encrypted page
@@ -102,11 +104,13 @@ int encrypted_main_vfs_class::write_encrypted_page(encryption_context::id_t _pag
 	printf("[%p]: encrypted write %i bytes to %lli\n", this, _page_size, _offset);
 #endif
 
-		// Reserve space
+	// Reserve space
 	_encryption_buffer.reserve(_page_size);
 
 	// Encrypt
 	auto _size = _page_size - SQLITE3_MAX_USER_DATA_SIZE;
+
+	std::memcpy(_encryption_buffer.data() + _size, _input + _size, SQLITE3_MAX_USER_DATA_SIZE);
 
 	if (!_context->encrypt(_page_id, _input, _size, _encryption_buffer.data(), _encryption_buffer.data() + _size)) {
 		return SQLITE_CERR_ENCRYPTION_FAILED;
@@ -196,9 +200,19 @@ int encrypted_main_vfs_class::xfile_control(sqlite3_file * _file, int _op, void 
 
 		if (!std::strcmp(_pragma[1], "key")) {
 			if (_pragma[2]) {
-				auto _key = _pragma[2];
-
 				try {
+					key_t _key = base64::decode(_pragma[2], std::char_traits<char>::length(_pragma[2]));
+
+					scope_exit _cleaner([&]() {
+						_key.assign(_key.length(), 'x');
+
+						auto _ptr = _pragma[2];
+
+						while (*_ptr) {
+							*_ptr++ = 'x';
+						}
+					});
+
 					_context->set_key(_key, true);
 					_context->set_key(_key, false);
 				} catch (...) {

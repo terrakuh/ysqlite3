@@ -95,20 +95,14 @@ bool openssl_encryption_context::encrypt(id_t _id, const_buffer_t _input, size_t
 
 	// Add padding
 	auto _block_size = _encryptor->block_size();
-	auto _max_data_size = page_data_size;
 
-	if (auto _tmp = _size % _block_size) {
-		_size += _tmp;
-		_data += _tmp;
-		_max_data_size -= _tmp;
-	}
+	_size += _block_size;
+	_data += _block_size;
 
 	// Generate new IV
 	auto _iv_length = _encryptor->iv_length();
 
 	random_bytes(_data, _iv_length);
-
-	print("generated iv: ", _data, _iv_length);
 
 	// Create page key
 	internal_key_t _page_key;
@@ -117,12 +111,9 @@ bool openssl_encryption_context::encrypt(id_t _id, const_buffer_t _input, size_t
 		return false;
 	}
 
-	print("page key: ", _page_key.data(), _page_key.size());
+	scope_exit _key_cleaner([&_page_key, _output]() { std::memset(_page_key.data(), 0, _page_key.size()); });
 
-	scope_exit _key_cleaner([&_page_key, _output]() { std::memset(_page_key.data(), 0, _page_key.size());
-	print(">>>>", _output, 16); });
-
-	return _encryptor->encrypt(_page_key.data(), _data, _aad, _aad_size, _input, _size, _output, _data + _iv_length, _max_data_size - _iv_length);
+	return _encryptor->encrypt(_page_key.data(), _data, _aad, _aad_size, _input, _size, _output, _data + _iv_length, page_data_size - _block_size - _iv_length);
 }
 
 bool openssl_encryption_context::decrypt(id_t _id, const_buffer_t _input, size_t _size, buffer_t _output, const_data_t _data)
@@ -139,18 +130,12 @@ bool openssl_encryption_context::decrypt(id_t _id, const_buffer_t _input, size_t
 
 	// Add padding
 	auto _block_size = _decryptor->block_size();
-	auto _max_data_size = page_data_size;
 
-	if (auto _tmp = _size % _block_size) {
-		_size += _tmp;
-		_data += _tmp;
-		_max_data_size -= _tmp;
-	}
+	_size += _block_size;
+	_data += _block_size;
 
 	// Get IV length
 	auto _iv_length = _decryptor->iv_length();
-
-	print("read iv: ", _data, _iv_length);
 
 	// Create page key
 	internal_key_t _page_key;
@@ -159,11 +144,9 @@ bool openssl_encryption_context::decrypt(id_t _id, const_buffer_t _input, size_t
 		return false;
 	}
 
-	print("page key: ", _page_key.data(), _page_key.size());
-
 	scope_exit _key_cleaner([&_page_key]() { std::memset(_page_key.data(), 0, _page_key.size()); });
-	print("<<<<", _input, 16);
-	return _decryptor->decrypt(_page_key.data(), _data, _aad, _aad_size, _input, _size, _output, _data + _iv_length, _max_data_size - _iv_length);
+
+	return _decryptor->decrypt(_page_key.data(), _data, _aad, _aad_size, _input, _size, _output, _data + _iv_length, page_data_size - _block_size - _iv_length);
 }
 
 bool openssl_encryption_context::does_something() const

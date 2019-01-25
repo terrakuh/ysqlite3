@@ -42,16 +42,7 @@ int aes_gcm_mode::block_size() const noexcept
 {
 	return 1;
 }
-inline void print(const char * _msg, const uint8_t * _ptr, int _size)
-{
-	printf("%s", _msg);
 
-	while (_size-- > 0) {
-		printf("%02x ", (int)*_ptr++);
-	}
-
-	puts("");
-}
 bool aes_gcm_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_buffer_t _aad, size_t _aad_size, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data, bool _encrypt)
 {
 	if (EVP_CipherInit(_impl->context, EVP_aes_256_gcm(), _key, _iv, _encrypt) == 1) {
@@ -72,7 +63,6 @@ bool aes_gcm_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_b
 
 		// Set authentication tag
 		if (!_encrypt) {
-			print("set tag: ", _data, 16);
 			if (EVP_CIPHER_CTX_ctrl(_impl->context, EVP_CTRL_GCM_SET_TAG, 16, _data) != 1) {
 				return false;
 			}
@@ -88,7 +78,6 @@ bool aes_gcm_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_b
 			if (EVP_CIPHER_CTX_ctrl(_impl->context, EVP_CTRL_GCM_GET_TAG, 16, _data) != 1) {
 				return false;
 			}
-			print("get tag: ", _data, 16);
 		}
 
 		return true;

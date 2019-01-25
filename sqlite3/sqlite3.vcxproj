@@ -165,11 +165,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;F:\OpenSSL_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>PRINT_OUTPUT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>F:\OpenSSL_x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">
@@ -178,7 +180,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;F:\OpenSSL_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SQLITE3_API=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -223,7 +225,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>PRINT_OUTPUT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;F:\OpenSSL_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -239,7 +241,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SQLITE3_API=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\boost_1_68_0\include;F:\OpenSSL_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -248,6 +250,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="address_transporter.cpp" />
+    <ClCompile Include="aes_gcm_mode.cpp" />
     <ClCompile Include="database.cpp" />
     <ClCompile Include="encrypted_database.cpp" />
     <ClCompile Include="encrypted_main_vfs_class.cpp" />
@@ -258,6 +261,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="openssl_encryption_context.cpp" />
     <ClCompile Include="scope_exit.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="statement.cpp" />
@@ -265,15 +269,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="address_transporter.hpp" />
+    <ClInclude Include="aes_gcm_mode.hpp" />
     <ClInclude Include="base64.hpp" />
     <ClInclude Include="config.hpp" />
     <ClInclude Include="database.hpp" />
     <ClInclude Include="encrypted_database.hpp" />
     <ClInclude Include="encrypted_main_vfs_class.hpp" />
     <ClInclude Include="encryption_context.hpp" />
+    <ClInclude Include="encryption_mode.hpp" />
     <ClInclude Include="exception.hpp" />
     <ClInclude Include="key.hpp" />
     <ClInclude Include="no_encryption_context.hpp" />
+    <ClInclude Include="openssl_encryption_context.hpp" />
     <ClInclude Include="scope_exit.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />

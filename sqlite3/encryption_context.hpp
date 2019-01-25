@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <array>
 #include <vector>
+#include <type_traits>
 
 #include "config.hpp"
 #include "key.hpp"
@@ -14,11 +15,11 @@ namespace ysqlite3
 class encryption_context
 {
 public:
-	typedef int8_t* data_t;
-	typedef const int8_t* const_data_t;
+	typedef uint8_t* data_t;
+	typedef const uint8_t* const_data_t;
 	typedef uint32_t id_t;
-	typedef int8_t* buffer_t;
-	typedef const int8_t* const_buffer_t;
+	typedef uint8_t* buffer_t;
+	typedef const uint8_t* const_buffer_t;
 	typedef int size_t;
 
 	constexpr static auto page_data_size = SQLITE3_MAX_USER_DATA_SIZE;
@@ -46,6 +47,45 @@ public:
 	bool newly_created() const noexcept
 	{
 		return _newly_created;
+	}
+
+protected:
+	template<typename Type>
+	static typename std::enable_if<std::is_arithmetic<Type>::value>::type write(void * _buffer, Type _value)
+	{
+		if (little_endian()) {
+			auto _ptr = reinterpret_cast<uint8_t*>(_buffer);
+
+			for (auto i = 0; i < sizeof(Type); ++i) {
+				*_ptr++ = _value >> 8 * i & 0xff;
+			}
+
+			return;
+		}
+
+		*reinterpret_cast<Type*>(_buffer) = _value;
+	}
+	static bool little_endian() noexcept
+	{
+		int _test = 1;
+
+		return *reinterpret_cast<char*>(&_test);
+	}
+	template<typename Type>
+	static typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type read(const void * _buffer)
+	{
+		if (little_endian()) {
+			Type _value = Type();
+			auto _ptr = reinterpret_cast<const uint8_t*>(_buffer);
+
+			for (auto i = 0; i < sizeof(Type); ++i) {
+				_value = static_cast<Type>(_value | static_cast<Type>(_ptr[i]) << 8 * (sizeof(Type) - i - 1));
+			}
+
+			return _value;
+		}
+
+		return *reinterpret_cast<const Type*>(_buffer);
 	}
 
 private:

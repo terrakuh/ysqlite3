@@ -54,6 +54,7 @@ protected:
 	}
 	virtual void random_bytes(void * _buffer, int _size);
 	bool create_page_key(id_t _id, const internal_key_t & _key, internal_key_t & _page_key);
+	static bool iequals(const char * _str1, const char * _str2);
 };
 
 }

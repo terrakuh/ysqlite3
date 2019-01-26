@@ -3,6 +3,7 @@
 #include "aes_gcm_mode.hpp"
 
 #include <cstring>
+#include <cctype>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
@@ -79,6 +80,15 @@ void openssl_encryption_context::set_key(const key_t & _key, bool _encrypt)
 
 void openssl_encryption_context::set_alogrithm(const char * _algorithm, bool _encrypt)
 {
+	auto & _cryptor = _encrypt ? _encryptor : _decryptor;
+
+	if (iequals(_algorithm, "aes-256-gcm")) {
+		_cryptor.reset(new aes_gcm_mode());
+	} else if (iequals(_algorithm, "aes-256-ccm")) {
+		_cryptor.reset(new aes_ccm_mode());
+	} else if (iequals(_algorithm, "chacha20-poly1305")) {
+		_cryptor.reset(new chacha20_poly1305_mode(true));
+	}
 }
 
 bool openssl_encryption_context::encrypt(id_t _id, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data)
@@ -96,7 +106,7 @@ bool openssl_encryption_context::encrypt(id_t _id, const_buffer_t _input, size_t
 	// Add padding
 	auto _block_size = _encryptor->block_size();
 
-	_size += _block_size;
+	//_size += _block_size;
 	_data += _block_size;
 
 	// Generate new IV
@@ -131,7 +141,7 @@ bool openssl_encryption_context::decrypt(id_t _id, const_buffer_t _input, size_t
 	// Add padding
 	auto _block_size = _decryptor->block_size();
 
-	_size += _block_size;
+	//_size += _block_size;
 	_data += _block_size;
 
 	// Get IV length
@@ -193,6 +203,19 @@ bool openssl_encryption_context::create_page_key(id_t _id, const internal_key_t 
 	}
 
 	return false;
+}
+
+bool openssl_encryption_context::iequals(const char * _str1, const char * _str2)
+{
+	char _c1, _c2;
+
+	while ((_c1 = *_str1++) && (_c2 = *_str2++)) {
+		if (std::tolower(_c1) != std::tolower(_c2)) {
+			return false;
+		}
+	}
+
+	return _c1 == _c2;
 }
 
 }

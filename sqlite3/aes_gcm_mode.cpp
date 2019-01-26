@@ -45,9 +45,19 @@ int aes_gcm_mode::block_size() const noexcept
 
 bool aes_gcm_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_buffer_t _aad, size_t _aad_size, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data, bool _encrypt)
 {
-	if (EVP_CipherInit(_impl->context, EVP_aes_256_gcm(), _key, _iv, _encrypt) == 1) {
+	if (EVP_CipherInit(_impl->context, EVP_aes_256_gcm(), nullptr, nullptr, _encrypt) == 1) {
 		scope_exit _context_cleaner([this]() { EVP_CIPHER_CTX_reset(_impl->context); });
 		int _len = 0;
+
+		// Set IV length
+		if (EVP_CIPHER_CTX_ctrl(_impl->context, EVP_CTRL_GCM_SET_IVLEN, 12, nullptr) != 1) {
+			return false;
+		}
+
+		// Set key and IV
+		if (EVP_CipherInit(_impl->context, nullptr, _key, _iv, _encrypt) == 1) {
+			return false;
+		}
 
 		// Provide AAD data
 		if (_aad && _aad_size) {

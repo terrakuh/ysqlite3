@@ -54,6 +54,9 @@
     <ClCompile Include="aes_gcm_mode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="aes_ccm_mode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sqlite3.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files\modes</Filter>
     </ClInclude>
     <ClInclude Include="aes_gcm_mode.hpp">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="aes_ccm_mode.hpp">
       <Filter>Header Files\modes</Filter>
     </ClInclude>
   </ItemGroup>

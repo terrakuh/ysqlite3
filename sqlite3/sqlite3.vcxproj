@@ -250,6 +250,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="address_transporter.cpp" />
+    <ClCompile Include="aes_ccm_mode.cpp" />
     <ClCompile Include="aes_gcm_mode.cpp" />
     <ClCompile Include="database.cpp" />
     <ClCompile Include="encrypted_database.cpp" />
@@ -269,6 +270,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="address_transporter.hpp" />
+    <ClInclude Include="aes_ccm_mode.hpp" />
     <ClInclude Include="aes_gcm_mode.hpp" />
     <ClInclude Include="base64.hpp" />
     <ClInclude Include="config.hpp" />

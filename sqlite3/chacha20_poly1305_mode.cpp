@@ -45,6 +45,11 @@ int chacha20_poly1305_mode::block_size() const noexcept
 	return 1;
 }
 
+int chacha20_poly1305_mode::key_size() const noexcept
+{
+	return 32;
+}
+
 bool chacha20_poly1305_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_buffer_t _aad, size_t _aad_size, const_buffer_t _input, size_t _size, buffer_t _output, data_t _data, bool _encrypt)
 {
 	if (EVP_CipherInit(_impl->context, _impl->authenticate ? EVP_chacha20_poly1305() : EVP_chacha20(), _key, _iv, _encrypt) == 1) {

@@ -73,7 +73,7 @@ int encrypted_main_vfs_class::read_encrypted_page(encryption_context::id_t _page
 		_context->load_app_data(_encryption_buffer.data());
 
 		// Copy SQLite header
-		std::memcpy(_output + encryption_context::app_data_size, _encryption_buffer.data() + encryption_context::app_data_size, encryption_context::header_size - encryption_context::app_data_size);
+		std::memcpy(_output, _encryption_buffer.data(), encryption_context::header_size);
 	}
 
 	auto _header_offset = _page_id ? 0 : encryption_context::header_size;

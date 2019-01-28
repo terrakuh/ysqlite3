@@ -1,11 +1,13 @@
 #include "openssl_encryption_context.hpp"
 #include "scope_exit.hpp"
 #include "aes_gcm_mode.hpp"
+#include "aes_ccm_mode.hpp"
+#include "chacha20_poly1305_mode.hpp"
+#include "chacha20_aes_gcm_mode.hpp"
 
 #include <cstring>
 #include <cctype>
 #include <openssl/rand.h>
-#include <openssl/err.h>
 
 
 namespace ysqlite3
@@ -16,8 +18,6 @@ openssl_encryption_context::openssl_encryption_context() : _encryptor(new aes_gc
 	_kdf_iterations = 0;
 	_context = EVP_CIPHER_CTX_new();
 	_md_context = EVP_MD_CTX_new();
-	//_encryption_cipher = EVP_aes_256_gcm();
-	//_decryption_cipher = EVP_aes_256_gcm();
 
 }
 
@@ -40,13 +40,10 @@ void openssl_encryption_context::load_app_data(const_data_t _data)
 	} else {
 		random_bytes(_salt.data(), _salt.size());
 	}
-
-	print(_data ? "loaded salt: " : "generated salt: ", _salt.data(), _salt.size());
 }
 
 void openssl_encryption_context::store_app_data(data_t _data)
 {
-	print("save salt: ", _salt.data(), _salt.size());
 	std::memcpy(_data, _salt.data(), _salt.size());
 }
 
@@ -74,8 +71,6 @@ void openssl_encryption_context::set_key(const key_t & _key, bool _encrypt)
 	_destination.swap(_encrypt ? _encryption_key2 : _decryption_key2);
 
 	PKCS5_PBKDF2_HMAC(_key.data(), _key.length(), _salt.data(), _salt.size(), _kdf_iterations, EVP_sha512(), _destination.size(), _destination.data());
-
-	print(_encrypt ? "encryption key: " : "decryption key: ", _destination.data(), _destination.size());
 }
 
 void openssl_encryption_context::set_alogrithm(const char * _algorithm, bool _encrypt)
@@ -88,6 +83,8 @@ void openssl_encryption_context::set_alogrithm(const char * _algorithm, bool _en
 		_cryptor.reset(new aes_ccm_mode());
 	} else if (iequals(_algorithm, "chacha20-poly1305")) {
 		_cryptor.reset(new chacha20_poly1305_mode(true));
+	} else if (iequals(_algorithm, "chacha20-aes-gcm")) {
+		_cryptor.reset(new chacha20_aes_gcm_mode());
 	}
 }
 
@@ -171,10 +168,6 @@ void openssl_encryption_context::random_bytes(void * _buffer, int _size)
 
 bool openssl_encryption_context::create_page_key(id_t _id, const internal_key_t & _key, internal_key_t & _page_key)
 {
-	std::memcpy(_page_key.data(), _key.data(), _key.size());
-
-	return true;
-
 	if (EVP_DigestInit(_md_context, EVP_sha512()) == 1) {
 		scope_exit _exit([this]() { EVP_MD_CTX_reset(_md_context); });
 
@@ -209,8 +202,12 @@ bool openssl_encryption_context::iequals(const char * _str1, const char * _str2)
 {
 	char _c1, _c2;
 
-	while ((_c1 = *_str1++) && (_c2 = *_str2++)) {
-		if (std::tolower(_c1) != std::tolower(_c2)) {
+	while (true) {
+		_c1 = *_str1++, _c2 = *_str2++;
+
+		if (!_c1 || !_c2) {
+			break;
+		} else if (std::tolower(_c1) != std::tolower(_c2)) {
 			return false;
 		}
 	}

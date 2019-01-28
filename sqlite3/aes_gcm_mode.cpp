@@ -60,7 +60,7 @@ bool aes_gcm_mode::encrypt_decrypt(const_key_t _key, const_buffer_t _iv, const_b
 		}
 
 		// Set key and IV
-		if (EVP_CipherInit(_impl->context, nullptr, _key, _iv, _encrypt) == 1) {
+		if (EVP_CipherInit(_impl->context, nullptr, _key, _iv, _encrypt) != 1) {
 			return false;
 		}
 

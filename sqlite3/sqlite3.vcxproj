@@ -252,6 +252,7 @@
     <ClCompile Include="address_transporter.cpp" />
     <ClCompile Include="aes_ccm_mode.cpp" />
     <ClCompile Include="aes_gcm_mode.cpp" />
+    <ClCompile Include="chacha20_aes_gcm_mode.cpp" />
     <ClCompile Include="chacha20_poly1305_mode.cpp" />
     <ClCompile Include="database.cpp" />
     <ClCompile Include="encrypted_database.cpp" />
@@ -274,6 +275,7 @@
     <ClInclude Include="aes_ccm_mode.hpp" />
     <ClInclude Include="aes_gcm_mode.hpp" />
     <ClInclude Include="base64.hpp" />
+    <ClInclude Include="chacha20_aes_gcm_mode.hpp" />
     <ClInclude Include="chacha20_poly1305_mode.hpp" />
     <ClInclude Include="config.hpp" />
     <ClInclude Include="database.hpp" />

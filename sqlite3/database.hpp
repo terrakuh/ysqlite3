@@ -87,7 +87,7 @@ protected:
 	std::shared_ptr<handle> _connection;
 
 
-	database();
+	SQLITE3_API database();
 };
 
 }

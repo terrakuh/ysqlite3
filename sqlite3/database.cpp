@@ -94,6 +94,17 @@ long long database::last_insert_rowid() const noexcept
 	return sqlite3_last_insert_rowid(_connection->get<sqlite3>());
 }
 
+statement database::create_statement(const char * _sql)
+{
+	statement _stmt(_connection);
+
+	if (_sql) {
+		_stmt.set_sql(_sql);
+	}
+
+	return _stmt;
+}
+
 database::database() : _connection(new handle([](void * _connection) { sqlite3_close_v2(reinterpret_cast<sqlite3*>(_connection)); }))
 {
 }

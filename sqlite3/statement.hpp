@@ -6,12 +6,13 @@
 
 #include "config.hpp"
 #include "exception.hpp"
-#include "database.hpp"
 #include "handle.hpp"
 
 
 namespace ysqlite3
 {
+
+class database;
 
 class statement
 {
@@ -51,8 +52,8 @@ public:
 		} _value;
 	};
 	
-	SQLITE3_API statement(const char * _sql, database & _database);
-	statement(statement && _move) = default;
+	
+	statement(statement && _move) noexcept = default;
 	/**
 	 * Destructor.
 	 *
@@ -153,14 +154,17 @@ public:
 	SQLITE3_API std::string get_string(int _index);
 	SQLITE3_API std::pair<const char*, int> get_text(int _index);
 	SQLITE3_API std::pair<const void*, int> get_blob(int _index);
-	statement & operator=(statement && _move) = default;
+	statement & operator=(statement && _move) noexcept = default;
 
 protected:
+	friend database;
+
 	/** The underlying sqlite3 statement. */
 	std::unique_ptr<handle> _statement;
 	/** Holds all relevant information about the underlying sqlite3 connection. */
 	std::shared_ptr<handle> _connection;
 
+	SQLITE3_API statement(const std::shared_ptr<handle> & _connection) noexcept;
 	SQLITE3_API virtual bool prepare(const char * _sql, handle * _statement);
 
 private:

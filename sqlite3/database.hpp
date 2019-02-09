@@ -7,6 +7,7 @@
 #include "config.hpp"
 #include "handle.hpp"
 #include "exception.hpp"
+#include "statement.hpp"
 
 
 namespace ysqlite3
@@ -77,6 +78,7 @@ public:
 	SQLITE3_API void set_journal_mode(JOURNAL_MODE _mode);
 	SQLITE3_API bool is_readonly() const;
 	SQLITE3_API long long last_insert_rowid() const noexcept;
+	SQLITE3_API statement create_statement(const char * _sql = nullptr);
 
 protected:
 	friend statement;
@@ -85,7 +87,7 @@ protected:
 	std::shared_ptr<handle> _connection;
 
 
-	database();
+	SQLITE3_API database();
 };
 
 }

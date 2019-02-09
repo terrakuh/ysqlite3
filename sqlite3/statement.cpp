@@ -7,13 +7,6 @@
 namespace ysqlite3
 {
 
-statement::statement(const char * _sql, database & _database) : _statement(new handle([](void * _statement) { sqlite3_finalize(reinterpret_cast<sqlite3_stmt*>(_statement)); })), _connection(_database._connection)
-{
-	if (!prepare(_sql, _statement.get())) {
-		throw programming_error(sqlite3_errmsg(_connection->get<sqlite3>()));
-	}
-}
-
 void statement::reset() noexcept
 {
 	sqlite3_reset(_statement->get<sqlite3_stmt>());
@@ -153,6 +146,10 @@ std::pair<const char*, int> statement::get_text(int _index)
 std::pair<const void*, int> statement::get_blob(int _index)
 {
 	return { reinterpret_cast<const char*>(sqlite3_column_blob(_statement->get<sqlite3_stmt>(), _index)), sqlite3_column_bytes(_statement->get<sqlite3_stmt>(), _index) };
+}
+
+statement::statement(const std::shared_ptr<handle> & _connection) noexcept : _connection(_connection)
+{
 }
 
 bool statement::prepare(const char * _sql, handle * _statement)

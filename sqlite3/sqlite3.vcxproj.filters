@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\modes">
+      <UniqueIdentifier>{a872f1b3-779d-4571-95ef-4d64483fcff5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sqlite3.c">
@@ -43,6 +46,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="address_transporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl_encryption_context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes_gcm_mode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes_ccm_mode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chacha20_poly1305_mode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chacha20_aes_gcm_mode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,6 +109,27 @@
     </ClInclude>
     <ClInclude Include="address_transporter.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="base64.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl_encryption_context.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="encryption_mode.hpp">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="aes_gcm_mode.hpp">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="aes_ccm_mode.hpp">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="chacha20_poly1305_mode.hpp">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="chacha20_aes_gcm_mode.hpp">
+      <Filter>Header Files\modes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

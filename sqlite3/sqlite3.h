@@ -453,6 +453,11 @@ SQLITE_API int sqlite3_exec(
 #define SQLITE_DONE        101  /* sqlite3_step() has finished executing */
 /* end-of-error-codes */
 
+// Custom errors
+#define SQLITE_CERR 254
+#define SQLITE_CERR_DECRYPTION_FAILED (SQLITE_CERR | 1 << 8)
+#define SQLITE_CERR_ENCRYPTION_FAILED (SQLITE_CERR | 2 << 8)
+
 /*
 ** CAPI3REF: Extended Result Codes
 ** KEYWORDS: {extended result code definitions}

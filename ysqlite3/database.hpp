@@ -1,9 +1,8 @@
 #pragma once
 
 #include "sqlite3.h"
-#include "result.hpp"
 
-#include <iostream>
+#include <cstddef>
 #include <string>
 
 namespace ysqlite3 {
@@ -88,22 +87,22 @@ public:
      Runs the SQL statement and ignores the result values.
 
      @param sql zero or more SQL statements
+     @returns the amount of returned result rows
      @throws exception::closed_database_exception if the database is closed
      @throws exception::database_exception if a database error occurred
      @throws exception::sql_exception if the SQL statement is invalid
     */
-    void run(const std::string& sql);
-    result execute(const std::string& sql);
+    std::size_t execute(const std::string& sql);
     /**
      Returns the SQLite3 database handle.
 
-     @return the database handle or `nullptr` if the database is closed
+     @returns the database handle or `nullptr` if the database is closed
     */
     sqlite3* handle() noexcept;
     /**
      Returns the SQLite3 database handle.
 
-     @return the database handle or `nullptr` if the database is closed
+     @returns the database handle or `nullptr` if the database is closed
     */
     const sqlite3* handle() const noexcept;
 

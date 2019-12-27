@@ -57,29 +57,20 @@ void database::open(const std::string& file, int flags, const std::string& vfs)
     }
 }
 
-void database::run(const std::string& sql)
+std::size_t database::execute(const std::string& sql)
 {
     _assert_open();
 
-    char* message = nullptr;
-    auto error    = sqlite3_exec(_database, sql.c_str(), nullptr, nullptr, &message);
+    char* message      = nullptr;
+    std::size_t result = 0;
+    auto error         = sqlite3_exec(
+        _database, sql.c_str(),
+        [](void* result, int, char**, char**) {
+            *static_cast<std::size_t*>(result) += 1;
 
-    if (message) {
-        auto freeer = at_scope_exit([message] { sqlite3_free(message); });
-
-        YSQLITE_THROW(exception::sql_exception, message);
-    } else if (error != SQLITE_OK) {
-        YSQLITE_THROW(exception::database_exception, error, "failed to execute sql");
-    }
-}
-
-result database::execute(const std::string& sql)
-{
-    _assert_open();
-
-    result r;
-    char* message = nullptr;
-    auto error    = sqlite3_exec(_database, sql.c_str(), result::_feeder, &r, &message);
+            return SQLITE_OK;
+        },
+        &result, &message);
 
     if (message) {
         auto freeer = at_scope_exit([message] { sqlite3_free(message); });
@@ -89,7 +80,7 @@ result database::execute(const std::string& sql)
         YSQLITE_THROW(exception::database_exception, error, "failed to execute sql");
     }
 
-    return r;
+    return result;
 }
 
 sqlite3* database::handle() noexcept

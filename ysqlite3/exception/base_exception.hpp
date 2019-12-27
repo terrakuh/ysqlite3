@@ -11,7 +11,7 @@
 #    endif
 #endif
 
-#define YSQLITE_THROW(e, ...) throw ysqlite3::exception::##e(__VA_ARGS__, __FILE__, __FUNCTION_NAME__, __LINE__);
+#define YSQLITE_THROW(e, ...) throw e(__VA_ARGS__, __FILE__, __FUNCTION_NAME__, __LINE__);
 
 namespace ysqlite3 {
 namespace exception {
@@ -25,6 +25,18 @@ public:
     virtual const char* what() const noexcept override
     {
         return _msg.c_str();
+    }
+    const std::string& file() const noexcept
+    {
+        return _file;
+    }
+    const std::string& function() const noexcept
+    {
+        return _function;
+    }
+    int line() const noexcept
+    {
+        return _line;
     }
 
 private:

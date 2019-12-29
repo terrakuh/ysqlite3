@@ -20,28 +20,30 @@ namespace ysqlite3 {
 class database
 {
 public:
-	enum OPEN_FLAGS
+	typedef int open_flag_type;
+
+	enum open_flag
 	{
-		OF_READONLY       = SQLITE_OPEN_READONLY,
-		OF_READWRITE      = SQLITE_OPEN_READWRITE,
-		OF_CREATE         = SQLITE_OPEN_CREATE,
-		OF_DELETEONCLOSE  = SQLITE_OPEN_DELETEONCLOSE,
-		OF_EXCLUSIVE      = SQLITE_OPEN_EXCLUSIVE,
-		OF_AUTOPROXY      = SQLITE_OPEN_AUTOPROXY,
-		OF_URI            = SQLITE_OPEN_URI,
-		OF_MEMORY         = SQLITE_OPEN_MEMORY,
-		OF_MAIN_DB        = SQLITE_OPEN_MAIN_DB,
-		OF_TEMP_DB        = SQLITE_OPEN_TEMP_DB,
-		OF_TRANSIENT_DB   = SQLITE_OPEN_TRANSIENT_DB,
-		OF_MAIN_JOURNAL   = SQLITE_OPEN_MAIN_JOURNAL,
-		OF_TEMP_JOURNAL   = SQLITE_OPEN_TEMP_JOURNAL,
-		OF_SUBJOURNAL     = SQLITE_OPEN_SUBJOURNAL,
-		OF_MASTER_JOURNAL = SQLITE_OPEN_MASTER_JOURNAL,
-		OF_NOMUTEX        = SQLITE_OPEN_NOMUTEX,
-		OF_FULLMUTEX      = SQLITE_OPEN_FULLMUTEX,
-		OF_SHAREDCACHE    = SQLITE_OPEN_SHAREDCACHE,
-		OF_PRIVATECACHE   = SQLITE_OPEN_PRIVATECACHE,
-		OF_WAL            = SQLITE_OPEN_WAL
+		open_flag_readonly        = SQLITE_OPEN_READONLY,
+		open_flag_readwrite       = SQLITE_OPEN_READWRITE,
+		open_flag_create          = SQLITE_OPEN_CREATE,
+		open_flag_delete_on_close = SQLITE_OPEN_DELETEONCLOSE,
+		open_flag_exclusive       = SQLITE_OPEN_EXCLUSIVE,
+		open_flag_autoproxy       = SQLITE_OPEN_AUTOPROXY,
+		open_flag_uri             = SQLITE_OPEN_URI,
+		open_flag_memory          = SQLITE_OPEN_MEMORY,
+		open_flag_main_db         = SQLITE_OPEN_MAIN_DB,
+		open_flag_temp_db         = SQLITE_OPEN_TEMP_DB,
+		open_flag_transient_db    = SQLITE_OPEN_TRANSIENT_DB,
+		open_flag_main_journal    = SQLITE_OPEN_MAIN_JOURNAL,
+		open_flag_temp_journal    = SQLITE_OPEN_TEMP_JOURNAL,
+		open_flag_subjournal      = SQLITE_OPEN_SUBJOURNAL,
+		open_flag_master_journal  = SQLITE_OPEN_MASTER_JOURNAL,
+		open_flag_no_mutex        = SQLITE_OPEN_NOMUTEX,
+		open_flag_full_mutex      = SQLITE_OPEN_FULLMUTEX,
+		open_flag_shared_cache    = SQLITE_OPEN_SHAREDCACHE,
+		open_flag_private_cache   = SQLITE_OPEN_PRIVATECACHE,
+		open_flag_wal             = SQLITE_OPEN_WAL
 	};
 
 	/**

@@ -130,7 +130,7 @@ public:
 	{
 		close();
 
-		auto error = sqlite3_open_v2(file.data(), &_database, flags, vfs.empty() ? nullptr : vfs.c_str());
+		auto error = sqlite3_open_v2(file.data(), &_database, flags, vfs.empty() ? nullptr : vfs.data());
 
 		if (error != SQLITE_OK) {
 			_database = nullptr;
@@ -183,7 +183,7 @@ public:
             &result, &message);
 
 		if (message) {
-			auto freeer = at_scope_exit([message] { sqlite3_free(message); });
+			auto _ = gsl::finally([message] { sqlite3_free(message); });
 
 			YSQLITE_THROW(exception::sql_exception, message);
 		} else if (error != SQLITE_OK) {

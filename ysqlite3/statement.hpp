@@ -2,7 +2,6 @@
 
 #include "exception/database_exception.hpp"
 #include "exception/parameter_exception.hpp"
-#include "scope_exit.hpp"
 #include "sqlite3.h"
 
 #include <cstddef>
@@ -102,7 +101,7 @@ public:
 			auto error = sqlite3_step(_statement);
 
 			if (error != SQLITE_ROW) {
-				auto resetter = at_scope_exit([this] { sqlite3_reset(_statement); });
+				auto _ = gsl::finally([this] { sqlite3_reset(_statement); });
 
 				if (error == SQLITE_DONE) {
 					return;
@@ -156,7 +155,7 @@ public:
 			return true;
 		}
 
-		auto resetter = at_scope_exit([this] { sqlite3_reset(_statement); });
+		auto _ = gsl::finally([this] { sqlite3_reset(_statement); });
 
 		if (error == SQLITE_DONE) {
 			return false;

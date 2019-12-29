@@ -59,13 +59,15 @@ public:
 	 @param file the database file
 	 @throws see database::open()
 	*/
-	database(const std::string& file)
+	database(gsl::cstring_span<> file)
 	{
 		open(file);
 	}
 	database(const database& copy) = delete;
 	/**
-	 Move-Constructor. After this operation `move` is guaranteed to be closed.
+	 Move-Constructor.
+
+	 @post `move` is guaranteed to be closed
 
 	 @param[in,out] move the other database
 	*/
@@ -117,17 +119,18 @@ public:
 	 @post the database is opened (`closed() == false`)
 
 	 @param file the file name
-	 @param flags (opt) the open flags, by default the file will be opened with `OF_READWRITE | OF_CREATE`; see
-	 OPEN_FLAGS
+	 @param flags (opt) the open flags, by default the file will be opened with `open_flag_readwrite |
+	 open_flag_create`; see database::open_flag
 	 @param vfs (opt) the virtual filesystem that should be used; if empty, the default vfs will be used
 	 @throws exception::database_exception if the database could not be opened
 	 @throws see database::close()
 	*/
-	void open(const std::string& file, int flags = OF_READWRITE | OF_CREATE, const std::string& vfs = "")
+	void open(gsl::cstring_span<> file, open_flag_type flags = open_flag_readwrite | open_flag_create,
+	          gsl::cstring_span<> vfs = "")
 	{
 		close();
 
-		auto error = sqlite3_open_v2(file.c_str(), &_database, flags, vfs.empty() ? nullptr : vfs.c_str());
+		auto error = sqlite3_open_v2(file.data(), &_database, flags, vfs.empty() ? nullptr : vfs.c_str());
 
 		if (error != SQLITE_OK) {
 			_database = nullptr;
@@ -139,12 +142,12 @@ public:
 	}
 	template<typename T, typename... Args>
 	typename std::enable_if<std::is_base_of<function::function, T>::value>::type
-	    register_function(const std::string& name, Args... args)
+	    register_function(gsl::cstring_span<> name, Args... args)
 	{
 		Expects(not closed());
 
 		auto instance = new T(std::forward<Args>(args)...);
-		auto error    = sqlite3_create_function_v2(_database, name.c_str(), instance->_argc, instance->_flags, instance,
+		auto error    = sqlite3_create_function_v2(_database, name.data(), instance->_argc, instance->_flags, instance,
                                                 function::function::xfunc, nullptr, nullptr,
                                                 [](void* instance) { delete static_cast<T*>(instance); });
 
@@ -164,14 +167,14 @@ public:
 	 @throws exception::database_exception if a database error occurred
 	 @throws exception::sql_exception if the SQL statement is invalid
 	*/
-	std::size_t execute(const std::string& sql)
+	std::size_t execute(gsl::cstring_span<> sql)
 	{
 		Expects(not closed());
 
 		char* message      = nullptr;
 		std::size_t result = 0;
 		auto error         = sqlite3_exec(
-            _database, sql.c_str(),
+            _database, sql.data(),
             [](void* result, int, char**, char**) {
                 *static_cast<std::size_t*>(result) += 1;
 
@@ -204,13 +207,13 @@ public:
 	 @returns the prepared statement
 	 @throws exception::database_exception if the statement could not be created
 	*/
-	statement prepare_statement(const std::string& sql)
+	statement prepare_statement(gsl::cstring_span<> sql)
 	{
 		Expects(not closed());
 
 		sqlite3_stmt* stmt = nullptr;
 		const char* tail   = nullptr;
-		auto error         = sqlite3_prepare_v2(_database, sql.c_str(), sql.length(), &stmt, &tail);
+		auto error         = sqlite3_prepare_v2(_database, sql.data(), sql.length(), &stmt, &tail);
 
 		if (error != SQLITE_OK) {
 			YSQLITE_THROW(exception::database_exception, error, "could not prepare statement");

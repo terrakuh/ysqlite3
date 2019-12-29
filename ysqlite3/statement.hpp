@@ -25,19 +25,12 @@ public:
 			_index = index;
 			_name  = nullptr;
 		}
-		index(const std::string& name)
+		index(gsl::cstring_span<> name)
 		{
 			Expects(not name.empty());
 
 			_index = 0;
-			_name  = name.c_str();
-		}
-		index(gsl::not_null<const char*> name)
-		{
-			Expects(name.get()[0] != 0);
-
-			_index = 0;
-			_name  = name;
+			_name  = name.data();
 		}
 
 	private:
@@ -58,7 +51,9 @@ public:
 	}
 	statement(const statement& copy) = delete;
 	/**
-	 Move-Constructor. After this operation `move` is guaranteed to be closed.
+	 Move-Constructor.
+
+	 @post `move` is guaranteed to be closed
 
 	 @param[in,out] move the other statement
 	*/

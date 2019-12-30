@@ -10,42 +10,68 @@ class database;
 
 namespace function {
 
+/**
+ A function interface for SQLite.
+*/
 class function
 {
 public:
-    enum class TEXT_ENCODING
-    {
-        UTF_8    = SQLITE_UTF8,
-        UTF_16BE = SQLITE_UTF16BE,
-        UTF_16LE = SQLITE_UTF16LE
-    };
+	enum class text_enconding
+	{
+		utf8    = SQLITE_UTF8,
+		utf16be = SQLITE_UTF16BE,
+		utf16le = SQLITE_UTF16LE
+	};
 
-    function(int argc, bool deterministic, bool direct_only, TEXT_ENCODING encoding) noexcept
-    {
-        _argc  = argc;
-        _flags = static_cast<int>(encoding) | (deterministic ? SQLITE_DETERMINISTIC : 0) |
-                 (direct_only ? SQLITE_DIRECTONLY : 0);
-    }
-    virtual ~function() = default;
-    static void xfunc(sqlite3_context* context, int argc, sqlite3_value** argv)
-    {
-        try {
-            static_cast<function*>(sqlite3_user_data(context))->run(context, argc, argv);
-        } catch (const std::exception& e) {
-            sqlite3_result_error(context, e.what(), -1);
-        } catch (...) {
-            sqlite3_result_error(context, "function threw an exception", -1);
-        }
-    }
+	/**
+	 Constructor.
+
+	 @param the maximum allowed parameter count; if this value is negative the is no limit
+	 @param deterministic whether this function produces the same output with the same input
+	 @param encoding the preferred text encoding
+	 @see more information can be found on the [SQLite page](https://www.sqlite.org/c3ref/create_function.html)
+	*/
+	function(int argc, bool deterministic, bool direct_only, text_enconding encoding) noexcept
+	{
+		_argc  = argc < 0 ? -1 : argc;
+		_flags = static_cast<int>(encoding) | (deterministic ? SQLITE_DETERMINISTIC : 0) |
+		         (direct_only ? SQLITE_DIRECTONLY : 0);
+	}
+	virtual ~function() = default;
+	/**
+	 The function interface for SQLite.
+
+	 @param[in] context the context
+	 @param argc the argument count
+	 @param[in] argv the argument values
+	*/
+	static void xfunc(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept
+	{
+		try {
+			static_cast<function*>(sqlite3_user_data(context))->run(context, argc, argv);
+		} catch (const std::exception& e) {
+			sqlite3_result_error(context, e.what(), -1);
+		} catch (...) {
+			sqlite3_result_error(context, "function threw an exception", -1);
+		}
+	}
 
 protected:
-    virtual void run(sqlite3_context* context, int argc, sqlite3_value** argv) = 0;
+	/**
+	 Runs the function.
+
+	 @param[in] context the function context
+	 @param argc the argument count
+	 @param[in] args the argument values
+	 @throws may throw anything
+	*/
+	virtual void run(sqlite3_context* context, int argc, sqlite3_value** argv) = 0;
 
 private:
-    friend database;
+	friend database;
 
-    int _argc;
-    int _flags;
+	int _argc;
+	int _flags;
 };
 
 } // namespace function

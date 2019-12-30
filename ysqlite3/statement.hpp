@@ -52,7 +52,7 @@ public:
 	/**
 	 Move-Constructor.
 
-	 @post `move` is guaranteed to be closed
+	 @post `move` is closed
 
 	 @param[in,out] move the other statement
 	*/
@@ -62,9 +62,9 @@ public:
 		move._statement = nullptr;
 	}
 	/**
-	 Destructor. Closes the statement.
+	 Destructor.
 
-	 @see statement::close()
+	 @post the statement is closed
 	*/
 	virtual ~statement()
 	{
@@ -109,6 +109,24 @@ public:
 
 				YSQLITE_THROW(exception::database_exception, error, "failed to step");
 			}
+		}
+	}
+	/**
+	 Resets the statement.
+
+	 @pre the statement is not closed
+	 @post bindings will remain unchanged
+
+	 @throws exception::database_exception if the reset could not be completed
+	*/
+	void reset()
+	{
+		Expects(!closed());
+
+		auto error = sqlite3_reset(_statement);
+
+		if (error != SQLITE_OK) {
+			YSQLITE_THROW(exception::database_exception, error, "failed to reset");
 		}
 	}
 	/**
@@ -244,6 +262,14 @@ public:
 	{
 		return _statement;
 	}
+	/**
+	 Returns the SQLite statemet handle. This statement object will be marked as closed, but the handle will remain
+	 open.
+
+	 @post the statement is closed
+
+	 @returns the handle
+	*/
 	gsl::owner<sqlite3_stmt*> release() noexcept
 	{
 		auto p = _statement;

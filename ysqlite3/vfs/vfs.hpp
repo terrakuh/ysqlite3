@@ -36,6 +36,13 @@ public:
 		read      = SQLITE_ACCESS_READ
 	};
 
+	/**
+	 Creates a VFS and initializes its values. After initialization a VFS must registered, see vfs::register_vfs().
+
+	 @pre name cannot be empty
+
+	 @param name the name of this VFS
+	*/
 	vfs(gsl::not_null<gsl::czstring<>> name) : _name(name.get()), _vfs{}
 	{
 		Expects(!_name.empty());
@@ -115,7 +122,22 @@ public:
 	{
 		return &_vfs;
 	}
+	/**
+	 Returns the maximum allowed pathname length for this VFS.
+
+	 @return the max pathname length
+	*/
 	virtual int max_pathname() const noexcept                                             = 0;
+	/**
+	 Opens the specified with the flags.
+
+	 @param name the file path
+	 @param flags the open flags; see database::open_flag_type
+	 @param output_flags[out] the applied flags
+	 @returns a file object describing the virtual file
+	 @throws may throw anything
+	 @see for more information look at the official [SQLite page](https://www.sqlite.org/c3ref/vfs.html)
+	*/
 	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, database::open_flag_type flags,
 	                                              database::open_flag_type& output_flags) = 0;
 	virtual void delete_file(gsl::czstring<> name, bool sync_directory)                   = 0;

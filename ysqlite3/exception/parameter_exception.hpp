@@ -8,7 +8,7 @@ namespace exception {
 class parameter_exception : public base_exception
 {
 public:
-    using base_exception::base_exception;
+	using base_exception::base_exception;
 };
 
 } // namespace exception

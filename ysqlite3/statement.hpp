@@ -26,7 +26,7 @@ public:
 		}
 		index(gsl::cstring_span<> name)
 		{
-			Expects(not name.empty());
+			Expects(!name.empty());
 
 			_index = 0;
 			_name  = name.data();
@@ -80,7 +80,7 @@ public:
 	*/
 	void clear_bindings()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		sqlite3_clear_bindings(_statement);
 	}
@@ -94,7 +94,7 @@ public:
 	*/
 	void finish()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		// step until SQLITE_DONE is returned
 		while (true) {
@@ -147,7 +147,7 @@ public:
 	*/
 	bool step()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		auto error = sqlite3_step(_statement);
 
@@ -196,7 +196,7 @@ public:
 	*/
 	bool readonly()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		return sqlite3_stmt_readonly(_statement);
 	}
@@ -209,7 +209,7 @@ public:
 	*/
 	int parameter_count()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		return sqlite3_bind_parameter_count(_statement);
 	}
@@ -222,7 +222,7 @@ public:
 	*/
 	int column_count()
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		return sqlite3_column_count(_statement);
 	}
@@ -273,7 +273,7 @@ private:
 	template<typename Binder, typename... Args>
 	statement& _bind(const index& index, Binder&& binder, Args&&... args)
 	{
-		Expects(not closed());
+		Expects(!closed());
 
 		auto error = binder(_statement, _to_column_index(index), std::forward<Args>(args)...);
 

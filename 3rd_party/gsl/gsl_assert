@@ -154,7 +154,7 @@ namespace details
 #define GSL_CONTRACT_CHECK(type, cond)                                                             \
     (GSL_LIKELY(cond) ? static_cast<void>(0)                                                       \
                       : gsl::details::throw_exception(gsl::fail_fast(                              \
-                            "GSL: " type " failure at " __FILE__ ": " GSL_STRINGIFY(__LINE__))))
+                            "GSL: " type " failure (" #cond ") at " __FILE__ ": " GSL_STRINGIFY(__LINE__))))
 
 #elif defined(GSL_TERMINATE_ON_CONTRACT_VIOLATION)
 

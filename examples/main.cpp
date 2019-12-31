@@ -58,6 +58,28 @@ public:
 	}
 };
 
+class super : public vfs::layer::layered_file
+{
+public:
+	using layered_file::layered_file;
+
+	virtual void file_control(file_cntl operation, void* arg) override
+	{
+		if (operation == file_cntl_pragma) {
+			auto name  = static_cast<char**>(arg)[1];
+			auto value = static_cast<char**>(arg)[2];
+
+			if (!std::strcmp("print", name)) {
+				printf("#: %s\n", value ? value : "null");
+
+				return;
+			}
+		}
+
+		layered_file::file_control(operation, arg);
+	}
+};
+
 int main(int args, char** argv)
 {
 	using namespace backward;
@@ -68,8 +90,8 @@ int main(int args, char** argv)
 	/*Printer p;
 	p.print(st);*/
 	try {
-		auto v = std::make_shared<vfs::layer::layered_vfs<>>(
-		    std::make_shared<vfs::sqlite3_vfs_wrapper<>>(vfs::find_vfs(nullptr), "myvfs"), "myvfs");
+		auto v = std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>, super>>(vfs::find_vfs(nullptr),
+		                                                                                      "myvfs");
 
 		v->add_layer<rot13_layer>();
 
@@ -80,6 +102,7 @@ int main(int args, char** argv)
 
 		db.open("D:/test.db");
 		// db.register_function<summi>("summi");
+		db.execute(R"(pragma print("hello, world");)");
 		db.execute(R"(CREATE TABLE IF NOT EXISTS tast(noim text not null); INSERT INTO tast(noim) VALUES('heyho'),
 		 ('Musik');)");
 

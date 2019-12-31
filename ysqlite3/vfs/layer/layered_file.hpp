@@ -15,10 +15,9 @@ class layered_file : public file
 public:
 	typedef std::vector<std::unique_ptr<layer>> layers_type;
 
-	layered_file(gsl::not_null<std::shared_ptr<file>> parent, layers_type layers)
-	    : _parent(std::move(parent)), _layers(std::move(layers))
+	layered_file(gsl::not_null<gsl::owner<file*>> parent, layers_type layers) noexcept
+	    : _parent(parent), _layers(std::move(layers))
 	{}
-
 	virtual void close() override
 	{
 		_parent->close();
@@ -87,7 +86,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<file> _parent;
+	std::unique_ptr<file> _parent;
 	layers_type _layers;
 };
 

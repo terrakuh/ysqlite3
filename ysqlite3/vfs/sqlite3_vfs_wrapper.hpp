@@ -10,7 +10,8 @@
 namespace ysqlite3 {
 namespace vfs {
 
-class sqlite3_vfs_wrapper : public vfs
+template<typename File = sqlite3_file_wrapper>
+class sqlite3_vfs_wrapper : public vfs<File>
 {
 public:
 	sqlite3_vfs_wrapper(sqlite3_vfs* parent, gsl::not_null<gsl::czstring<>> name) : vfs(name)

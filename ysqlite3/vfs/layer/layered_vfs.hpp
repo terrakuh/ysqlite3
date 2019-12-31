@@ -14,7 +14,8 @@ namespace ysqlite3 {
 namespace vfs {
 namespace layer {
 
-class layered_vfs : public vfs
+template<typename File = layered_file>
+class layered_vfs : public vfs<File>
 {
 public:
 	layered_vfs(gsl::not_null<gsl::shared_ptr<vfs>> parent, gsl::not_null<gsl::czstring<>> name)

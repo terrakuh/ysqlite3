@@ -67,7 +67,7 @@ public:
 		file_cntl_size_limit            = SQLITE_FCNTL_SIZE_LIMIT
 	};
 
-	file() : _methods{}
+	file() noexcept : _methods{}
 	{
 		_methods.iVersion               = 1;
 		_methods.xClose                 = _close;

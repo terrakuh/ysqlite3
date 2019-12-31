@@ -22,11 +22,9 @@
 namespace ysqlite3 {
 namespace vfs {
 
-template<typename File, typename = std::enable_if<std::is_base_of<file, File>::value>>
 class vfs
 {
 public:
-	typedef File file_type;
 	typedef void (*dlsym_type)();
 	typedef std::chrono::duration<int, std::micro> sleep_duration_type;
 	typedef std::chrono::duration<sqlite3_int64, std::milli> time_type;
@@ -50,7 +48,7 @@ public:
 		Expects(!_name.empty());
 
 		_vfs.iVersion = 3;
-		_vfs.szOsFile = sizeof(sqlite3_file) + sizeof(File*);
+		_vfs.szOsFile = sizeof(sqlite3_file) + sizeof(void*);
 		_vfs.zName    = _name.c_str();
 		_vfs.pAppData = this;
 
@@ -104,7 +102,7 @@ public:
 	 @param name the file path
 	 @param flags the open flags; see database::open_flag_type
 	 @param output_flags[out] the applied flags
-	 @returns a file object describing the virtual file
+	 @returns the file object
 	 @throws may throw anything
 	 @see for more information look at the official [SQLite page](https://www.sqlite.org/c3ref/vfs.html)
 	*/
@@ -169,10 +167,10 @@ public:
 		return nullptr;
 	}
 	template<typename Derived>
-	friend typename std::enable_if<std::is_base_of<vfs<typename Derived::file_type>, Derived>::value>::type
+	friend typename std::enable_if<std::is_base_of<vfs, Derived>::value>::type
 	    register_vfs(const std::shared_ptr<Derived>& v, bool make_default);
 	template<typename Derived>
-	friend typename std::enable_if<std::is_base_of<vfs<typename Derived::file_type>, Derived>::value>::type
+	friend typename std::enable_if<std::is_base_of<vfs, Derived>::value>::type
 	    unregister_vfs(gsl::not_null<Derived*> v);
 
 private:
@@ -315,7 +313,7 @@ private:
 };
 
 template<typename Derived>
-inline typename std::enable_if<std::is_base_of<vfs<typename Derived::file_type>, Derived>::value>::type
+inline typename std::enable_if<std::is_base_of<vfs, Derived>::value>::type
     register_vfs(const std::shared_ptr<Derived>& v, bool make_default)
 {
 	// static_assert(&vfs::dlopen == &Derived::dlopen, "all three dlopen, dlclose and dlsym must be overriden");
@@ -335,8 +333,7 @@ inline typename std::enable_if<std::is_base_of<vfs<typename Derived::file_type>,
 }
 
 template<typename Derived>
-inline typename std::enable_if<std::is_base_of<vfs<typename Derived::file_type>, Derived>::value>::type
-    unregister_vfs(gsl::not_null<Derived*> v)
+inline typename std::enable_if<std::is_base_of<vfs, Derived>::value>::type unregister_vfs(gsl::not_null<Derived*> v)
 {
 	auto error = sqlite3_vfs_unregister(&v->_vfs);
 

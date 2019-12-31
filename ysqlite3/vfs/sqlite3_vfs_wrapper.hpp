@@ -10,10 +10,13 @@
 namespace ysqlite3 {
 namespace vfs {
 
-template<typename File = sqlite3_file_wrapper>
-class sqlite3_vfs_wrapper : public vfs<File>
+template<typename File = sqlite3_file_wrapper,
+         typename      = std::enable_if<std::is_base_of<sqlite3_file_wrapper, File>::value>>
+class sqlite3_vfs_wrapper : public vfs
 {
 public:
+	typedef File file_type;
+
 	sqlite3_vfs_wrapper(sqlite3_vfs* parent, gsl::not_null<gsl::czstring<>> name) : vfs(name)
 	{
 		_parent = parent;
@@ -35,8 +38,7 @@ public:
 
 		_check_error(_parent->xOpen(_parent, name, tmp_file.get(), flags, &output_flags));
 
-		// create vfs file
-		return new sqlite3_file_wrapper(std::move(tmp_file));
+		return new File(std::move(tmp_file));
 	}
 	virtual void delete_file(gsl::czstring<> name, bool sync_directory) override
 	{

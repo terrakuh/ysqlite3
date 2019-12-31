@@ -31,8 +31,8 @@ public:
 
 		_layer_creators.push_back(_creator<T>);
 	}
-	virtual gsl::not_null<file*> open(gsl::czstring<> name, database::open_flag_type flags,
-	                                  database::open_flag_type& output_flags) override
+	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, database::open_flag_type flags,
+	                                              database::open_flag_type& output_flags) override
 	{
 		auto v = Vfs::open(name, flags, output_flags);
 

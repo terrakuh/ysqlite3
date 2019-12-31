@@ -25,7 +25,7 @@ inline int f(void*, int columns, char** values, char** names)
 class summi : public function::function
 {
 public:
-	summi() : function(2, true, true, TEXT_ENCODING::UTF_8)
+	summi() : function(2, true, true, text_enconding::utf8)
 	{}
 
 protected:
@@ -68,12 +68,12 @@ int main(int args, char** argv)
 	/*Printer p;
 	p.print(st);*/
 	try {
-		auto v = std::make_shared<vfs::layer::layered_vfs>(
-		    std::make_shared<vfs::sqlite3_vfs_wrapper>(vfs::vfs::find_vfs(nullptr), "myvfs"), "myvfs");
+		auto v = std::make_shared<vfs::layer::layered_vfs<>>(
+		    std::make_shared<vfs::sqlite3_vfs_wrapper<>>(vfs::find_vfs(nullptr), "myvfs"), "myvfs");
 
 		v->add_layer<rot13_layer>();
 
-		vfs::vfs::register_vfs(v, true);
+		vfs::register_vfs(v, true);
 		// auto _ = gsl::finally([&v] { vfs::vfs::unregister_vfs(&v); });
 
 		database db;

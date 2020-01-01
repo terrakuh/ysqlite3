@@ -46,6 +46,16 @@ public:
 		open_flag_wal             = SQLITE_OPEN_WAL
 	};
 
+	enum class journal_mode
+	{
+		delete_,
+		truncate,
+		persist,
+		memory,
+		wal,
+		off
+	};
+
 	class transaction
 	{
 	public:
@@ -166,7 +176,33 @@ public:
 	{
 		close(true);
 	}
+	/**
+	 Sets the database journaling mode.
 
+	 @param mode the journal modus
+	 @throws see database::execute()
+	*/
+	void set_journal_mode(journal_mode mode)
+	{
+		switch (mode) {
+		case journal_mode::delete_: execute("PRAGMA journal_mode=DELETE;"); break;
+		case journal_mode::truncate: execute("PRAGMA journal_mode=TRUNCATE;"); break;
+		case journal_mode::persist: execute("PRAGMA journal_mode=PERSIST;"); break;
+		case journal_mode::memory: execute("PRAGMA journal_mode=MEMORY;"); break;
+		case journal_mode::wal: execute("PRAGMA journal_mode=WAL;"); break;
+		case journal_mode::off: execute("PRAGMA journal_mode=OFF;"); break;
+		}
+	}
+	/**
+	 Enables or disables foreign key support.
+
+	 @param enable whether to enable support or not
+	 @throws see database::execute()
+	*/
+	void enable_foreign_keys(bool enable = true)
+	{
+		execute(enable ? "PRAGMA foreign_keys=ON" : "PRAGMA foreign_keys=OFF");
+	}
 	/**
 	 Closes this database. Closing a closed database is a noop.
 

@@ -76,7 +76,7 @@ public:
 	{
 		_parent->file_control(operation, arg);
 	}
-	virtual int sector_size() const noexcept
+	virtual int sector_size() const noexcept override
 	{
 		return _parent->sector_size();
 	}

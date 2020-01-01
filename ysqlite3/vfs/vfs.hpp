@@ -77,15 +77,29 @@ public:
 	vfs(const vfs& copy) = delete;
 	vfs(vfs&& move)      = delete;
 	virtual ~vfs()       = default;
+	/**
+	 Checks whether this VFS has been registered.
 
+	 @returns `true` if this VFS was registered, otherwise `false`
+	*/
 	bool registered() const noexcept
 	{
 		return _registered != nullptr;
 	}
+	/**
+	 Returns the name of this VFS.
+
+	 @returns the name of this VFS
+	*/
 	const std::string& name() const noexcept
 	{
 		return _name;
 	}
+	/**
+	 Returns the SQLite VFS handle.
+
+	 @returns the handle
+	*/
 	gsl::not_null<sqlite3_vfs*> handle() noexcept
 	{
 		return &_vfs;

@@ -12,6 +12,18 @@ namespace vfs {
 class file
 {
 public:
+	enum class file_format
+	{
+		main_db        = SQLITE_OPEN_MAIN_DB,
+		main_journal   = SQLITE_OPEN_MAIN_JOURNAL,
+		temp_db        = SQLITE_OPEN_TEMP_DB,
+		temp_journal   = SQLITE_OPEN_TEMP_JOURNAL,
+		transient_db   = SQLITE_OPEN_TRANSIENT_DB,
+		subjournal     = SQLITE_OPEN_SUBJOURNAL,
+		master_journal = SQLITE_OPEN_MASTER_JOURNAL,
+		wal            = SQLITE_OPEN_WAL
+	};
+
 	enum class sync_flag
 	{
 		normal    = SQLITE_SYNC_NORMAL,
@@ -67,6 +79,9 @@ public:
 		file_cntl_size_limit            = SQLITE_FCNTL_SIZE_LIMIT
 	};
 
+	/**
+	 Constructor.
+	*/
 	file() noexcept : _methods{}
 	{
 		_methods.iVersion               = 1;
@@ -106,10 +121,20 @@ public:
 	virtual void unlock(lock_flag flag)                                         = 0;
 	virtual bool has_reserved_lock() const                                      = 0;
 	virtual void file_control(file_cntl operation, void* arg)                   = 0;
+	/**
+	 Returns the sector size for this file. The default implementation returns 4096.
+
+	 @returns the sector size
+	*/
 	virtual int sector_size() const noexcept
 	{
 		return 4096;
 	}
+	/**
+	 Returns SQLite specific device characteristics.
+
+	 @returns device characteristics
+	*/
 	virtual int device_characteristics() const noexcept = 0;
 
 private:

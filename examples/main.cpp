@@ -100,7 +100,7 @@ int main(int args, char** argv)
 
 		database db;
 
-		db.open("D:/test.db");
+		db.open("test.db");
 		// db.register_function<summi>("summi");
 		db.execute(R"(pragma print("hello, world");)");
 		db.execute(R"(CREATE TABLE IF NOT EXISTS tast(noim text not null); INSERT INTO tast(noim) VALUES('heyho'),

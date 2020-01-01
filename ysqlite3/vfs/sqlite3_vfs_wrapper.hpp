@@ -30,7 +30,8 @@ public:
 	{
 		return _parent->mxPathname;
 	}
-	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, database::open_flag_type flags,
+	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, file::format format,
+	                                              database::open_flag_type flags,
 	                                              database::open_flag_type& output_flags) override
 	{
 		std::shared_ptr<sqlite3_file> tmp_file(reinterpret_cast<sqlite3_file*>(new gsl::byte[_parent->szOsFile]{}),
@@ -38,7 +39,7 @@ public:
 
 		_check_error(_parent->xOpen(_parent, name, tmp_file.get(), flags, &output_flags));
 
-		return new File(std::move(tmp_file));
+		return new File(format, std::move(tmp_file));
 	}
 	virtual void delete_file(gsl::czstring<> name, bool sync_directory) override
 	{

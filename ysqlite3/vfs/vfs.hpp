@@ -114,13 +114,15 @@ public:
 	 Opens the specified with the flags.
 
 	 @param name the file path
+	 @param format the format of the file
 	 @param flags the open flags; see database::open_flag_type
 	 @param output_flags[out] the applied flags
 	 @returns the file object
 	 @throws may throw anything
 	 @see for more information look at the official [SQLite page](https://www.sqlite.org/c3ref/vfs.html)
 	*/
-	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, database::open_flag_type flags,
+	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, file::format format,
+	                                              database::open_flag_type flags,
 	                                              database::open_flag_type& output_flags) = 0;
 	virtual void delete_file(gsl::czstring<> name, bool sync_directory)                   = 0;
 	virtual bool access(gsl::czstring<> name, access_flag flag)                           = 0;
@@ -217,10 +219,27 @@ private:
 		std::memset(file, 0, vfs->szOsFile);
 
 		return _wrap([=] {
-			int tmp = 0;
+			int tmp             = 0;
+			file::format format;
+			constexpr auto mask = SQLITE_OPEN_MAIN_DB | SQLITE_OPEN_TEMP_DB | SQLITE_OPEN_TRANSIENT_DB |
+			                      SQLITE_OPEN_MAIN_JOURNAL | SQLITE_OPEN_TEMP_JOURNAL | SQLITE_OPEN_SUBJOURNAL |
+			                      SQLITE_OPEN_MASTER_JOURNAL | SQLITE_OPEN_WAL;
+
+
+			switch (flags & mask) {
+			case SQLITE_OPEN_MAIN_DB:
+			case SQLITE_OPEN_TEMP_DB:
+			case SQLITE_OPEN_TRANSIENT_DB:
+			case SQLITE_OPEN_MAIN_JOURNAL:
+			case SQLITE_OPEN_TEMP_JOURNAL:
+			case SQLITE_OPEN_SUBJOURNAL:
+			case SQLITE_OPEN_MASTER_JOURNAL:
+			case SQLITE_OPEN_WAL: format = static_cast<file::format>(flags & mask);
+			default: YSQLITE_THROW(exception::sqlite3_exception, SQLITE_MISUSE, "unknown file format");
+			}
 
 			// open
-			auto f = _self(vfs)->open(name, flags, out_flags ? *out_flags : tmp);
+			auto f = _self(vfs)->open(name, format, flags, out_flags ? *out_flags : tmp);
 
 			file->pMethods                      = f->methods();
 			*reinterpret_cast<void**>(file + 1) = f;

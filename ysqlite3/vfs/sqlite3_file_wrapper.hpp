@@ -14,9 +14,9 @@ namespace vfs {
 class sqlite3_file_wrapper : public file
 {
 public:
-	sqlite3_file_wrapper(gsl::not_null<gsl::shared_ptr<sqlite3_file>> parent) noexcept : _parent(std::move(parent))
+	sqlite3_file_wrapper(format format, gsl::not_null<gsl::shared_ptr<sqlite3_file>> parent) noexcept
+	    : file(format), _parent(std::move(parent))
 	{}
-
 	virtual void close() override
 	{
 		auto _ = gsl::finally([this] { _parent = nullptr; });

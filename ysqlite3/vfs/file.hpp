@@ -12,7 +12,7 @@ namespace vfs {
 class file
 {
 public:
-	enum class file_format
+	enum class format
 	{
 		main_db        = SQLITE_OPEN_MAIN_DB,
 		main_journal   = SQLITE_OPEN_MAIN_JOURNAL,
@@ -82,7 +82,7 @@ public:
 	/**
 	 Constructor.
 	*/
-	file() noexcept : _methods{}
+	file(format format) noexcept : _methods{}
 	{
 		_methods.iVersion               = 1;
 		_methods.xClose                 = _close;
@@ -105,6 +105,7 @@ public:
 
 		_methods.xFetch   = _fetch; // if SQLITE_MAX_MMAP_SIZE > 0
 		_methods.xUnfetch = _unfetch;*/
+		_format = format;
 	}
 	virtual ~file() = default;
 	sqlite3_io_methods* methods() noexcept
@@ -139,6 +140,7 @@ public:
 
 private:
 	sqlite3_io_methods _methods;
+	format _format;
 
 	static file* _self(sqlite3_file* file) noexcept
 	{

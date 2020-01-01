@@ -31,12 +31,13 @@ public:
 
 		_layer_creators.push_back(_creator<T>);
 	}
-	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, database::open_flag_type flags,
+	virtual gsl::not_null<gsl::owner<file*>> open(gsl::czstring<> name, file::format format,
+	                                              database::open_flag_type flags,
 	                                              database::open_flag_type& output_flags) override
 	{
-		auto v = Vfs::open(name, flags, output_flags);
+		auto v = Vfs::open(name, format, flags, output_flags);
 
-		return new File(v, create_layers());
+		return new File(format, v, create_layers());
 	}
 	virtual layered_file::layers_type create_layers() const
 	{

@@ -46,6 +46,84 @@ public:
 		open_flag_wal             = SQLITE_OPEN_WAL
 	};
 
+	class transaction
+	{
+	public:
+		transaction(const transaction& copy) = delete;
+		/**
+		 Move-Constructor.
+
+		 @post move is invalid
+
+		 @param[in,out] move the transaction that should be moved
+		*/
+		transaction(transaction&& move) noexcept
+		{
+			_db      = move._db;
+			move._db = nullptr;
+		}
+		/**
+		 Destructor. If the transaction was neither committed nor rollbacked, it will be rollbacked.
+		*/
+		~transaction()
+		{
+			if (_db) {
+				rollback();
+			}
+		}
+		/**
+		 Commits the transaction.
+
+		 @pre this transaction is valid
+		 @post the transaction is not valid
+
+		 @throws see database::execute()
+		*/
+		void commit()
+		{
+			Expects(_db != nullptr);
+
+			_db->execute("COMMIT;");
+
+			_db = nullptr;
+		}
+		/**
+		 Rollbacks the transaction.
+
+		 @pre this transaction is valid
+		 @post the transaction is not valid
+
+		 @throws see database::execute()
+		*/
+		void rollback()
+		{
+			Expects(_db != nullptr);
+
+			_db->execute("ROLLBACK;");
+
+			_db = nullptr;
+		}
+		/**
+		 Tests whether this transaction is valid.
+
+		 @returns `true` if it is valid, otherwise `false`
+		*/
+		operator bool() const noexcept
+		{
+			return _db != nullptr;
+		}
+
+	private:
+		friend database;
+
+		database* _db;
+
+		transaction(gsl::not_null<database*> db) noexcept
+		{
+			_db = db;
+		}
+	};
+
 	/**
 	 Creates a database without a connection.
 	*/
@@ -240,6 +318,18 @@ public:
 		}
 
 		return stmt;
+	}
+	/**
+	 Begins a new transaction.
+
+	 @returns the transaction object; use this to rollback or commit
+	 @throws see database::execute()
+	*/
+	transaction begin_transaction()
+	{
+		execute("BEGIN TRANSACTION;");
+
+		return { this };
 	}
 	/**
 	 Returns the SQLite database file handle. This database will be marked as closed, but the handle will remain open.

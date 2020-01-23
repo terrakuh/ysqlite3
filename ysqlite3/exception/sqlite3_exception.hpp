@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_EXCEPTION_SQLITE3_EXCEPTION_HPP_
+#define YSQLITE3_EXCEPTION_SQLITE3_EXCEPTION_HPP_
 
 #include "../sqlite3.h"
 #include "base_exception.hpp"
@@ -34,3 +35,5 @@ private:
 
 } // namespace exception
 } // namespace ysqlite3
+
+#endif

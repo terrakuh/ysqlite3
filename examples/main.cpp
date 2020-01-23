@@ -6,6 +6,7 @@
 #include <ysqlite3/database.hpp>
 #include <ysqlite3/exception/base_exception.hpp>
 #include <ysqlite3/function/base64_encoder.hpp>
+#include <ysqlite3/function/regexp.hpp>
 #include <ysqlite3/vfs/layer/layered_vfs.hpp>
 #include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
 #include <ysqlite3/vfs/vfs.hpp>
@@ -26,7 +27,7 @@ inline int f(void*, int columns, char** values, char** names)
 class summi : public function::function
 {
 public:
-	summi() : function(2, true, true, text_enconding::utf8)
+	summi() : function(2, true, true, text_encoding::utf8)
 	{}
 
 protected:
@@ -105,6 +106,7 @@ int main(int args, char** argv)
 
 		db.register_function<function::base64_encode>("base64_encode");
 		db.register_function<function::base64_decode>("base64_decode");
+		db.register_function<ysqlite3::function::regexp>("regexp");
 
 		// db.register_function<summi>("summi");
 		db.execute(R"(pragma print("hello, world");)");
@@ -115,11 +117,10 @@ int main(int args, char** argv)
 )");
 
 		db.execute(R"(SELECT base64_encode("foo");)");
-		// sqlite3_exec(db.handle(), R"(SELECT * FROM tast;)", f, nullptr, nullptr);
+
 		sqlite3_exec(db.handle(), R"(SELECT base64_encode("foo");)", f, nullptr, nullptr);
 		sqlite3_exec(db.handle(), R"(SELECT base64_decode(base64_encode("foo"));)", f, nullptr, nullptr);
-
-		//		db.prepare_statement(R"(INSERT INTO tast(noim) VALUES(?))").bind(1, 65).finish();
+		sqlite3_exec(db.handle(), R"(select * from tast where noim regexp '.*')", f, nullptr, nullptr);
 
 	} catch (const std::exception& e) {
 		std::cerr << "exception caught (" << typeid(e).name() << ")";

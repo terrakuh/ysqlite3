@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_VFS_LAYER_LAYERED_VFS_HPP_
+#define YSQLITE3_VFS_LAYER_LAYERED_VFS_HPP_
 
 #include "../vfs.hpp"
 #include "layer.hpp"
@@ -27,7 +28,7 @@ public:
 	template<typename T>
 	typename std::enable_if<std::is_base_of<layer, T>::value>::type add_layer()
 	{
-		Expects(!this->registered());
+		Expects(!this->template registered());
 
 		_layer_creators.push_back(_creator<T>);
 	}
@@ -67,3 +68,5 @@ private:
 } // namespace layer
 } // namespace vfs
 } // namespace ysqlite3
+
+#endif

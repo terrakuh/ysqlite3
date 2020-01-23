@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_VFS_VFS_HPP_
+#define YSQLITE3_VFS_VFS_HPP_
 
 #include "../database.hpp"
 #include "../exception/sqlite3_exception.hpp"
@@ -381,3 +382,5 @@ inline sqlite3_vfs* find_vfs(gsl::czstring<> name) noexcept
 
 } // namespace vfs
 } // namespace ysqlite3
+
+#endif

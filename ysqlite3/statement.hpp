@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_STATEMENT_HPP_
+#define YSQLITE3_STATEMENT_HPP_
 
 #include "exception/database_exception.hpp"
 #include "exception/parameter_exception.hpp"
@@ -312,3 +313,5 @@ private:
 };
 
 } // namespace ysqlite3
+
+#endif

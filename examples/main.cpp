@@ -5,6 +5,7 @@
 #include <typeinfo>
 #include <ysqlite3/database.hpp>
 #include <ysqlite3/exception/base_exception.hpp>
+#include <ysqlite3/function/base64_encoder.hpp>
 #include <ysqlite3/vfs/layer/layered_vfs.hpp>
 #include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
 #include <ysqlite3/vfs/vfs.hpp>
@@ -101,10 +102,22 @@ int main(int args, char** argv)
 		database db;
 
 		db.open("test.db");
+
+		db.register_function<function::base64_encode>("base64_encode");
+		db.register_function<function::base64_decode>("base64_decode");
+
 		// db.register_function<summi>("summi");
 		db.execute(R"(pragma print("hello, world");)");
-		db.execute(R"(CREATE TABLE IF NOT EXISTS tast(noim text not null); INSERT INTO tast(noim) VALUES('heyho'),
-		 ('Musik');)");
+
+		db.execute(R"(
+	CREATE TABLE IF NOT EXISTS tast(noim text not null);
+	INSERT INTO tast(noim) VALUES('heyho'), ('Musik');
+)");
+
+		db.execute(R"(SELECT base64_encode("foo");)");
+		// sqlite3_exec(db.handle(), R"(SELECT * FROM tast;)", f, nullptr, nullptr);
+		sqlite3_exec(db.handle(), R"(SELECT base64_encode("foo");)", f, nullptr, nullptr);
+		sqlite3_exec(db.handle(), R"(SELECT base64_decode(base64_encode("foo"));)", f, nullptr, nullptr);
 
 		//		db.prepare_statement(R"(INSERT INTO tast(noim) VALUES(?))").bind(1, 65).finish();
 

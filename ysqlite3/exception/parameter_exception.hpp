@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_EXCEPTION_PARAMETER_EXCEPTION_HPP_
+#define YSQLITE3_EXCEPTION_PARAMETER_EXCEPTION_HPP_
 
 #include "base_exception.hpp"
 
@@ -13,3 +14,5 @@ public:
 
 } // namespace exception
 } // namespace ysqlite3
+
+#endif

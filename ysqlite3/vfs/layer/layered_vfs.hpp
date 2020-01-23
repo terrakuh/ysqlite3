@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
+#define YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
 
 #include "../vfs.hpp"
 #include "layer.hpp"
@@ -66,3 +67,5 @@ private:
 } // namespace layer
 } // namespace vfs
 } // namespace ysqlite3
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YSQLITE3_FUNCTION_FUNCTION_HPP_
+#define YSQLITE3_FUNCTION_FUNCTION_HPP_
 
 #include "../sqlite3.h"
 
@@ -76,3 +77,5 @@ private:
 
 } // namespace function
 } // namespace ysqlite3
+
+#endif

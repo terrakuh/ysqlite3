@@ -8,6 +8,7 @@
 #include <ysqlite3/vfs/layer/layered_vfs.hpp>
 #include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
 #include <ysqlite3/vfs/vfs.hpp>
+#include <ysqlite3/function/regexp.hpp>
 
 using namespace ysqlite3;
 
@@ -100,11 +101,14 @@ int main(int args, char** argv)
 
 		database db;
 
-		db.open("D:/test.db");
+		db.open("test.db");
+		db.register_function<ysqlite3::function::regexp>("regexp");
 		// db.register_function<summi>("summi");
 		db.execute(R"(pragma print("hello, world");)");
 		db.execute(R"(CREATE TABLE IF NOT EXISTS tast(noim text not null); INSERT INTO tast(noim) VALUES('heyho'),
 		 ('Musik');)");
+		 
+		 sqlite3_exec(db.handle(), R"(select * from tast where noim regexp '.*')", f, nullptr, nullptr);
 
 		//		db.prepare_statement(R"(INSERT INTO tast(noim) VALUES(?))").bind(1, 65).finish();
 

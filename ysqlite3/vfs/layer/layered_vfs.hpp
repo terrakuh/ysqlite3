@@ -1,5 +1,5 @@
-#ifndef YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
-#define YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
+#ifndef YSQLITE3_VFS_LAYER_LAYERED_VFS_HPP_
+#define YSQLITE3_VFS_LAYER_LAYERED_VFS_HPP_
 
 #include "../vfs.hpp"
 #include "layer.hpp"

@@ -15,7 +15,7 @@ class regexp : public function
 {
 public:
 	regexp(bool cache = true) noexcept
-	    : function(2, true, false, text_enconding::utf8),
+	    : function(2, true, false, text_encoding::utf8),
 	      _cache(cache ? new std::map<std::string, std::regex>() : nullptr)
 	{}
 

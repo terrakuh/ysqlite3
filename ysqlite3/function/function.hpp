@@ -17,7 +17,7 @@ namespace function {
 class function
 {
 public:
-	enum class text_enconding
+	enum class text_encoding
 	{
 		utf8    = SQLITE_UTF8,
 		utf16be = SQLITE_UTF16BE,
@@ -32,7 +32,7 @@ public:
 	 @param encoding the preferred text encoding
 	 @see more information can be found on the [SQLite page](https://www.sqlite.org/c3ref/create_function.html)
 	*/
-	function(int argc, bool deterministic, bool direct_only, text_enconding encoding) noexcept
+	function(int argc, bool deterministic, bool direct_only, text_encoding encoding) noexcept
 	{
 		_argc  = argc < 0 ? -1 : argc;
 		_flags = static_cast<int>(encoding) | (deterministic ? SQLITE_DETERMINISTIC : 0) |

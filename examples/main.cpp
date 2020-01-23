@@ -26,7 +26,7 @@ inline int f(void*, int columns, char** values, char** names)
 class summi : public function::function
 {
 public:
-	summi() : function(2, true, true, text_enconding::utf8)
+	summi() : function(2, true, true, text_encoding::utf8)
 	{}
 
 protected:

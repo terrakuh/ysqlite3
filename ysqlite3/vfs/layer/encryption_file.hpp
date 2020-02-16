@@ -12,13 +12,17 @@ namespace layer {
 class encryption_file : public layered_file
 {
 public:
+	using layered_file::layered_file;
+
 	virtual void file_control(file_cntl operation, void* arg) override
 	{
 		if (operation == file_cntl_pragma) {
-			auto name  = static_cast<char**>(arg)[0];
-			auto value = static_cast<char**>(arg)[1];
+			auto name  = static_cast<char**>(arg)[1];
+			auto value = static_cast<char**>(arg)[2];
 
 			if (!std::strcmp(name, "key")) {
+				return;
+			} else if (!std::strcmp(name, "key_b64")) {
 				return;
 			}
 		}

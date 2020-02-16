@@ -10,6 +10,7 @@ namespace layer {
 class encryption_layer : public layer
 {
 public:
+protected:
 };
 
 } // namespace layer

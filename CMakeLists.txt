@@ -4,7 +4,7 @@ project(ysqlite3)
 set(CMAKE_CXX_STANDARD 14)
 
 option(YSQLITE3_USE_OPENSSL "Build OpenSSL encryptors." OFF)
-
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -Wall -Wextra -Wuninitialized -fno-omit-frame-pointer -fsanitize=undefined,float-divide-by-zero,integer,nullability -g")
 find_package(Threads)
 
 file(GLOB_RECURSE YSQLITE_SOURCE_FILES

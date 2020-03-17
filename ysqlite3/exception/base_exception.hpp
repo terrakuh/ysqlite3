@@ -23,7 +23,7 @@ public:
     base_exception(const std::string& msg, const char* file, const char* function, int line)
         : _msg(msg), _file(file), _function(function ? function : "*no func*"), _line(line)
     {}
-    virtual const char* what() const noexcept override
+    const char* what() const noexcept override
     {
         return _msg.c_str();
     }

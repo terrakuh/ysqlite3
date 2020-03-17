@@ -105,8 +105,7 @@ bool database::closed() const noexcept
 	return _database == nullptr;
 }
 
-void database::open(gsl::not_null<gsl::czstring<>> file, open_flag_type flags = open_flag_readwrite | open_flag_create,
-                    gsl::czstring<> vfs = nullptr)
+void database::open(gsl::not_null<gsl::czstring<>> file, open_flag_type flags, gsl::czstring<> vfs)
 {
 	Expects(vfs == nullptr || vfs[0] != 0);
 

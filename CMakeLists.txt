@@ -14,6 +14,7 @@ add_library(ysqlite3 "${YSQLITE_SOURCE_FILES}" "${CMAKE_CURRENT_SOURCE_DIR}/src/
 target_include_directories(ysqlite3
 	PUBLIC 
 		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3>"
+		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
 		"$<INSTALL_INTERFACE:include>"
 	PUBLIC
 		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rd_party>"

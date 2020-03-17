@@ -12,7 +12,7 @@ namespace function {
 class base64_encode : public function
 {
 public:
-	base64_encode() noexcept : function(1, true, false, text_enconding::utf8)
+	base64_encode() noexcept : function(1, true, false, text_encoding::utf8)
 	{}
 
 protected:
@@ -32,7 +32,7 @@ protected:
 class base64_decode : public function
 {
 public:
-	base64_decode() noexcept : function(1, true, false, text_enconding::utf8)
+	base64_decode() noexcept : function(1, true, false, text_encoding::utf8)
 	{}
 
 protected:

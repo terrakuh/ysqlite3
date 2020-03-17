@@ -28,7 +28,7 @@ public:
 	template<typename T>
 	typename std::enable_if<std::is_base_of<layer, T>::value>::type add_layer()
 	{
-		Expects(!this->template registered());
+		Expects(!this->registered());
 
 		_layer_creators.push_back(_creator<T>);
 	}

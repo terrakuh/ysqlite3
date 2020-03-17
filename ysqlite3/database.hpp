@@ -106,7 +106,7 @@ public:
 	private:
 		friend database;
 
-		database* _db;
+		database* _db = nullptr;
 
 		transaction(gsl::not_null<database*> db) noexcept;
 	};

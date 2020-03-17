@@ -115,6 +115,13 @@ int main(int args, char** argv)
 	CREATE TABLE IF NOT EXISTS tast(noim text not null);
 	INSERT INTO tast(noim) VALUES('heyho'), ('Musik');
 )");
+		auto stmt = db.prepare_statement("INSERT INTO tast(noim) VALUES(?);");
+
+		std::string in;
+		std::cout << "enter new value: ";
+		std::getline(std::cin, in);
+		stmt.bind(1, in);
+		stmt.finish();
 
 		db.execute(R"(SELECT base64_encode("foo");)");
 

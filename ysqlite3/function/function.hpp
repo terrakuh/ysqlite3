@@ -12,8 +12,8 @@ class database;
 namespace function {
 
 /**
- A function interface for SQLite.
-*/
+ * A function interface for SQLite.
+ */
 class function
 {
 public:
@@ -25,13 +25,13 @@ public:
 	};
 
 	/**
-	 Constructor.
-
-	 @param the maximum allowed parameter count; if this value is negative the is no limit
-	 @param deterministic whether this function produces the same output with the same input
-	 @param encoding the preferred text encoding
-	 @see more information can be found on the [SQLite page](https://www.sqlite.org/c3ref/create_function.html)
-	*/
+	 * Constructor.
+	 *
+	 * @param the maximum allowed parameter count; if this value is negative the is no limit
+	 * @param deterministic whether this function produces the same output with the same input
+	 * @param encoding the preferred text encoding
+	 * @see more information can be found on the [SQLite page](https://www.sqlite.org/c3ref/create_function.html)
+	 */
 	function(int argc, bool deterministic, bool direct_only, text_encoding encoding) noexcept
 	{
 		_argc  = argc < 0 ? -1 : argc;
@@ -40,12 +40,12 @@ public:
 	}
 	virtual ~function() = default;
 	/**
-	 The function interface for SQLite.
-
-	 @param[in] context the context
-	 @param argc the argument count
-	 @param[in] argv the argument values
-	*/
+	 * The function interface for SQLite.
+	 *
+	 * @param[in] context the context
+	 * @param argc the argument count
+	 * @param[in] argv the argument values
+	 */
 	static void xfunc(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept
 	{
 		try {
@@ -59,13 +59,13 @@ public:
 
 protected:
 	/**
-	 Runs the function.
-
-	 @param[in] context the function context
-	 @param argc the argument count
-	 @param[in] args the argument values
-	 @throws may throw anything
-	*/
+	 * Runs the function.
+	 *
+	 * @param[in] context the function context
+	 * @param argc the argument count
+	 * @param[in] args the argument values
+	 * @throws may throw anything
+	 */
 	virtual void run(sqlite3_context* context, int argc, sqlite3_value** argv) = 0;
 
 private:

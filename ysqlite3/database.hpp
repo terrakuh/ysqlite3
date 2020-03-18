@@ -156,13 +156,14 @@ public:
 	/**
 	 * Closes this database. Closing a closed database is a noop.
 	 *
-	 * @param force (opt) if `true` the database is closed when every statement was finalized and/or backups finished
+	 * @param force (opt) if `true` the database is closed when every statement was finalized and/or backups
+	 * finished
 	 * @throw exception::database_exception if `force == false` and if the database is busy
 	 */
 	void close(bool force = false);
 	/**
-	 * Checks whether the database is closed. This function does not check if the actual database file was forcefully
-	 * closed.
+	 * Checks whether the database is closed. This function does not check if the actual database file was
+	 * forcefully closed.
 	 *
 	 * @returns `true` if the database is closed, otherwise `false`
 	 */
@@ -179,11 +180,11 @@ public:
 	 * @throw exception::database_exception if the database could not be opened
 	 * @throw see database::close()
 	 */
-	void open(gsl::not_null<gsl::czstring<>> file, open_flag_type flags = open_flag_readwrite | open_flag_create,
-	          gsl::czstring<> vfs = nullptr);
+	void open(gsl::not_null<gsl::czstring<>> file,
+	          open_flag_type flags = open_flag_readwrite | open_flag_create, gsl::czstring<> vfs = nullptr);
 	/**
 	 * Registers a normal function which can then be used in SQL statements.
-	 * 
+	 *
 	 * @pre the database is openend
 	 *
 	 * @tparam T the function; must inherit function::function
@@ -200,8 +201,8 @@ public:
 		Expects(!closed());
 
 		auto instance = std::make_unique<T>(std::forward<Args>(args)...);
-		auto error    = sqlite3_create_function_v2(_database, name, instance->_argc, instance->_flags, instance.get(),
-                                                function::function::xfunc, nullptr, nullptr,
+		auto error    = sqlite3_create_function_v2(_database, name, instance->_argc, instance->_flags,
+                                                instance.get(), function::function::xfunc, nullptr, nullptr,
                                                 [](void* instance) { delete static_cast<T*>(instance); });
 
 		if (error != SQLITE_OK) {
@@ -221,6 +222,14 @@ public:
 	 * @throw exception::sql_exception if the SQL statement is invalid
 	 */
 	std::size_t execute(gsl::not_null<gsl::czstring<>> sql);
+	/**
+	 * Returns the rowid of the last insert statement of this connection or 0 if no insert was made.
+	 *
+	 * @pre the database is open
+	 *
+	 * @returns the last rowid
+	 */
+	sqlite3_int64 last_insert_rowid() const;
 	/**
 	 * Creates a prepared statement. Prepared statement can have parameters descibed by any of the following:
 	 *
@@ -245,7 +254,8 @@ public:
 	 */
 	transaction begin_transaction();
 	/**
-	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will remain open.
+	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will
+	 * remain open.
 	 *
 	 * @post the database is closed
 	 *

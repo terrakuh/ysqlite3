@@ -148,6 +148,13 @@ std::size_t database::execute(gsl::not_null<gsl::czstring<>> sql)
 	return result;
 }
 
+sqlite3_int64 database::last_insert_rowid() const
+{
+	Expects(!closed());
+
+	return sqlite3_last_insert_rowid(_database);
+}
+
 statement database::prepare_statement(gsl::not_null<gsl::czstring<>> sql)
 {
 	Expects(!closed());

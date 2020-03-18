@@ -17,18 +17,17 @@ file(GLOB_RECURSE YSQLITE_SOURCE_FILES
 add_library(ysqlite3 "${YSQLITE_SOURCE_FILES}" "${CMAKE_CURRENT_SOURCE_DIR}/src/sqlite3.c")
 target_include_directories(ysqlite3
 							PUBLIC 
-								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3>"
 								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-								"$<INSTALL_INTERFACE:include>"
-							PUBLIC
+								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3>"
 								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rd_party>"
+								"$<INSTALL_INTERFACE:include>"
 								"$<INSTALL_INTERFACE:include/ysqlite3/3rd_party>")
-target_link_libraries("ysqlite3"
+target_link_libraries(ysqlite3
 						PUBLIC Threads::Threads
 						PUBLIC "${CMAKE_DL_LIBS}")
 
 add_executable(main "${CMAKE_CURRENT_SOURCE_DIR}/examples/main.cpp")
-target_link_libraries(main PUBLIC "ysqlite3")
+target_link_libraries(main ysqlite3)
 
 install(TARGETS ysqlite3
 		EXPORT ysqlite3

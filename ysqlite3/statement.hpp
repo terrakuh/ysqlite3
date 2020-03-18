@@ -98,12 +98,14 @@ public:
 	 * @throw exception::database_exception if the step could not be executed properly
 	 */
 	bool step();
+	statement& bind_reference(index index, gsl::czstring<> value);
+	statement& bind_reference(index index, const std::string& value);
 	statement& bind(index index, gsl::czstring<> value);
 	statement& bind(index index, const std::string& value);
 	statement& bind(index index, std::nullptr_t);
 	statement& bind(index index, double value);
 	statement& bind(index index, int value);
-	statement& bind64(index index, sqlite3_int64 value);
+	statement& bind(index index, sqlite3_int64 value);
 	statement& bind_zeros(index index, int size);
 	statement& bind_zeros64(index index, sqlite3_uint64 size);
 	/**

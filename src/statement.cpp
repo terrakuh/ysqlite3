@@ -1,7 +1,5 @@
 #include "statement.hpp"
 
-#include <cstring>
-
 using namespace ysqlite3;
 
 statement::index::index(int index)
@@ -111,49 +109,22 @@ bool statement::step()
 
 statement& statement::bind_reference(index index, gsl::czstring<> value)
 {
-	return _bind(index, sqlite3_bind_text, value, -1, nullptr);
+	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_STATIC);
 }
 
 statement& statement::bind_reference(index index, const std::string& value)
 {
-	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), nullptr);
+	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_STATIC);
 }
 
 statement& statement::bind(index index, gsl::czstring<> value)
 {
-	const auto length = std::char_traits<char>::length(value);
-	const auto buffer = new char[length + 1];
-
-	std::memcpy(buffer, value, length);
-
-	buffer[length] = 0;
-
-	try {
-		_bind(index, sqlite3_bind_text, buffer, length, [](void* ptr) { delete[] static_cast<char*>(ptr); });
-	} catch (...) {
-		delete[] buffer;
-
-		throw;
-	}
-	
-	return *this;
+	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_TRANSIENT);
 }
 
 statement& statement::bind(index index, const std::string& value)
 {
-	const auto buffer = new char[value.length()];
-
-	std::memcpy(buffer, value.c_str(), value.length());
-
-	try {
-		_bind(index, sqlite3_bind_text, buffer, value.length(), [](void* ptr) { delete[] static_cast<char*>(ptr); });
-	} catch (...) {
-		delete[] buffer;
-
-		throw;
-	}
-	
-	return *this;
+	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_TRANSIENT);
 }
 
 statement& statement::bind(index index, std::nullptr_t)

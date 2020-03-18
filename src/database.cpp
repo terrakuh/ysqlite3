@@ -51,6 +51,13 @@ void transaction::commit()
 	_db = nullptr;
 }
 
+transaction& transaction::operator=(transaction&& move) noexcept
+{
+	std::swap(_db, move._db);
+
+	return *this;
+}
+
 database::database(gsl::not_null<gsl::czstring<>> file)
 {
 	open(file);
@@ -194,4 +201,11 @@ sqlite3* database::handle() noexcept
 const sqlite3* database::handle() const noexcept
 {
 	return _database;
+}
+
+database& database::operator=(database&& move) noexcept
+{
+	std::swap(_database, move._database);
+
+	return *this;
 }

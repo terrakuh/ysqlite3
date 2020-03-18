@@ -153,6 +153,7 @@ public:
 	 * @returns the handle
 	 */
 	gsl::owner<sqlite3_stmt*> release() noexcept;
+	statement& operator=(statement&& move) noexcept;
 
 private:
 	sqlite3_stmt* _statement = nullptr;

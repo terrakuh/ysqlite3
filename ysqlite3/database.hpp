@@ -102,6 +102,7 @@ public:
 		 * @returns `true` if it is open, otherwise `false`
 		 */
 		operator bool() const noexcept;
+		transaction& operator=(transaction&& move) noexcept;
 
 	private:
 		friend database;
@@ -274,6 +275,7 @@ public:
 	 * @returns the database handle or `nullptr` if the database is closed
 	 */
 	const sqlite3* handle() const noexcept;
+	database& operator=(database&& move) noexcept;
 
 private:
 	/** the underlying sqlite3 database connection */

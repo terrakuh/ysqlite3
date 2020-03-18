@@ -226,6 +226,13 @@ gsl::owner<sqlite3_stmt*> statement::release() noexcept
 	return p;
 }
 
+statement& statement::operator=(statement&& move) noexcept
+{
+	std::swap(_statement, move._statement);
+
+	return *this;
+}
+
 int statement::_to_column_index(const index& index)
 {
 	if (index._name) {

@@ -9,7 +9,7 @@ statement::statement(sqlite3_stmt* stmt, sqlite3* db)
 	Expects(static_cast<bool>(stmt) == static_cast<bool>(db));
 
 	_statement = stmt;
-	_database = db;
+	_database  = db;
 }
 
 statement::statement(statement&& move) noexcept
@@ -217,6 +217,8 @@ int statement::_to_parameter_index(index index)
 		}
 
 		return i;
+	} else if (index.value < 1 || index.value > sqlite3_bind_parameter_count(_statement)) {
+		YSQLITE_THROW(exception::parameter_exception, "parameter index out of range");
 	}
 
 	return index.value;

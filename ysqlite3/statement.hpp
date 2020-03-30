@@ -157,6 +157,13 @@ private:
 	sqlite3_stmt* _statement = nullptr;
 	sqlite3* _database = nullptr;
 
+	/**
+	 * Returns the integer index of the parameter.
+	 *
+	 * @param index the parameter
+	 * @returns the integer index
+	 * @throw exception::parameter_exception if the parameter name is unknown or the index is out of range
+	 */
 	int _to_parameter_index(index index);
 	template<typename Binder, typename... Args>
 	statement& _bind(const index& index, Binder&& binder, Args&&... args)

@@ -123,6 +123,8 @@ int results::_to_column_index(index index)
 		}
 
 		YSQLITE_THROW(exception::parameter_exception, "unkown column name");
+	} else if (index.value < 0 || index.value >= sqlite3_column_count(_statement)) {
+		YSQLITE_THROW(exception::parameter_exception, "column index out of range");
 	}
 
 	return index.value;

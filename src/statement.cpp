@@ -128,13 +128,12 @@ statement& statement::bind(index index, double value)
 	return _bind(index, sqlite3_bind_double, value);
 }
 
-statement& statement::bind(index index, int value)
-{
-	return _bind(index, sqlite3_bind_int, value);
-}
-
 statement& statement::bind(index index, sqlite3_int64 value)
 {
+	if (value >= std::numeric_limits<int>::min() && value <= std::numeric_limits<int>::max()) {
+		return _bind(index, sqlite3_bind_int, value);
+	}
+
 	return _bind(index, sqlite3_bind_int64, value);
 }
 

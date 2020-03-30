@@ -72,17 +72,7 @@ public:
 	 * @returns the integer value
 	 * @throw see _to_column_index()
 	 */
-	int integer(index index);
-	/**
-	 * Returns the value at the index as an integer.
-	 *
-	 * @pre `*this == true`
-	 *
-	 * @param index the column
-	 * @returns the integer value
-	 * @throw see _to_column_index()
-	 */
-	sqlite3_int64 integer64(index index);
+	sqlite3_int64 integer(index index);
 	/**
 	 * Returns the value at the index as a double.
 	 *

@@ -94,7 +94,6 @@ public:
 	statement& bind(index index, const std::string& value);
 	statement& bind(index index, std::nullptr_t);
 	statement& bind(index index, double value);
-	statement& bind(index index, int value);
 	statement& bind(index index, sqlite3_int64 value);
 	statement& bind_zeros(index index, sqlite3_uint64 size);
 	/**

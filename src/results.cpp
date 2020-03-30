@@ -18,14 +18,7 @@ bool results::is_null(index index)
 	return type_of(index) == type::null;
 }
 
-int results::integer(index index)
-{
-	Expects(*this);
-
-	return sqlite3_column_int(_statement, _to_column_index(index));
-}
-
-sqlite3_int64 results::integer64(index index)
+sqlite3_int64 results::integer(index index)
 {
 	Expects(*this);
 

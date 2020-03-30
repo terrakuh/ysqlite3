@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace ysqlite3 {
 
 class statement
@@ -108,8 +107,7 @@ public:
 	statement& bind(index index, double value);
 	statement& bind(index index, int value);
 	statement& bind(index index, sqlite3_int64 value);
-	statement& bind_zeros(index index, int size);
-	statement& bind_zeros64(index index, sqlite3_uint64 size);
+	statement& bind_zeros(index index, sqlite3_uint64 size);
 	/**
 	 * Returns whether the statement makes no direct changes to the database.
 	 *

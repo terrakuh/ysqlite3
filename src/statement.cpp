@@ -1,5 +1,7 @@
 #include "statement.hpp"
 
+#include <limits>
+
 using namespace ysqlite3;
 
 statement::index::index(int index)
@@ -147,13 +149,12 @@ statement& statement::bind(index index, sqlite3_int64 value)
 	return _bind(index, sqlite3_bind_int64, value);
 }
 
-statement& statement::bind_zeros(index index, int size)
+statement& statement::bind_zeros(index index, sqlite3_uint64 size)
 {
-	return _bind(index, sqlite3_bind_zeroblob, size);
-}
+	if (size <= std::numeric_limits<int>::max()) {
+		return _bind(index, sqlite3_bind_zeroblob, static_cast<int>(size));
+	}
 
-statement& statement::bind_zeros64(index index, sqlite3_uint64 size)
-{
 	return _bind(index, sqlite3_bind_zeroblob64, size);
 }
 

@@ -83,7 +83,7 @@ void statement::close()
 	}
 }
 
-bool statement::closed() noexcept
+bool statement::closed() const noexcept
 {
 	return !_statement;
 }

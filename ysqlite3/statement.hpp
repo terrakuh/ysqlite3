@@ -88,7 +88,7 @@ public:
 	 *
 	 * @returns `true` if the statement is closed, otherwise `false`
 	 */
-	bool closed() noexcept;
+	bool closed() const noexcept;
 	/**
 	 * Evaluates the SQL statement step by step and returns the data. This function must be called one or more
 	 * times.

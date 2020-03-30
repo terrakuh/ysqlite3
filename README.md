@@ -48,13 +48,13 @@ using namespace ysqlite3;
 class rot13_layer : public vfs::layer::layer
 {
 public:
-	virtual void encode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
+	void encode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
 	{
 		for (auto& i : buffer) {
 			i = static_cast<gsl::byte>(static_cast<unsigned char>(i) + 13);
 		}
 	}
-	virtual void decode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
+	void decode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
 	{
 		for (auto& i : buffer) {
 			i = static_cast<gsl::byte>(static_cast<unsigned char>(i) - 13);

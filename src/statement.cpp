@@ -178,6 +178,19 @@ int statement::column_count()
 	return sqlite3_column_count(_statement);
 }
 
+std::vector<std::string> statement::columns()
+{
+	Expects(!closed());
+
+	std::vector<std::string> columns;
+
+	for (int i = 0, c = sqlite3_column_count(_statement); i < c; ++i) {
+		columns.push_back(sqlite3_column_name(_statement, i));
+	}
+
+	return columns;
+}
+
 sqlite3_stmt* statement::handle() noexcept
 {
 	return _statement;

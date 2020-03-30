@@ -9,6 +9,8 @@
 #include <gsl/gsl>
 #include <string>
 #include <utility>
+#include <vector>
+
 
 namespace ysqlite3 {
 
@@ -132,6 +134,15 @@ public:
 	 * @returns the column count
 	 */
 	int column_count();
+	/**
+	 * Returns the selected column names of a SELECT statement. If this is no SELECT statement, no columns are
+	 * returned.
+	 *
+	 * @pre the statement is not closed
+	 *
+	 * @returns the column name
+	 */
+	std::vector<std::string> columns();
 	/**
 	 * Returns the SQLite3 statment handle.
 	 *

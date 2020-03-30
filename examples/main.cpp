@@ -109,25 +109,23 @@ int main(int args, char** argv)
 		db.register_function<ysqlite3::function::regexp>("regexp");
 
 		// db.register_function<summi>("summi");
-		db.execute(R"(pragma print("hello, world");)");
+		//db.execute(R"(pragma print("hello, world");)");
 
 		db.execute(R"(
-	CREATE TABLE IF NOT EXISTS tast(noim text not null);
-	INSERT INTO tast(noim) VALUES('heyho'), ('Musik');
+	CREATE TABLE IF NOT EXISTS tast(noim text);
+	INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
 )");
-		auto stmt = db.prepare_statement("INSERT INTO tast(noim) VALUES(?);");
 
-		std::string in;
-		std::cout << "enter new value: ";
-		std::getline(std::cin, in);
-		stmt.bind(1, in);
-		stmt.finish();
+		auto stmt = db.prepare_statement("select * from tast");
+		results r;
 
-		db.execute(R"(SELECT base64_encode("foo");)");
+		while ((r = stmt.step())) {
+			for (auto i : stmt.columns()) {
+				auto text = r.text(i.c_str());
 
-		sqlite3_exec(db.handle(), R"(SELECT base64_encode("foo");)", f, nullptr, nullptr);
-		sqlite3_exec(db.handle(), R"(SELECT base64_decode(base64_encode("foo"));)", f, nullptr, nullptr);
-		sqlite3_exec(db.handle(), R"(select * from tast where noim regexp '.*')", f, nullptr, nullptr);
+				std::cout << i << ": " << (!text ? "<null>" : text) << std::endl;
+ 			}
+		}
 
 	} catch (const std::exception& e) {
 		std::cerr << "exception caught (" << typeid(e).name() << ")";

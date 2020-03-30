@@ -3,6 +3,7 @@
 
 #include "exception/database_exception.hpp"
 #include "exception/parameter_exception.hpp"
+#include "results.hpp"
 #include "sqlite3.h"
 
 #include <cstddef>
@@ -16,26 +17,15 @@ namespace ysqlite3 {
 class statement
 {
 public:
-	class index
-	{
-	public:
-		index(int index);
-		index(gsl::czstring<> name);
-
-	private:
-		friend statement;
-
-		int _index        = 0;
-		const char* _name = nullptr;
-	};
-
 	/**
 	 * Associates this object with an SQLite statement.
 	 *
+	 * @pre either both parameters are `nullptr` or none
+	 * 
 	 * @param[in] stmt the statement
+	 * @param[in] db the database
 	 */
-	statement(sqlite3_stmt* stmt) noexcept;
-	statement(const statement& copy) = delete;
+	statement(sqlite3_stmt* stmt, sqlite3* db);
 	/**
 	 * Move-Constructor.
 	 *
@@ -94,11 +84,10 @@ public:
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns `true` if a row was fetched or `false` if no more rows are available, i.e. the statement is
-	 * finished
+	 * @returns the fetched results
 	 * @throw exception::database_exception if the step could not be executed properly
 	 */
-	bool step();
+	results step();
 	statement& bind_reference(index index, gsl::czstring<> value);
 	statement& bind_reference(index index, const std::string& value);
 	statement& bind(index index, gsl::czstring<> value);
@@ -166,14 +155,15 @@ public:
 
 private:
 	sqlite3_stmt* _statement = nullptr;
+	sqlite3* _database = nullptr;
 
-	int _to_column_index(const index& index);
+	int _to_parameter_index(index index);
 	template<typename Binder, typename... Args>
 	statement& _bind(const index& index, Binder&& binder, Args&&... args)
 	{
 		Expects(!closed());
 
-		auto error = binder(_statement, _to_column_index(index), std::forward<Args>(args)...);
+		auto error = binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...);
 
 		if (error != SQLITE_OK) {
 			YSQLITE_THROW(exception::database_exception, error, "could not bind value");

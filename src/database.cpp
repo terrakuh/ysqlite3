@@ -174,7 +174,7 @@ statement database::prepare_statement(gsl::not_null<gsl::czstring<>> sql)
 		YSQLITE_THROW(exception::database_exception, error, "could not prepare statement");
 	}
 
-	return stmt;
+	return { stmt, _database };
 }
 
 database::transaction database::begin_transaction()

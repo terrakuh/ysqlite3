@@ -4,23 +4,12 @@
 
 using namespace ysqlite3;
 
-statement::index::index(int index)
+statement::statement(sqlite3_stmt* stmt, sqlite3* db)
 {
-	Expects(index > 0);
+	Expects(static_cast<bool>(stmt) == static_cast<bool>(db));
 
-	_index = index;
-}
-
-statement::index::index(gsl::czstring<> name)
-{
-	Expects(name);
-
-	_name = name;
-}
-
-statement::statement(sqlite3_stmt* stmt) noexcept
-{
 	_statement = stmt;
+	_database = db;
 }
 
 statement::statement(statement&& move) noexcept
@@ -90,20 +79,20 @@ bool statement::closed() const noexcept
 	return !_statement;
 }
 
-bool statement::step()
+results statement::step()
 {
 	Expects(!closed());
 
 	auto error = sqlite3_step(_statement);
 
 	if (error == SQLITE_ROW) {
-		return true;
+		return { _statement, _database };
 	}
 
 	auto _ = gsl::finally([this] { sqlite3_reset(_statement); });
 
 	if (error == SQLITE_DONE) {
-		return false;
+		return {};
 	}
 
 	YSQLITE_THROW(exception::database_exception, error, "failed to step");
@@ -218,10 +207,10 @@ statement& statement::operator=(statement&& move) noexcept
 	return *this;
 }
 
-int statement::_to_column_index(const index& index)
+int statement::_to_parameter_index(index index)
 {
-	if (index._name) {
-		auto i = sqlite3_bind_parameter_index(_statement, index._name);
+	if (index.name) {
+		auto i = sqlite3_bind_parameter_index(_statement, index.name);
 
 		if (!i) {
 			YSQLITE_THROW(exception::parameter_exception, "unkown parameter name");
@@ -230,5 +219,5 @@ int statement::_to_column_index(const index& index)
 		return i;
 	}
 
-	return index._index;
+	return index.value;
 }

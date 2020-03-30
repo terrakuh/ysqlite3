@@ -4,6 +4,8 @@ A handy SQLite3 wrapper with additional VFS for encryption
 
 ## Building
 
+### Compiling & Installing
+
 ```sh
 git clone https://github.com/terrakuh/ysqlite3.git
 cd ysqlite3
@@ -11,6 +13,15 @@ cd ysqlite3
 cmake . && cmake --build .
 
 cmake --build . --target install
+```
+
+### CMake
+
+```cmake
+find_package(ysqlite3 REQUIRED)
+
+add_executable(main "main.cpp")
+target_link_libraries(main ysqlite3::ysqlite3)
 ```
 
 ## Usage

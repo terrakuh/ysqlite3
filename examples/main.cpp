@@ -1,6 +1,3 @@
-#define GSL_THROW_ON_CONTRACT_VIOLATION
-
-#include <backward.hpp>
 #include <iostream>
 #include <typeinfo>
 #include <ysqlite3/database.hpp>
@@ -92,8 +89,8 @@ int main(int args, char** argv)
 	/*Printer p;
 	p.print(st);*/
 	try {
-		auto v = std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>, super>>(vfs::find_vfs(nullptr),
-		                                                                                      "myvfs");
+		auto v = std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>, super>>(
+		    vfs::find_vfs(nullptr), "myvfs");
 
 		v->add_layer<rot13_layer>();
 
@@ -109,7 +106,7 @@ int main(int args, char** argv)
 		db.register_function<ysqlite3::function::regexp>("regexp");
 
 		// db.register_function<summi>("summi");
-		//db.execute(R"(pragma print("hello, world");)");
+		// db.execute(R"(pragma print("hello, world");)");
 
 		db.execute(R"(
 	CREATE TABLE IF NOT EXISTS tast(noim text);
@@ -124,7 +121,7 @@ int main(int args, char** argv)
 				auto text = r.text(i.c_str());
 
 				std::cout << i << ": " << (!text ? "<null>" : text) << std::endl;
- 			}
+			}
 		}
 
 	} catch (const std::exception& e) {

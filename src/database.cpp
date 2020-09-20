@@ -1,64 +1,13 @@
 #include "database.hpp"
 
+#include "error.hpp"
+#include "finally.hpp"
+
 #include <utility>
 
 using namespace ysqlite3;
-using transaction = database::transaction;
 
-transaction::transaction(transaction&& move) noexcept
-{
-	_db      = move._db;
-	move._db = nullptr;
-}
-
-transaction::~transaction()
-{
-	if (_db) {
-		rollback();
-	}
-}
-
-void transaction::rollback()
-{
-	Expects(open());
-
-	_db->execute("ROLLBACK;");
-
-	_db = nullptr;
-}
-
-bool transaction::open() const noexcept
-{
-	return _db;
-}
-
-transaction::operator bool() const noexcept
-{
-	return open();
-}
-
-transaction::transaction(gsl::not_null<database*> db) noexcept
-{
-	_db = db;
-}
-
-void transaction::commit()
-{
-	Expects(open());
-
-	_db->execute("COMMIT;");
-
-	_db = nullptr;
-}
-
-transaction& transaction::operator=(transaction&& move) noexcept
-{
-	std::swap(_db, move._db);
-
-	return *this;
-}
-
-database::database(gsl::not_null<gsl::czstring<>> file)
+database::database(const char* file)
 {
 	open(file);
 }
@@ -96,10 +45,8 @@ void database::close(bool force)
 		if (force) {
 			sqlite3_close_v2(_database);
 		} else {
-			auto error = sqlite3_close(_database);
-
-			if (error != SQLITE_OK) {
-				YSQLITE_THROW(exception::database_exception, error, "cloud not close");
+			if (const auto ec = sqlite3_close(_database)) {
+				throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 			}
 		}
 
@@ -107,90 +54,86 @@ void database::close(bool force)
 	}
 }
 
-bool database::closed() const noexcept
+bool database::is_open() const noexcept
 {
-	return _database == nullptr;
+	return _database;
 }
 
-void database::open(gsl::not_null<gsl::czstring<>> file, open_flag_type flags, gsl::czstring<> vfs)
+void database::open(const char* file, open_flag_type flags, const char* vfs)
 {
-	Expects(vfs == nullptr || vfs[0] != 0);
+	if (!vfs && !vfs[0]) {
+		throw std::system_error{ errc::bad_vfs_name };
+	}
 
 	close();
 
-	auto error = sqlite3_open_v2(file, &_database, flags, vfs);
-
-	if (error != SQLITE_OK) {
+	if (const auto ec = sqlite3_open_v2(file, &_database, flags, vfs)) {
 		_database = nullptr;
-
-		YSQLITE_THROW(exception::database_exception, error, "failed to open");
+		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
-
-	Ensures(!closed());
 }
 
-std::size_t database::execute(gsl::not_null<gsl::czstring<>> sql)
+std::size_t database::execute(const char* sql)
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::database_is_closed };
+	}
 
 	char* message      = nullptr;
 	std::size_t result = 0;
-	auto error         = sqlite3_exec(
+	const auto ec      = sqlite3_exec(
         _database, sql,
         [](void* result, int, char**, char**) {
             *static_cast<std::size_t*>(result) += 1;
-
             return SQLITE_OK;
         },
         &result, &message);
 
-	if (message) {
-		auto _ = gsl::finally([message] { sqlite3_free(message); });
+	const auto _ = finally([message] { sqlite3_free(message); });
 
-		YSQLITE_THROW(exception::sql_exception, message);
-	} else if (error != SQLITE_OK) {
-		YSQLITE_THROW(exception::database_exception, error, "failed to execute sql");
+	if (ec) {
+		if (message) {
+			throw std::system_error{ static_cast<sqlite3_errc>(ec), message };
+		}
+
+		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
 
 	return result;
 }
 
-sqlite3_int64 database::last_insert_rowid() const
+sqlite3_int64 database::last_insert_rowid() const noexcept
 {
-	Expects(!closed());
-
-	return sqlite3_last_insert_rowid(_database);
+	return is_open() ? sqlite3_last_insert_rowid(_database) : 0;
 }
 
-statement database::prepare_statement(gsl::not_null<gsl::czstring<>> sql)
+statement database::prepare_statement(const char* sql)
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::database_is_closed };
+	}
 
 	sqlite3_stmt* stmt = nullptr;
 	const char* tail   = nullptr;
-	auto error         = sqlite3_prepare_v2(_database, sql, -1, &stmt, &tail);
 
-	if (error != SQLITE_OK) {
-		YSQLITE_THROW(exception::database_exception, error, "could not prepare statement");
+	if (const auto ec = sqlite3_prepare_v2(_database, sql, -1, &stmt, &tail)) {
+		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
 
 	return { stmt, _database };
 }
 
-database::transaction database::begin_transaction()
+transaction database::begin_transaction()
 {
 	execute("BEGIN TRANSACTION;");
-
 	return { this };
 }
 
-gsl::owner<sqlite3*> database::release() noexcept
+sqlite3* database::release_handle() noexcept
 {
-	auto p = _database;
-
-	_database = nullptr;
-
-	return p;
+	const auto tmp = _database;
+	_database      = nullptr;
+	return tmp;
 }
 
 sqlite3* database::handle() noexcept
@@ -205,7 +148,7 @@ const sqlite3* database::handle() const noexcept
 
 database& database::operator=(database&& move) noexcept
 {
+	close(true);
 	std::swap(_database, move._database);
-
 	return *this;
 }

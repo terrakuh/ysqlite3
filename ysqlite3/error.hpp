@@ -240,6 +240,7 @@ enum class errc
 	bad_index_name,
 	bad_arguments,
 	bad_result,
+	vfs_already_registered
 };
 
 inline const std::error_category& ysqlite3_category() noexcept

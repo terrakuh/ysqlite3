@@ -4,6 +4,7 @@
 #include "../file.hpp"
 #include "layer.hpp"
 
+#include <cstring>
 #include <memory>
 #include <vector>
 

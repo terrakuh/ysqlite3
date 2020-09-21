@@ -14,11 +14,11 @@ class encryption_file : public layered_file
 public:
 	using layered_file::layered_file;
 
-	virtual void file_control(file_cntl operation, void* arg) override
+	void file_control(file_cntl operation, void* arg) override
 	{
 		if (operation == file_cntl_pragma) {
-			auto name  = static_cast<char**>(arg)[1];
-			auto value = static_cast<char**>(arg)[2];
+			const auto name  = static_cast<char**>(arg)[1];
+			const auto value = static_cast<char**>(arg)[2];
 
 			if (!std::strcmp(name, "key")) {
 				return;
@@ -35,4 +35,4 @@ public:
 } // namespace vfs
 } // namespace ysqlite3
 
-#endif // !YSQLITE3_VFS_LAYER_ENCRYPTION_FILE_HPP_
+#endif

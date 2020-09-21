@@ -31,6 +31,7 @@ try {
 	v->add_layer<rot13_layer>();
 	vfs::register_vfs(v, true);
 
+	auto db = std::make_shared<database>();
 	database db;
 	db.open("test.db");
 	db.execute(R"(

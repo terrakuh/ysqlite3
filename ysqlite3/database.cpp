@@ -61,7 +61,7 @@ bool database::is_open() const noexcept
 
 void database::open(const char* file, open_flag_type flags, const char* vfs)
 {
-	if (!vfs && !vfs[0]) {
+	if (vfs && !vfs[0]) {
 		throw std::system_error{ errc::bad_vfs_name };
 	}
 
@@ -121,12 +121,6 @@ statement database::prepare_statement(const char* sql)
 	}
 
 	return { stmt, _database };
-}
-
-transaction database::begin_transaction()
-{
-	execute("BEGIN TRANSACTION;");
-	return { this };
 }
 
 sqlite3* database::release_handle() noexcept

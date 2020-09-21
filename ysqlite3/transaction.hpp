@@ -10,7 +10,7 @@ class database;
 class transaction
 {
 public:
-	transaction(const transaction& copy) = delete;
+	transaction(std::shared_ptr<database> db) noexcept;
 	/**
 	 * Move-Constructor.
 	 *
@@ -57,8 +57,6 @@ private:
 	friend database;
 
 	std::shared_ptr<database> _db;
-
-	transaction(std::shared_ptr<database> db) noexcept;
 };
 
 } // namespace ysqlite3

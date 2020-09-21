@@ -1,9 +1,10 @@
-#include "function/regexp.hpp"
+#include "regexp.hpp"
 
 using namespace ysqlite3::function;
 
 regexp::regexp(bool cache) noexcept
-    : function(2, true, false, text_encoding::utf8), _cache(cache ? new std::map<std::string, std::regex>() : nullptr)
+    : function(2, true, false, text_encoding::utf8),
+      _cache(cache ? new std::map<std::string, std::regex>() : nullptr)
 {}
 
 void regexp::run(sqlite3_context* context, int argc, sqlite3_value** argv)

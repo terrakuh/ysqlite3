@@ -1,12 +1,17 @@
 #include "statement.hpp"
 
+#include "error.hpp"
+#include "finally.hpp"
+
 #include <limits>
 
 using namespace ysqlite3;
 
 statement::statement(sqlite3_stmt* stmt, sqlite3* db)
 {
-	Expects(static_cast<bool>(stmt) == static_cast<bool>(db));
+	if (static_cast<bool>(stmt) != static_cast<bool>(db)) {
+		throw std::system_error{ errc::bad_arguments };
+	}
 
 	_statement = stmt;
 	_database  = db;
@@ -27,78 +32,79 @@ statement::~statement()
 
 void statement::clear_bindings()
 {
-	Expects(!closed());
-
-	sqlite3_clear_bindings(_statement);
+	if (is_open()) {
+		sqlite3_clear_bindings(_statement);
+	}
 }
 
 void statement::finish()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
 	// step until SQLITE_DONE is returned
 	while (true) {
-		auto error = sqlite3_step(_statement);
+		const auto ec = sqlite3_step(_statement);
 
-		if (error != SQLITE_ROW) {
-			auto _ = gsl::finally([this] { sqlite3_reset(_statement); });
+		if (ec != SQLITE_ROW) {
+			sqlite3_reset(_statement);
 
-			if (error == SQLITE_DONE) {
+			if (ec == SQLITE_DONE) {
 				return;
 			}
 
-			YSQLITE_THROW(exception::database_exception, error, "failed to step");
+			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 		}
 	}
 }
 
 void statement::reset()
 {
-	Expects(!closed());
-
-	auto error = sqlite3_reset(_statement);
-
-	if (error != SQLITE_OK) {
-		YSQLITE_THROW(exception::database_exception, error, "failed to reset");
+	if (is_open()) {
+		if (const auto ec = sqlite3_reset(_statement)) {
+			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+		}
 	}
 }
 
 void statement::close()
 {
-	auto error = sqlite3_finalize(_statement);
+	const auto ec = sqlite3_finalize(_statement);
+	_statement    = nullptr;
 
-	_statement = nullptr;
-
-	if (error != SQLITE_OK) {
-		YSQLITE_THROW(exception::database_exception, error, "failed to close the statement");
+	if (ec) {
+		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
 }
 
-bool statement::closed() const noexcept
+bool statement::is_open() const noexcept
 {
-	return !_statement;
+	return _statement;
 }
 
 results statement::step()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
-	auto error = sqlite3_step(_statement);
+	const auto ec = sqlite3_step(_statement);
 
-	if (error == SQLITE_ROW) {
+	if (ec == SQLITE_ROW) {
 		return { _statement, _database };
 	}
 
-	auto _ = gsl::finally([this] { sqlite3_reset(_statement); });
+	const auto _ = finally([this] { sqlite3_reset(_statement); });
 
-	if (error == SQLITE_DONE) {
+	if (ec == SQLITE_DONE) {
 		return {};
 	}
 
-	YSQLITE_THROW(exception::database_exception, error, "failed to step");
+	throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 }
 
-statement& statement::bind_reference(index index, gsl::czstring<> value)
+statement& statement::bind_reference(index index, const char* value)
 {
 	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_STATIC);
 }
@@ -108,7 +114,7 @@ statement& statement::bind_reference(index index, const std::string& value)
 	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_STATIC);
 }
 
-statement& statement::bind(index index, gsl::czstring<> value)
+statement& statement::bind(index index, const char* value)
 {
 	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_TRANSIENT);
 }
@@ -148,28 +154,36 @@ statement& statement::bind_zeros(index index, sqlite3_uint64 size)
 
 bool statement::readonly()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
 	return sqlite3_stmt_readonly(_statement);
 }
 
 int statement::parameter_count()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
 	return sqlite3_bind_parameter_count(_statement);
 }
 
 int statement::column_count()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
 	return sqlite3_column_count(_statement);
 }
 
 std::vector<std::string> statement::columns()
 {
-	Expects(!closed());
+	if (!is_open()) {
+		throw std::system_error{ errc::statement_is_closed };
+	}
 
 	std::vector<std::string> columns;
 
@@ -190,34 +204,31 @@ const sqlite3_stmt* statement::handle() const noexcept
 	return _statement;
 }
 
-gsl::owner<sqlite3_stmt*> statement::release() noexcept
+sqlite3_stmt* statement::release() noexcept
 {
-	auto p = _statement;
-
+	auto tmp   = _statement;
 	_statement = nullptr;
-
-	return p;
+	return tmp;
 }
 
 statement& statement::operator=(statement&& move) noexcept
 {
 	std::swap(_statement, move._statement);
-
 	return *this;
 }
 
 int statement::_to_parameter_index(index index)
 {
 	if (index.name) {
-		auto i = sqlite3_bind_parameter_index(_statement, index.name);
+		const auto idx = sqlite3_bind_parameter_index(_statement, index.name);
 
-		if (!i) {
-			YSQLITE_THROW(exception::parameter_exception, "unkown parameter name");
+		if (!idx) {
+			throw std::system_error{ errc::unknown_parameter };
 		}
 
-		return i;
+		return idx;
 	} else if (index.value < 1 || index.value > sqlite3_bind_parameter_count(_statement)) {
-		YSQLITE_THROW(exception::parameter_exception, "parameter index out of range");
+		throw std::system_error{ errc::parameter_out_of_range };
 	}
 
 	return index.value;

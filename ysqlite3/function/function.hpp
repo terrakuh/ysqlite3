@@ -27,7 +27,7 @@ public:
 	/**
 	 * Constructor.
 	 *
-	 * @param the maximum allowed parameter count; if this value is negative the is no limit
+	 * @param argc the maximum allowed parameter count; if this value is negative the is no limit
 	 * @param deterministic whether this function produces the same output with the same input
 	 * @param encoding the preferred text encoding
 	 * @see more information can be found on the [SQLite
@@ -64,7 +64,7 @@ protected:
 	 *
 	 * @param[in] context the function context
 	 * @param argc the argument count
-	 * @param[in] args the argument values
+	 * @param[in] argv the argument values
 	 */
 	virtual void run(sqlite3_context* context, int argc, sqlite3_value** argv) = 0;
 

@@ -136,15 +136,17 @@ public:
 	typename std::enable_if<std::is_base_of<function::function, Type>::value>::type
 	    register_function(const char* name, Args... args)
 	{
-		Expects(!closed());
+		if (!is_open()) {
+			throw std::system_error{ errc::database_is_closed };
+		}
 
-		auto instance = std::make_unique<Type>(std::forward<Args>(args)...);
-		auto error    = sqlite3_create_function_v2(_database, name, instance->_argc, instance->_flags,
-                                                instance.get(), function::function::xfunc, nullptr, nullptr,
-                                                [](void* instance) { delete static_cast<T*>(instance); });
+		std::unique_ptr<Type> instance{ new Type{ std::forward<Args>(args)... } };
+		const auto ec = sqlite3_create_function_v2(
+		    _database, name, instance->_argc, instance->_flags, instance.get(), function::function::xfunc,
+		    nullptr, nullptr, [](void* instance) { delete static_cast<Type*>(instance); });
 
-		if (error != SQLITE_OK) {
-			YSQLITE_THROW(exception::database_exception, error, "could not create function");
+		if (ec) {
+			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 		}
 
 		instance.release();
@@ -183,19 +185,12 @@ public:
 	 */
 	statement prepare_statement(const char* sql);
 	/**
-	 * Begins a new transaction.
-	 *
-	 * @exception see database::execute()
-	 * @return the transaction object; use this to rollback or commit
-	 */
-	transaction begin_transaction();
-	/**
 	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will
 	 * remain open.
 	 *
 	 * @post the database is closed
 	 *
-	 * @return the handle
+	 * @return the handle or `nullptr`
 	 */
 	sqlite3* release_handle() noexcept;
 	/**

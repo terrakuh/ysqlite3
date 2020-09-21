@@ -4,6 +4,11 @@
 
 using namespace ysqlite3;
 
+transaction::transaction(std::shared_ptr<database> db) noexcept : _db{ std::move(db) }
+{
+	_db->execute("BEGIN TRANSACTION;");
+}
+
 transaction::transaction(transaction&& move) noexcept
 {
 	_db      = move._db;
@@ -27,16 +32,13 @@ void transaction::rollback()
 
 bool transaction::is_open() const noexcept
 {
-	return _db;
+	return static_cast<bool>(_db);
 }
 
 transaction::operator bool() const noexcept
 {
 	return is_open();
 }
-
-transaction::transaction(std::shared_ptr<database> db) noexcept : _db{ std::move(db) }
-{}
 
 void transaction::commit()
 {

@@ -4,6 +4,8 @@
 #include "../file.hpp"
 #include "layer.hpp"
 
+#include <cstring>
+#include <memory>
 #include <vector>
 
 namespace ysqlite3 {
@@ -15,72 +17,70 @@ class layered_file : public file
 public:
 	typedef std::vector<std::unique_ptr<layer>> layers_type;
 
-	layered_file(format format, gsl::not_null<gsl::owner<file*>> parent, layers_type layers) noexcept
-	    : file(format), _parent(parent), _layers(std::move(layers))
+	layered_file(file_format format, std::unique_ptr<file> parent, layers_type layers) noexcept
+	    : file{ format }, _parent{ std::move(parent) }, _layers{ std::move(layers) }
 	{}
-	virtual void close() override
+	void close() override
 	{
 		_parent->close();
 	}
-	virtual void read(gsl::span<gsl::byte> buffer, sqlite3_int64 offset) override
+	void read(span<std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
 		// read from parent
 		_parent->read(buffer, offset);
 
 		// remove all layers
 		for (auto i = _layers.rbegin(); i != _layers.rend(); ++i) {
-			auto& layer = *i;
-
-			layer->decode(buffer, offset);
+			(*i)->decode(buffer, offset);
 		}
 	}
-	virtual void write(gsl::span<const gsl::byte> buffer, sqlite3_int64 offset) override
+	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
-		std::unique_ptr<gsl::byte[]> tmp(new gsl::byte[buffer.size()]);
-
-		std::memcpy(tmp.get(), buffer.data(), buffer.size());
+		std::vector<std::uint8_t> tmp;
+		tmp.resize(buffer.size());
+		std::memcpy(tmp.data(), buffer.begin(), buffer.size());
 
 		// apply all layers
 		for (auto& layer : _layers) {
-			layer->encode({ tmp.get(), buffer.size() }, offset);
+			layer->encode({ tmp.data(), buffer.size() }, offset);
 		}
 
 		// forward to parent
-		_parent->write({ tmp.get(), buffer.size() }, offset);
+		_parent->write({ tmp.data(), buffer.size() }, offset);
 	}
-	virtual void truncate(sqlite3_int64 size) override
+	void truncate(sqlite3_int64 size) override
 	{
 		_parent->truncate(size);
 	}
-	virtual void sync(sync_flag flag) override
+	void sync(sync_flag flag) override
 	{
 		_parent->sync(flag);
 	}
-	virtual sqlite3_int64 file_size() const override
+	sqlite3_int64 file_size() const override
 	{
 		return _parent->file_size();
 	}
-	virtual void lock(lock_flag flag) override
+	void lock(lock_flag flag) override
 	{
 		_parent->lock(flag);
 	}
-	virtual void unlock(lock_flag flag) override
+	void unlock(lock_flag flag) override
 	{
 		_parent->unlock(flag);
 	}
-	virtual bool has_reserved_lock() const override
+	bool has_reserved_lock() const override
 	{
 		return _parent->has_reserved_lock();
 	}
-	virtual void file_control(file_cntl operation, void* arg) override
+	void file_control(file_cntl operation, void* arg) override
 	{
 		_parent->file_control(operation, arg);
 	}
-	virtual int sector_size() const noexcept override
+	int sector_size() const noexcept override
 	{
 		return _parent->sector_size();
 	}
-	virtual int device_characteristics() const noexcept override
+	int device_characteristics() const noexcept override
 	{
 		return _parent->device_characteristics();
 	}
@@ -94,4 +94,4 @@ private:
 } // namespace vfs
 } // namespace ysqlite3
 
-#endif // !YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
+#endif

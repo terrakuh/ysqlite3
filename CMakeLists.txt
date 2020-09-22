@@ -1,45 +1,52 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(ysqlite3)
-set(CMAKE_CXX_STANDARD 14)
+project(ysqlite3
+	VERSION 0.1.0
+	LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 11)
 
-option(YSQLITE3_USE_OPENSSL "Build OpenSSL encryptors." OFF)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -Wall -Wextra -Wuninitialized -fno-omit-frame-pointer -fsanitize=undefined,float-divide-by-zero,integer,nullability -g")
+option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." ON)
+
+find_package(ZLIB)
 find_package(Threads REQUIRED)
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build type." FORCE)
+file(GLOB_RECURSE sources
+	"${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3/*.cpp")
+
+set(YSQLITE3_ZLIB_FOUND ${ZLIB_FOUND})
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
+	"${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3/config.hpp")
+add_library(ysqlite3 "${sources}" "${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3/sqlite3.c")
+add_library(ysqlite3::ysqlite3 ALIAS ysqlite3)
+target_include_directories(ysqlite3
+	PUBLIC
+		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+		"$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>")
+target_link_libraries(ysqlite3
+	PUBLIC
+		Threads::Threads
+		"${CMAKE_DL_LIBS}")
+
+if(ZLIB_FOUND)
+	target_link_libraries(ysqlite3 PUBLIC ZLIB::ZLIB)
+else()
+	message(WARN "ZLib not found. Not building compression VFS.")
 endif()
 
-file(GLOB_RECURSE YSQLITE_SOURCE_FILES
-		"${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+if(YSQLITE3_BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
 
-add_library(ysqlite3 "${YSQLITE_SOURCE_FILES}" "${CMAKE_CURRENT_SOURCE_DIR}/src/sqlite3.c")
-target_include_directories(ysqlite3
-							PUBLIC 
-								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3>"
-								"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rd_party>"
-								"$<INSTALL_INTERFACE:include>"
-								"$<INSTALL_INTERFACE:include/ysqlite3/3rd_party>")
-target_link_libraries(ysqlite3
-						PUBLIC Threads::Threads
-						PUBLIC "${CMAKE_DL_LIBS}")
-
-add_executable(main "${CMAKE_CURRENT_SOURCE_DIR}/examples/main.cpp")
-target_link_libraries(main ysqlite3)
-
+# install
 install(TARGETS ysqlite3
-		EXPORT ysqlite3
-		ARCHIVE
-			DESTINATION "lib"
-		LIBRARY
-			DESTINATION "lib")
+	EXPORT ysqlite3
+	ARCHIVE DESTINATION "lib"
+	LIBRARY DESTINATION "lib")
 install(DIRECTORY "ysqlite3"
-		DESTINATION "include")
-install(DIRECTORY "3rd_party"
-		DESTINATION "include/ysqlite3")
+	DESTINATION "include"
+	REGEX "*.h(pp)?$")
 install(EXPORT ysqlite3
-		DESTINATION "lib/cmake/ysqlite3"
-		NAMESPACE ysqlite3::
-		FILE "ysqlite3-config.cmake")
+	DESTINATION "lib/cmake/ysqlite3"
+	NAMESPACE ysqlite3::
+	FILE "ysqlite3-config.cmake")

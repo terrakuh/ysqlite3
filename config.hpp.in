@@ -1,0 +1,8 @@
+#ifndef YSQLITE3_CONFIG_HPP_
+#define YSQLITE3_CONFIG_HPP_
+
+// clang-format off
+#cmakedefine01 YSQLITE3_ZLIB_FOUND
+// clang-format on
+
+#endif

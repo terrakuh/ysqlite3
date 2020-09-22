@@ -1,13 +1,10 @@
 #ifndef YSQLITE3_STATEMENT_HPP_
 #define YSQLITE3_STATEMENT_HPP_
 
-#include "exception/database_exception.hpp"
-#include "exception/parameter_exception.hpp"
 #include "results.hpp"
 #include "sqlite3.h"
 
 #include <cstddef>
-#include <gsl/gsl>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,7 +18,7 @@ public:
 	 * Associates this object with an SQLite statement.
 	 *
 	 * @pre either both parameters are `nullptr` or none
-	 * 
+	 *
 	 * @param[in] stmt the statement
 	 * @param[in] db the database
 	 */
@@ -41,9 +38,7 @@ public:
 	 */
 	virtual ~statement();
 	/**
-	 * Clears all set bindings.
-	 *
-	 * @pre the statement is not closed
+	 * Clears all set bindings. If this statement is closed, this is a noop.
 	 */
 	void clear_bindings();
 	/**
@@ -52,16 +47,15 @@ public:
 	 * @pre the statement is not closed
 	 * @post the statement is reset
 	 *
-	 * @throw exception::database_exception if the step could not be executed properly
+	 * @exception std::system_error if the step could not be executed properly
 	 */
 	void finish();
 	/**
-	 * Resets the statement.
+	 * Resets the statement. If this statement is closed, this is a noop.
 	 *
-	 * @pre the statement is not closed
 	 * @post bindings will remain unchanged
 	 *
-	 * @throw exception::database_exception if the reset could not be completed
+	 * @exception std::system_error if the reset could not be completed
 	 */
 	void reset();
 	/**
@@ -69,28 +63,23 @@ public:
 	 *
 	 * @post the database is closed
 	 *
-	 * @throw exception::database_exception if closing failed for some reason
+	 * @exception std::system_error if closing failed for some reason
 	 */
 	void close();
+	bool is_open() const noexcept;
 	/**
-	 * Returns whether the statement is closed or not.
-	 *
-	 * @returns `true` if the statement is closed, otherwise `false`
-	 */
-	bool closed() const noexcept;
-	/**
-	 * Evaluates the SQL statement step by step and returns the data. This function must be called one or more
+	 * Evaluates the SQL statement step by step and return the data. This function must be called one or more
 	 * times.
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns the fetched results
+	 * @return the fetched results
 	 * @throw exception::database_exception if the step could not be executed properly
 	 */
 	results step();
-	statement& bind_reference(index index, gsl::czstring<> value);
+	statement& bind_reference(index index, const char* value);
 	statement& bind_reference(index index, const std::string& value);
-	statement& bind(index index, gsl::czstring<> value);
+	statement& bind(index index, const char* value);
 	statement& bind(index index, const std::string& value);
 	statement& bind(index index, std::nullptr_t);
 	statement& bind(index index, double value);
@@ -101,7 +90,7 @@ public:
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns `true` if read-only, otherwise `false`
+	 * @return `true` if read-only, otherwise `false`
 	 */
 	bool readonly();
 	/**
@@ -109,7 +98,7 @@ public:
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns the parameter count
+	 * @return the parameter count
 	 */
 	int parameter_count();
 	/**
@@ -117,7 +106,7 @@ public:
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns the column count
+	 * @return the column count
 	 */
 	int column_count();
 	/**
@@ -126,19 +115,19 @@ public:
 	 *
 	 * @pre the statement is not closed
 	 *
-	 * @returns the column name
+	 * @return the column name
 	 */
 	std::vector<std::string> columns();
 	/**
 	 * Returns the SQLite3 statment handle.
 	 *
-	 * @returns the statment handle or `nullptr` if the statment is closed
+	 * @return the statment handle or `nullptr` if the statment is closed
 	 */
 	sqlite3_stmt* handle() noexcept;
 	/**
 	 * Returns the SQLite3 statment handle.
 	 *
-	 * @returns the statment handle or `nullptr` if the statment is closed
+	 * @return the statment handle or `nullptr` if the statment is closed
 	 */
 	const sqlite3_stmt* handle() const noexcept;
 	/**
@@ -147,32 +136,31 @@ public:
 	 *
 	 * @post the statement is closed
 	 *
-	 * @returns the handle
+	 * @return the handle
 	 */
-	gsl::owner<sqlite3_stmt*> release() noexcept;
+	sqlite3_stmt* release() noexcept;
 	statement& operator=(statement&& move) noexcept;
 
 private:
 	sqlite3_stmt* _statement = nullptr;
-	sqlite3* _database = nullptr;
+	sqlite3* _database       = nullptr;
 
 	/**
 	 * Returns the integer index of the parameter.
 	 *
+	 * @exception std::system_error if the parameter name is unknown or the index is out of range
 	 * @param index the parameter
-	 * @returns the integer index
-	 * @throw exception::parameter_exception if the parameter name is unknown or the index is out of range
+	 * @return the integer index
 	 */
 	int _to_parameter_index(index index);
 	template<typename Binder, typename... Args>
 	statement& _bind(const index& index, Binder&& binder, Args&&... args)
 	{
-		Expects(!closed());
-
-		auto error = binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...);
-
-		if (error != SQLITE_OK) {
-			YSQLITE_THROW(exception::database_exception, error, "could not bind value");
+		if (!is_open()) {
+			throw std::system_error{ errc::statement_is_closed };
+		} else if (const auto ec =
+		               binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...)) {
+			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 		}
 
 		return *this;

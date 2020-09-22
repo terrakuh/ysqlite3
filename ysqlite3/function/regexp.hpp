@@ -3,24 +3,16 @@
 
 #include "function.hpp"
 
-#include <map>
-#include <memory>
-#include <regex>
-#include <string>
-
 namespace ysqlite3 {
 namespace function {
 
 class regexp : public function
 {
 public:
-	regexp(bool cache = true) noexcept;
+	regexp() noexcept;
 
 protected:
 	void run(sqlite3_context* context, int argc, sqlite3_value** argv) override;
-
-private:
-	std::unique_ptr<std::map<std::string, std::regex>> _cache;
 };
 
 } // namespace function

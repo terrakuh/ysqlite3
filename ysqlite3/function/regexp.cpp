@@ -1,38 +1,41 @@
 #include "regexp.hpp"
 
+#include "../error.hpp"
+
+#include <regex>
+
 using namespace ysqlite3::function;
 
-regexp::regexp(bool cache) noexcept
-    : function(2, true, false, text_encoding::utf8),
-      _cache(cache ? new std::map<std::string, std::regex>() : nullptr)
+regexp::regexp() noexcept : function{ 2, true, false, text_encoding::utf8 }
 {}
 
 void regexp::run(sqlite3_context* context, int argc, sqlite3_value** argv)
 {
-	std::regex p;
-	std::regex* pattern = nullptr;
+	if (argc != 2) {
+		throw std::system_error{ sqlite3_errc::generic, "requires 2 arguments" };
+	}
 
-	// cached
-	if (_cache) {
-		std::string str(reinterpret_cast<const char*>(sqlite3_value_text(argv[0])));
-		auto r = _cache->find(str);
+	auto pattern = static_cast<std::regex*>(sqlite3_get_auxdata(context, 0));
 
-		if (r != _cache->end()) {
-			pattern = &r->second;
-		} else {
-			p       = std::regex(str, std::regex_constants::ECMAScript | std::regex_constants::optimize);
-			pattern = &_cache->emplace(std::move(str), std::move(p)).first->second;
+	// not compiled
+	if (!pattern) {
+		const auto str = reinterpret_cast<const char*>(sqlite3_value_text(argv[0]));
+
+		if (!str) {
+			throw std::system_error{ sqlite3_errc::generic, "bad regex" };
 		}
-	} else {
-		p       = std::regex(reinterpret_cast<const char*>(sqlite3_value_text(argv[0])));
-		pattern = &p;
+
+		try {
+			pattern =
+			    new std::regex{ str, std::regex_constants::ECMAScript | std::regex_constants::optimize };
+		} catch (const std::regex_error& e) {
+			throw std::system_error{ sqlite3_errc::generic, "bad regex" };
+		}
+
+		sqlite3_set_auxdata(context, 0, pattern, [](void* ptr) { delete static_cast<std::regex*>(ptr); });
 	}
 
 	std::cmatch match;
-
-	if (std::regex_match(reinterpret_cast<const char*>(sqlite3_value_text(argv[1])), match, *pattern)) {
-		sqlite3_result_int(context, 1);
-	} else {
-		sqlite3_result_int(context, 0);
-	}
+	const auto str = reinterpret_cast<const char*>(sqlite3_value_text(argv[1]));
+	sqlite3_result_int(context, static_cast<int>(str && std::regex_match(str, match, *pattern)));
 }

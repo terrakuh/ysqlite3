@@ -1,9 +1,8 @@
 #ifndef YSQLITE3_FUNCTION_FUNCTION_HPP_
 #define YSQLITE3_FUNCTION_FUNCTION_HPP_
 
+#include "../error.hpp"
 #include "../sqlite3.h"
-
-#include <exception>
 
 namespace ysqlite3 {
 
@@ -52,7 +51,10 @@ public:
 		try {
 			static_cast<function*>(sqlite3_user_data(context))->run(context, argc, argv);
 		} catch (const std::exception& e) {
-			sqlite3_result_error(context, e.what(), -1);
+			sqlite3_result_error(context, e.what(),
+			                     dynamic_cast<const std::system_error*>(&e)
+			                         ? static_cast<const std::system_error&>(e).code().value()
+			                         : -1);
 		} catch (...) {
 			sqlite3_result_error(context, "function threw an exception", -1);
 		}

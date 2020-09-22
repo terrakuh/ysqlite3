@@ -1,8 +1,6 @@
 # Change Log
 
 ## Unreleased
-### Added
-- `std::iostream` VFS
 - [ROT13](https://en.wikipedia.org/wiki/ROT13) example
 
 ### Changed

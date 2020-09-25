@@ -114,9 +114,11 @@ public:
 	 */
 	virtual int device_characteristics() const noexcept = 0;
 
+protected:
+	const file_format format;
+
 private:
 	sqlite3_io_methods _methods;
-	file_format _format;
 };
 
 } // namespace vfs

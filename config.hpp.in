@@ -3,6 +3,7 @@
 
 // clang-format off
 #cmakedefine01 YSQLITE3_ZLIB_FOUND
+#cmakedefine01 YSQLITE3_ENCRYPTION_BACKEND_OPENSSL
 // clang-format on
 
 #endif

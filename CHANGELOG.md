@@ -1,12 +1,17 @@
 # Change Log
 
+## Unreleased
+### Added
+- Custom data support to layers
+
 ## [0.1.0] - 2020-09-22
+### Added
 - [ROT13](https://en.wikipedia.org/wiki/ROT13) example
 
 ### Changed
 - Upgraded SQLite3 to v3.33.0
 - Minimum C++ version from `14` to `11`
-- All headers and sources into one directory (`src`)
+- All headers and sources into one directory (`ysqlite3`)
 - Error reporting with `std::error_code` and `std::system_error` instead of custom exceptions
 
 ### Removed

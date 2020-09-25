@@ -37,6 +37,7 @@ public:
 	std::unique_ptr<file> open(const char* name, file_format format, open_flag_type flags,
 	                           open_flag_type& output_flags) override
 	{
+		printf("opening file: %i\n", (int)format);
 		auto tmp = VFS::open(name, format, flags, output_flags);
 		return std::unique_ptr<file>{ new File{ format, std::move(tmp), create_layers() } };
 	}

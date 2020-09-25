@@ -13,9 +13,13 @@ namespace layer {
 class layer
 {
 public:
-	virtual ~layer()                                                      = default;
-	virtual void encode(span<std::uint8_t*> buffer, sqlite3_int64 offset) = 0;
-	virtual void decode(span<std::uint8_t*> buffer, sqlite3_int64 offset) = 0;
+	virtual ~layer()                                                                = default;
+	virtual void encode(span<std::uint8_t*> page, span<std::uint8_t*> data)         = 0;
+	virtual void decode(span<std::uint8_t*> page, span<const std::uint8_t*> data)   = 0;
+	virtual std::uint8_t data_size() const noexcept
+	{
+		return 0;
+	}
 };
 
 } // namespace layer

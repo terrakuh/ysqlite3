@@ -10,15 +10,15 @@ using namespace ysqlite3;
 class rot13_layer : public vfs::layer::layer
 {
 public:
-	void encode(span<std::uint8_t*> buffer, sqlite3_int64) override
+	void encode(span<std::uint8_t*> page, span<std::uint8_t*> data) override
 	{
-		for (auto& i : buffer) {
+		for (auto& i : page) {
 			i += 13;
 		}
 	}
-	void decode(span<std::uint8_t*> buffer, sqlite3_int64) override
+	void decode(span<std::uint8_t*> page, span<std::uint8_t*> data) override
 	{
-		for (auto& i : buffer) {
+		for (auto& i : page) {
 			i -= 13;
 		}
 	}

@@ -17,6 +17,7 @@ enum class file_format
 	temp_journal   = SQLITE_OPEN_TEMP_JOURNAL,
 	transient_db   = SQLITE_OPEN_TRANSIENT_DB,
 	subjournal     = SQLITE_OPEN_SUBJOURNAL,
+	super_journal  = SQLITE_OPEN_SUPER_JOURNAL,
 	master_journal = SQLITE_OPEN_MASTER_JOURNAL,
 	wal            = SQLITE_OPEN_WAL
 };

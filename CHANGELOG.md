@@ -4,6 +4,9 @@
 ### Added
 - Custom data support to layers
 
+### Changed
+- Only transform pages
+
 ## [0.1.0] - 2020-09-22
 ### Added
 - [ROT13](https://en.wikipedia.org/wiki/ROT13) example

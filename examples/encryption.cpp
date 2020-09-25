@@ -32,6 +32,11 @@ public:
 	{
 		return 28;
 	}
+	bool pragma(const char* name, const char* value) override
+	{
+		printf("doing: %s=%s\n", name, value);
+		return true;
+	}
 
 private:
 	EVP_CIPHER_CTX* _context;
@@ -72,16 +77,21 @@ try {
 	        vfs::find_vfs(nullptr), "aes-gcm");
 	v->add_layer<aes_gcm_layer>();
 	vfs::register_vfs(v, true);
-auto ptr = new database{};
-	database& db = *ptr;
-	 std::remove("test.db");
+auto p = new database;
+	database& db=*p;
+	std::remove("test.db");
+	std::remove("test.db-journal");
+	std::remove("test.db-wal");
 	db.open("test.db", open_flag_readwrite | open_flag_create, "aes-gcm");
-	// db.set_journal_mode(journal_mode::memory);
+	// db.set_journal_mode(journal_mode::delete_);
 	db.execute(R"(
+PRAGMA key="hi";
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS tast(noim text);
 INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
-ROLLBACK;
+COMMIT;
+BEGIN TRANSACTION;
+INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
 
 )");
 

@@ -4,8 +4,10 @@ project(ysqlite3
 	VERSION 0.1.0
 	LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." ON)
+option(YSQLITE3_BUILD_EXTENSIONS "Build the extensions." ON)
 set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
@@ -28,6 +30,8 @@ file(GLOB_RECURSE sources
 
 add_library(ysqlite3 "${sources}" "${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3/sqlite3.c")
 add_library(ysqlite3::ysqlite3 ALIAS ysqlite3)
+set_target_properties(ysqlite3 PROPERTIES
+	POSITION_INDEPENDENT_CODE TRUE)
 target_include_directories(ysqlite3
 	PUBLIC
 		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
@@ -50,6 +54,10 @@ endif()
 
 if(YSQLITE3_BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if(YSQLITE3_BUILD_EXTENSIONS)
+	add_subdirectory(extensions)
 endif()
 
 # install

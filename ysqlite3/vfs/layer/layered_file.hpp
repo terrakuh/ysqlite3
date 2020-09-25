@@ -2,7 +2,6 @@
 #define YSQLITE3_VFS_LAYER_LAYERED_FILE_HPP_
 
 #include "../file.hpp"
-#include "data_manager.hpp"
 #include "layer.hpp"
 
 #include <cstring>
@@ -35,9 +34,10 @@ public:
 private:
 	std::unique_ptr<file> _parent;
 	layers_type _layers;
-	data_manager _data_manager;
+	std::uint8_t _data_size = 0;
 
-	static std::uint8_t _data_size(const layers_type& layers) noexcept;
+	void _encode_page(span<std::uint8_t*> page) const;
+	void _decode_page(span<std::uint8_t*> page) const;
 };
 
 } // namespace layer

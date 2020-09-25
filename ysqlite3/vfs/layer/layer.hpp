@@ -3,6 +3,7 @@
 
 #include "../../span.hpp"
 #include "../../sqlite3.h"
+#include "../file.hpp"
 
 #include <cstdint>
 
@@ -13,12 +14,16 @@ namespace layer {
 class layer
 {
 public:
-	virtual ~layer()                                                                = default;
-	virtual void encode(span<std::uint8_t*> page, span<std::uint8_t*> data)         = 0;
-	virtual void decode(span<std::uint8_t*> page, span<const std::uint8_t*> data)   = 0;
+	virtual ~layer()                                                              = default;
+	virtual void encode(span<std::uint8_t*> page, span<std::uint8_t*> data)       = 0;
+	virtual void decode(span<std::uint8_t*> page, span<const std::uint8_t*> data) = 0;
 	virtual std::uint8_t data_size() const noexcept
 	{
 		return 0;
+	}
+	virtual bool pragma(const char* name, const char* value)
+	{
+		return false;
 	}
 };
 

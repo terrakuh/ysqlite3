@@ -3,6 +3,7 @@
 ## Unreleased
 ### Added
 - Custom data support to layers
+- Cryptographic functions: `sha1`, `sha2`, `sha3`, `md5` and `digest`
 
 ### Changed
 - Only transform pages

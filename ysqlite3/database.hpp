@@ -90,6 +90,7 @@ public:
 	 * @see force-closing with database::close()
 	 */
 	virtual ~database();
+	void set_reserved_size(std::uint8_t size);
 	/**
 	 * Sets the database journaling mode.
 	 *

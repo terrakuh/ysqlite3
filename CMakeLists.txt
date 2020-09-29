@@ -22,6 +22,11 @@ if("${YSQLITE3_ENCRYPTION_BACKEND}" STREQUAL "OpenSSL")
 	set(YSQLITE3_ENCRYPTION_BACKEND_OPENSSL TRUE)
 endif()
 
+# endian
+include(TestBigEndian)
+test_big_endian(YSQLITE3_BIG_ENDIAN)
+
+# configure
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
 	"${CMAKE_CURRENT_SOURCE_DIR}/ysqlite3/config.hpp")
 

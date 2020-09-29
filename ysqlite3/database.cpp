@@ -22,6 +22,18 @@ database::~database()
 	close(true);
 }
 
+void database::set_reserved_size(std::uint8_t size)
+{
+	if (!is_open()) {
+		throw std::system_error{ errc::database_is_closed };
+	}
+
+	int n = size;
+	if (const auto ec = sqlite3_file_control(_database, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n)) {
+		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+	}
+}
+
 void database::set_journal_mode(journal_mode mode)
 {
 	switch (mode) {

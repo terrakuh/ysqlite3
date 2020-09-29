@@ -1,53 +1,87 @@
+#include <array>
+#include <cstring>
 #include <iostream>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <typeinfo>
 #include <ysqlite3/database.hpp>
-#include <ysqlite3/vfs/layer/layered_vfs.hpp>
+#include <ysqlite3/vfs/page_transforming_file.hpp>
 #include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
 #include <ysqlite3/vfs/vfs.hpp>
 
 using namespace ysqlite3;
 
-class aes_gcm_layer : public vfs::layer::layer
+class crypt_file : public vfs::page_transforming_file<ysqlite3::vfs::sqlite3_file_wrapper>
 {
 public:
-	aes_gcm_layer()
+	using page_transformer::page_transformer;
+	~crypt_file()
 	{
-		_context = EVP_CIPHER_CTX_new();
-		_cipher  = EVP_aes_128_gcm();
-		_key     = (const unsigned char*) "1234567890123456";
+		EVP_CIPHER_CTX_free(_context);
 	}
-	void encode(span<std::uint8_t*> page, span<std::uint8_t*> data) override
+	void file_control(vfs::file_cntl operation, void* arg) override
 	{
-		RAND_bytes(data.begin(), 12);
-		_crypt(page, data.cast<const std::uint8_t*>(), true);
-		EVP_CIPHER_CTX_ctrl(_context, EVP_CTRL_GCM_GET_TAG, 16, data.begin() + 12);
+		if (operation == vfs::file_cntl::pragma) {
+			const auto& name = static_cast<char**>(arg)[1];
+			const auto value = static_cast<char**>(arg)[2];
+
+			if (!std::strcmp(name, "plain_key")) {
+				if (!PKCS5_PBKDF2_HMAC(value, -1, nullptr, 0, 200000, EVP_sha512(),
+				                       static_cast<int>(_key.size()), _key.data())) {
+					throw std::system_error{ sqlite3_errc::generic, "failed to generate new key" };
+				}
+				return;
+			}
+		}
+
+		page_transformer::file_control(operation, arg);
 	}
-	void decode(span<std::uint8_t*> page, span<const std::uint8_t*> data) override
-	{
-		_crypt(page, data, false);
-	}
-	std::uint8_t data_size() const noexcept override
+	constexpr static std::uint8_t reserve_size() noexcept
 	{
 		return 28;
 	}
-	bool pragma(const char* name, const char* value) override
+
+protected:
+	void encode_page(span<std::uint8_t*> page) override
 	{
-		printf("doing: %s=%s\n", name, value);
-		return true;
+		auto data = page.subspan(page.size() - reserve_size());
+		page      = page.subspan(0, page.size() - reserve_size());
+		std::memset(data.begin(), 0, data.size());
+
+		// _assert_params();
+		// const auto iv_length = EVP_CIPHER_iv_length(_cipher);
+		// RAND_bytes(data.begin(), iv_length);
+		// _crypt(page, data, true);
+		// EVP_CIPHER_CTX_ctrl(_context, EVP_CTRL_GCM_GET_TAG, 16, data.begin() + iv_length);
+	}
+	void decode_page(span<std::uint8_t*> page) override
+	{
+		auto data = page.subspan(page.size() - reserve_size());
+		std::memset(data.begin(), 0, data.size());
+		// _assert_params();
+		// _crypt(page.subspan(0, page.size() - data_size), page.subspan(page.size() - data_size), false);
+	}
+	bool check_reserve_size(std::uint8_t size) const noexcept override
+	{
+		return size == reserve_size();
 	}
 
 private:
-	EVP_CIPHER_CTX* _context;
-	const EVP_CIPHER* _cipher;
-	const unsigned char* _key;
+	EVP_CIPHER_CTX* _context  = EVP_CIPHER_CTX_new();
+	const EVP_CIPHER* _cipher = EVP_aes_256_gcm();
+	std::array<unsigned char, 32> _key{};
 
-	void _crypt(span<std::uint8_t*> buffer, span<const std::uint8_t*> data, bool encrypt)
+	void _assert_params()
+	{
+		// if (!_key) {
+		// 	throw std::system_error{ sqlite3_errc::generic, "no key provided" };
+		// }
+	}
+	void _crypt(span<std::uint8_t*> buffer, span<std::uint8_t*> data, bool encrypt)
 	{
 		EVP_CIPHER_CTX_reset(_context);
 
-		if (!EVP_CipherInit_ex(_context, _cipher, nullptr, _key, data.begin(), encrypt)) {
+		if (!EVP_CipherInit_ex(_context, _cipher, nullptr, _key.data(), data.begin(), encrypt)) {
 			throw;
 		}
 
@@ -60,40 +94,46 @@ private:
 
 		// set tag
 		if (!encrypt) {
-			EVP_CIPHER_CTX_ctrl(_context, EVP_CTRL_GCM_SET_TAG, 16,
-			                    const_cast<std::uint8_t*>(data.begin()) + 12);
+			EVP_CIPHER_CTX_ctrl(_context, EVP_CTRL_GCM_SET_TAG, 16, data.begin() + 12);
 		}
 
 		if (!EVP_CipherFinal_ex(_context, buffer.begin(), &len) || len) {
 			throw;
 		}
 	}
+	void _generate_iv(span<std::uint8_t*> iv) const noexcept
+	{
+		RAND_bytes(reinterpret_cast<unsigned char*>(iv.begin()), static_cast<int>(iv.size() - 4));
+		*reinterpret_cast<std::uint32_t*>(iv.end() - 4) += 1;
+#if YSQLITE3_BIG_ENDIAN
+		std::reverse(iv.end() - 4, iv.end());
+#endif
+	}
 };
 
 int main(int args, char** argv)
 try {
-	const auto v =
-	    std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>, vfs::layer::layered_file>>(
-	        vfs::find_vfs(nullptr), "aes-gcm");
-	v->add_layer<aes_gcm_layer>();
-	vfs::register_vfs(v, true);
-auto p = new database;
-	database& db=*p;
+	vfs::register_vfs(
+	    std::make_shared<vfs::sqlite3_vfs_wrapper<crypt_file>>(vfs::find_vfs(nullptr), "aes-gcm"), true);
+
+	database db;
 	std::remove("test.db");
 	std::remove("test.db-journal");
 	std::remove("test.db-wal");
 	db.open("test.db", open_flag_readwrite | open_flag_create, "aes-gcm");
-	// db.set_journal_mode(journal_mode::delete_);
+	db.set_reserved_size(crypt_file::reserve_size());
+	// db.set_journal_mode(journal_mode::memory);
 	db.execute(R"(
-PRAGMA key="hi";
-BEGIN TRANSACTION;
+
 CREATE TABLE IF NOT EXISTS tast(noim text);
-INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
-COMMIT;
-BEGIN TRANSACTION;
-INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
+INSERT INTO tast(noim) VALUES('heyho');
 
 )");
+	db.execute("BEGIN TRANSACTION");
+	for (auto i = 0; i < 300; ++i) {
+		db.execute("INSERT INTO tast(noim) VALUES('heyho');");
+	}
+	db.execute("COMMIT");
 
 	auto stmt = db.prepare_statement("SELECT * FROM tast");
 	results r;

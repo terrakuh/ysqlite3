@@ -20,7 +20,6 @@ void regexp::run(sqlite3_context* context, int argc, sqlite3_value** argv)
 	// not compiled
 	if (!pattern) {
 		const auto str = reinterpret_cast<const char*>(sqlite3_value_text(argv[0]));
-
 		if (!str) {
 			throw std::system_error{ sqlite3_errc::generic, "bad regex" };
 		}
@@ -29,7 +28,7 @@ void regexp::run(sqlite3_context* context, int argc, sqlite3_value** argv)
 			pattern =
 			    new std::regex{ str, std::regex_constants::ECMAScript | std::regex_constants::optimize };
 		} catch (const std::regex_error& e) {
-			throw std::system_error{ sqlite3_errc::generic, "bad regex" };
+			throw std::system_error{ sqlite3_errc::generic, e.what() };
 		}
 
 		sqlite3_set_auxdata(context, 0, pattern, [](void* ptr) { delete static_cast<std::regex*>(ptr); });

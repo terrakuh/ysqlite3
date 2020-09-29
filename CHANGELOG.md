@@ -1,12 +1,14 @@
 # Change Log
 
-## Unreleased
+## [Unreleased]
 ### Added
-- Custom data support to layers
+- Page transforming file
 - Cryptographic functions: `sha1`, `sha2`, `sha3`, `md5` and `digest`
+- Crypt VFS + extension
+- Encryption example
 
-### Changed
-- Only transform pages
+### Removed
+- Layered VFS
 
 ## [0.1.0] - 2020-09-22
 ### Added
@@ -22,4 +24,5 @@
 - `backward.hpp` 3rd party
 - `microsoft/gsl` 3rd party
 
+[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.1.0...dev
 [0.1.0]: https://github.com/terrakuh/ysqlite3/compare/v0.0.0...v0.1.0

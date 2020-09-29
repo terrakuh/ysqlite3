@@ -64,7 +64,7 @@ public:
 	}
 	void file_control(file_cntl operation, void* arg) override
 	{
-		_check_error(_parent->pMethods->xFileControl(_parent.get(), operation, arg));
+		_check_error(_parent->pMethods->xFileControl(_parent.get(), static_cast<int>(operation), arg));
 	}
 	int sector_size() const noexcept override
 	{

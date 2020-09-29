@@ -133,7 +133,7 @@ int device_characteristics(sqlite3_file* file) noexcept
 
 } // namespace
 
-file::file(file_format format) noexcept : _methods{}
+file::file(file_format format) noexcept : format{ format }, _methods{}
 {
 	_methods.iVersion               = 1;
 	_methods.xClose                 = &::close;
@@ -156,5 +156,4 @@ file::file(file_format format) noexcept : _methods{}
 
 	_methods.xFetch   = _fetch; // if SQLITE_MAX_MMAP_SIZE > 0
 	_methods.xUnfetch = _unfetch;*/
-	_format = format;
 }

@@ -17,6 +17,7 @@ enum class file_format
 	temp_journal   = SQLITE_OPEN_TEMP_JOURNAL,
 	transient_db   = SQLITE_OPEN_TRANSIENT_DB,
 	subjournal     = SQLITE_OPEN_SUBJOURNAL,
+	super_journal  = SQLITE_OPEN_SUPER_JOURNAL,
 	master_journal = SQLITE_OPEN_MASTER_JOURNAL,
 	wal            = SQLITE_OPEN_WAL
 };
@@ -37,43 +38,46 @@ enum class lock_flag
 	exclusive = SQLITE_LOCK_EXCLUSIVE,
 };
 
-enum file_cntl
+enum class file_cntl
 {
-	file_cntl_lock_state            = SQLITE_FCNTL_LOCKSTATE,
-	file_cntl_get_lock_proxy_file   = SQLITE_FCNTL_GET_LOCKPROXYFILE,
-	file_cntl_set_lock_proxy_file   = SQLITE_FCNTL_SET_LOCKPROXYFILE,
-	file_cntl_last_errno            = SQLITE_FCNTL_LAST_ERRNO,
-	file_cntl_size_hint             = SQLITE_FCNTL_SIZE_HINT,
-	file_cntl_chunk_size            = SQLITE_FCNTL_CHUNK_SIZE,
-	file_cntl_file_pointer          = SQLITE_FCNTL_FILE_POINTER,
-	file_cntl_sync_omitted          = SQLITE_FCNTL_SYNC_OMITTED,
-	file_cntl_win32_av_retry        = SQLITE_FCNTL_WIN32_AV_RETRY,
-	file_cntl_persist_wal           = SQLITE_FCNTL_PERSIST_WAL,
-	file_cntl_overwrite             = SQLITE_FCNTL_OVERWRITE,
-	file_cntl_vfsname               = SQLITE_FCNTL_VFSNAME,
-	file_cntl_powersafe_overwrite   = SQLITE_FCNTL_POWERSAFE_OVERWRITE,
-	file_cntl_pragma                = SQLITE_FCNTL_PRAGMA,
-	file_cntl_busy_handler          = SQLITE_FCNTL_BUSYHANDLER,
-	file_cntl_temp_filename         = SQLITE_FCNTL_TEMPFILENAME,
-	file_cntl_mmap_size             = SQLITE_FCNTL_MMAP_SIZE,
-	file_cntl_trace                 = SQLITE_FCNTL_TRACE,
-	file_cntl_has_moved             = SQLITE_FCNTL_HAS_MOVED,
-	file_cntl_sync                  = SQLITE_FCNTL_SYNC,
-	file_cntl_commit_phase_two      = SQLITE_FCNTL_COMMIT_PHASETWO,
-	file_cntl_win32_set_handle      = SQLITE_FCNTL_WIN32_SET_HANDLE,
-	file_cntl_wal_block             = SQLITE_FCNTL_WAL_BLOCK,
-	file_cntl_zipvfs                = SQLITE_FCNTL_ZIPVFS,
-	file_cntl_rbu                   = SQLITE_FCNTL_RBU,
-	file_cntl_vfs_pointer           = SQLITE_FCNTL_VFS_POINTER,
-	file_cntl_journal_pointer       = SQLITE_FCNTL_JOURNAL_POINTER,
-	file_cntl_win32_get_handle      = SQLITE_FCNTL_WIN32_GET_HANDLE,
-	file_cntl_pdf                   = SQLITE_FCNTL_PDB,
-	file_cntl_begin_atomic_write    = SQLITE_FCNTL_BEGIN_ATOMIC_WRITE,
-	file_cntl_commit_atomic_write   = SQLITE_FCNTL_COMMIT_ATOMIC_WRITE,
-	file_cntl_rollback_atomic_write = SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE,
-	file_cntl_lock_timeout          = SQLITE_FCNTL_LOCK_TIMEOUT,
-	file_cntl_data_version          = SQLITE_FCNTL_DATA_VERSION,
-	file_cntl_size_limit            = SQLITE_FCNTL_SIZE_LIMIT
+	lock_state            = SQLITE_FCNTL_LOCKSTATE,
+	get_lock_proxy_file   = SQLITE_FCNTL_GET_LOCKPROXYFILE,
+	set_lock_proxy_file   = SQLITE_FCNTL_SET_LOCKPROXYFILE,
+	last_errno            = SQLITE_FCNTL_LAST_ERRNO,
+	size_hint             = SQLITE_FCNTL_SIZE_HINT,
+	chunk_size            = SQLITE_FCNTL_CHUNK_SIZE,
+	file_pointer          = SQLITE_FCNTL_FILE_POINTER,
+	sync_omitted          = SQLITE_FCNTL_SYNC_OMITTED,
+	win32_av_retry        = SQLITE_FCNTL_WIN32_AV_RETRY,
+	persist_wal           = SQLITE_FCNTL_PERSIST_WAL,
+	overwrite             = SQLITE_FCNTL_OVERWRITE,
+	vfsname               = SQLITE_FCNTL_VFSNAME,
+	powersafe_overwrite   = SQLITE_FCNTL_POWERSAFE_OVERWRITE,
+	pragma                = SQLITE_FCNTL_PRAGMA,
+	busy_handler          = SQLITE_FCNTL_BUSYHANDLER,
+	temp_filename         = SQLITE_FCNTL_TEMPFILENAME,
+	mmap_size             = SQLITE_FCNTL_MMAP_SIZE,
+	trace                 = SQLITE_FCNTL_TRACE,
+	has_moved             = SQLITE_FCNTL_HAS_MOVED,
+	sync                  = SQLITE_FCNTL_SYNC,
+	commit_phase_two      = SQLITE_FCNTL_COMMIT_PHASETWO,
+	win32_set_handle      = SQLITE_FCNTL_WIN32_SET_HANDLE,
+	wal_block             = SQLITE_FCNTL_WAL_BLOCK,
+	zipvfs                = SQLITE_FCNTL_ZIPVFS,
+	rbu                   = SQLITE_FCNTL_RBU,
+	vfs_pointer           = SQLITE_FCNTL_VFS_POINTER,
+	journal_pointer       = SQLITE_FCNTL_JOURNAL_POINTER,
+	win32_get_handle      = SQLITE_FCNTL_WIN32_GET_HANDLE,
+	pdf                   = SQLITE_FCNTL_PDB,
+	begin_atomic_write    = SQLITE_FCNTL_BEGIN_ATOMIC_WRITE,
+	commit_atomic_write   = SQLITE_FCNTL_COMMIT_ATOMIC_WRITE,
+	rollback_atomic_write = SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE,
+	lock_timeout          = SQLITE_FCNTL_LOCK_TIMEOUT,
+	data_version          = SQLITE_FCNTL_DATA_VERSION,
+	size_limit            = SQLITE_FCNTL_SIZE_LIMIT,
+	checkpoint_done       = SQLITE_FCNTL_CKPT_DONE,
+	reserve_bytes         = SQLITE_FCNTL_RESERVE_BYTES,
+	checkpoint_start      = SQLITE_FCNTL_CKPT_START,
 };
 
 class file
@@ -114,9 +118,11 @@ public:
 	 */
 	virtual int device_characteristics() const noexcept = 0;
 
+protected:
+	const file_format format;
+
 private:
 	sqlite3_io_methods _methods;
-	file_format _format;
 };
 
 } // namespace vfs

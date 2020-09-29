@@ -10,19 +10,19 @@ class database;
 
 namespace function {
 
+enum class text_encoding
+{
+	utf8    = SQLITE_UTF8,
+	utf16be = SQLITE_UTF16BE,
+	utf16le = SQLITE_UTF16LE
+};
+
 /**
  * A function interface for SQLite.
  */
 class function
 {
 public:
-	enum class text_encoding
-	{
-		utf8    = SQLITE_UTF8,
-		utf16be = SQLITE_UTF16BE,
-		utf16le = SQLITE_UTF16LE
-	};
-
 	/**
 	 * Constructor.
 	 *

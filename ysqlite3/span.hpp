@@ -1,10 +1,16 @@
 #ifndef YSQLITE3_SPAN_HPP_
 #define YSQLITE3_SPAN_HPP_
 
+#include "error.hpp"
+
+#include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <utility>
 
 namespace ysqlite3 {
+
+constexpr std::size_t dynamic_extent = std::numeric_limits<std::size_t>::max();
 
 template<typename Iterator>
 class span
@@ -29,6 +35,19 @@ public:
 	Iterator end()
 	{
 		return _last;
+	}
+	span subspan(std::size_t offset, std::size_t count = dynamic_extent) const
+	{
+		if (offset > size()) {
+			throw std::system_error{ errc::out_of_bounds };
+		}
+		count = std::min(count, size() - offset);
+		return { _first + offset, _first + offset + count };
+	}
+	template<typename Type>
+	span<Type> cast() const noexcept
+	{
+		return { static_cast<Type>(_first), static_cast<Type>(_last) };
 	}
 
 private:

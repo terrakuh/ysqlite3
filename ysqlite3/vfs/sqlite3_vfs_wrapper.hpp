@@ -8,11 +8,13 @@
 namespace ysqlite3 {
 namespace vfs {
 
-template<typename File = sqlite3_file_wrapper,
-         typename      = std::enable_if<std::is_base_of<sqlite3_file_wrapper, File>::value>>
+template<typename File = sqlite3_file_wrapper>
 class sqlite3_vfs_wrapper : public vfs
 {
 public:
+	static_assert(std::is_base_of<sqlite3_file_wrapper, File>::value,
+	              "file must be derive sqlite3_file_wrapper");
+
 	typedef File file_type;
 
 	sqlite3_vfs_wrapper(sqlite3_vfs* parent, const char* name) : vfs{ name }

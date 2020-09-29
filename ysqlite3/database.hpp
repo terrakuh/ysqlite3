@@ -49,6 +49,13 @@ enum class journal_mode
 	off
 };
 
+enum class text_encoding
+{
+	utf8    = SQLITE_UTF8,
+	utf16be = SQLITE_UTF16BE,
+	utf16le = SQLITE_UTF16LE
+};
+
 /**
  * The database class. This class manages a single database connection.
  */
@@ -83,6 +90,7 @@ public:
 	 * @see force-closing with database::close()
 	 */
 	virtual ~database();
+	void set_reserved_size(std::uint8_t size);
 	/**
 	 * Sets the database journaling mode.
 	 *
@@ -151,6 +159,24 @@ public:
 
 		instance.release();
 	}
+	inline void register_function(const char* name, void (*function)(sqlite3_context*, int, sqlite3_value**),
+	                              function::text_encoding encoding, bool deterministic = true,
+	                              bool direct_only = false)
+	{
+		if (!is_open()) {
+			throw std::system_error{ errc::database_is_closed };
+		}
+
+		const auto ec =
+		    sqlite3_create_function_v2(_database, name, -1,
+		                               static_cast<int>(encoding) | SQLITE_DETERMINISTIC * deterministic |
+		                                   SQLITE_DIRECTONLY * direct_only,
+		                               nullptr, function, nullptr, nullptr, nullptr);
+
+		if (ec) {
+			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+		}
+	}
 	/**
 	 * Runs the SQL statement and ignores the result values.
 	 *
@@ -212,6 +238,12 @@ private:
 
 	/** the underlying sqlite3 database connection */
 	sqlite3* _database = nullptr;
+
+	template<typename Functor>
+	static void _functor_forwarder(sqlite3_context* context, int argc, sqlite3_value** argv)
+	{
+		(*static_cast<Functor*>(sqlite3_user_data(context)))(context, argc, argv);
+	}
 };
 
 } // namespace ysqlite3

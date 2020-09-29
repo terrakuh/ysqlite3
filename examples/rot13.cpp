@@ -1,22 +1,27 @@
 #include <iostream>
 #include <typeinfo>
 #include <ysqlite3/database.hpp>
-#include <ysqlite3/vfs/layer/layered_vfs.hpp>
+#include <ysqlite3/vfs/page_transforming_file.hpp>
+#include <ysqlite3/vfs/sqlite3_file_wrapper.hpp>
 #include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
 #include <ysqlite3/vfs/vfs.hpp>
 
 using namespace ysqlite3;
 
-class rot13_layer : public vfs::layer::layer
+class rot13_file : public vfs::page_transforming_file<vfs::sqlite3_file_wrapper>
 {
 public:
-	void encode(span<std::uint8_t*> page, span<std::uint8_t*> data) override
+	using parent = vfs::page_transforming_file<vfs::sqlite3_file_wrapper>;
+	using parent::parent;
+
+protected:
+	void encode_page(span<std::uint8_t*> page) override
 	{
 		for (auto& i : page) {
 			i += 13;
 		}
 	}
-	void decode(span<std::uint8_t*> page, span<std::uint8_t*> data) override
+	void decode_page(span<std::uint8_t*> page) override
 	{
 		for (auto& i : page) {
 			i -= 13;
@@ -26,11 +31,8 @@ public:
 
 int main(int args, char** argv)
 try {
-	const auto v =
-	    std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>, vfs::layer::layered_file>>(
-	        vfs::find_vfs(nullptr), "rot13");
-	v->add_layer<rot13_layer>();
-	vfs::register_vfs(v, true);
+	vfs::register_vfs(std::make_shared<vfs::sqlite3_vfs_wrapper<rot13_file>>(vfs::find_vfs(nullptr), "rot13"),
+	                  false);
 
 	database db;
 	db.open("test.db", open_flag_readwrite | open_flag_create, "rot13");

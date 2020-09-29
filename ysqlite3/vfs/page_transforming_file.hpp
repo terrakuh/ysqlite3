@@ -5,6 +5,7 @@
 #include "file.hpp"
 
 #include <cstdint>
+#include <cstring>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -33,13 +34,17 @@ public:
 
 	void read(span<std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
+#if PRINT_DEBUG
 		printf("read from %s: %zi from %lli\n", name(this->format), buffer.size(), offset);
+#endif
 
 		if (_is_page(buffer.size(), offset)) {
 			Parent::read(buffer, offset);
 			decode_page(buffer);
 		} else {
+#if PRINT_DEBUG
 			puts("forwarding read");
+#endif
 			Parent::read(buffer, offset);
 		}
 
@@ -52,7 +57,9 @@ public:
 	}
 	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
+#if PRINT_DEBUG
 		printf("write to %s: %zi from %lli\n", name(this->format), buffer.size(), offset);
+#endif
 
 		// check reserve size
 		if (this->format == file_format::main_db && offset <= 20 && offset + buffer.size() >= 21) {
@@ -67,7 +74,9 @@ public:
 			encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
 			Parent::write({ _tmp_buffer.data(), _tmp_buffer.size() }, offset);
 		} else {
+#if PRINT_DEBUG
 			puts("forwarding write");
+#endif
 			Parent::write(buffer, offset);
 		}
 	}

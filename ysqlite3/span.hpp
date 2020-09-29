@@ -41,8 +41,8 @@ public:
 		if (offset > size()) {
 			throw std::system_error{ errc::out_of_bounds };
 		}
-
-		return { _first + offset, std::min(_first + offset + count, _last) };
+		count = std::min(count, size() - offset);
+		return { _first + offset, _first + offset + count };
 	}
 	template<typename Type>
 	span<Type> cast() const noexcept

@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Added
 - Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`
+- Multiple key format support with `PRAGMA key="r'my raw key'"`
+
+### Removed
+- `PRAGMA plain_key`
 
 ## [0.2.0] - 2020-09-29
 ### Added

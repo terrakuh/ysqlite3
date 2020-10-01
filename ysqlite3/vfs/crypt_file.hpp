@@ -37,14 +37,8 @@ public:
 			auto& name       = static_cast<char**>(arg)[1];
 			const auto value = static_cast<char**>(arg)[2];
 
-			if (!std::strcmp(name, "plain_key")) {
-				auto& key = _transform ? _transformation.key : _current.key;
-				if (!PKCS5_PBKDF2_HMAC(value, -1, nullptr, 0, 200000, EVP_sha512(),
-				                       static_cast<int>(key.size()), key.data())) {
-					name = sqlite3_mprintf("%s", "failed to generate new key");
-				} else {
-					name = sqlite3_mprintf("%s", "ok");
-				}
+			if (!std::strcmp(name, "key")) {
+				name = _generate_key(value, _transform ? _transformation : _current);
 			} else if (!std::strcmp(name, "crypt_transformation")) {
 				if ((value[0] == '0' || value[0] == '1') && !value[1]) {
 					if (_transform != (value[0] == '1')) {
@@ -151,6 +145,26 @@ private:
 #	else
 		*reinterpret_cast<std::uint32_t*>(iv.end() - 4) += 1;
 #	endif
+	}
+	char* _generate_key(const char* value, encryptor& encryptor)
+	{
+		std::string key;
+
+		// raw key
+		if (value[0] == 'r') {
+			key = value + 1;
+		}
+		
+		// check for ' or "
+		if (key.size() < 2 || key.front() != key.back() || (key.front() != '\'' && key.front() != '"')) {
+			return sqlite3_mprintf("%s", "bad key format");
+		}
+
+		if (!PKCS5_PBKDF2_HMAC(key.c_str() + 1, static_cast<int>(key.size() - 2), nullptr, 0, 200000,
+		                       EVP_sha512(), static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
+			return sqlite3_mprintf("%s", "failed to generate new key");
+		}
+		return sqlite3_mprintf("%s", "ok");
 	}
 };
 #endif

@@ -12,6 +12,7 @@
 #include <cstring>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <string>
 
 namespace ysqlite3 {
 namespace vfs {
@@ -45,9 +46,9 @@ public:
 						(_transform ? _current : _transformation) = (_transform ? _transformation : _current);
 						_transform                                = !_transform;
 					}
-					name = sqlite3_mprintf("%s", "ok");
+					name = sqlite3_mprintf("ok");
 				} else {
-					name = sqlite3_mprintf("%s", "bad argument");
+					name = sqlite3_mprintf("bad argument");
 				}
 			} else if (!std::strcmp(name, "cipher")) {
 				auto& cipher = _transform ? _transformation.cipher : _current.cipher;
@@ -60,10 +61,10 @@ public:
 				} else if (!std::strcmp(value, "aes-128-gcm")) {
 					cipher = EVP_aes_128_gcm();
 				} else {
-					name = sqlite3_mprintf("%s", "unkown cipher");
+					name = sqlite3_mprintf("unkown cipher");
 					return;
 				}
-				name = sqlite3_mprintf("%s", "ok");
+				name = sqlite3_mprintf("ok");
 			} else {
 				goto gt_parent;
 			}
@@ -132,7 +133,7 @@ private:
 		}
 
 		if (!EVP_CipherFinal_ex(_context, buffer.begin(), &len) || len) {
-			throw std::system_error{ sqlite3_errc::generic, "failed to encrypt/decrypt" };
+			throw std::system_error{ sqlite3_errc::not_a_database, "failed to encrypt/decrypt" };
 		}
 	}
 	void _generate_iv(span<std::uint8_t*> iv) const noexcept
@@ -149,22 +150,61 @@ private:
 	char* _generate_key(const char* value, encryptor& encryptor)
 	{
 		std::string key;
+		auto length = std::char_traits<char>::length(value);
+
+		// check for ' or "
+		if (length < 3 || value[1] != value[length - 1] || (value[1] != '\'' && value[1] != '"')) {
+			return sqlite3_mprintf("bad key format");
+		}
+		length -= 3;
 
 		// raw key
 		if (value[0] == 'r') {
-			key = value + 1;
-		}
-		
-		// check for ' or "
-		if (key.size() < 2 || key.front() != key.back() || (key.front() != '\'' && key.front() != '"')) {
-			return sqlite3_mprintf("%s", "bad key format");
+			key.append(value + 2, length);
+		} // hex key
+		else if (value[0] == 'x') {
+			const auto convert = [](char c) {
+				if (c >= '0' && c <= '9') {
+					return c - '0';
+				} else if (c >= 'a' && c <= 'f') {
+					return c - 'a' + 10;
+				} else if (c >= 'A' && c <= 'F') {
+					return c - 'A' + 10;
+				}
+				return -1;
+			};
+			auto i = length % 2;
+			value += 2;
+			key.resize(length / 2 + i);
+
+			if (i) {
+				const auto v = convert(*value);
+				if (v < 0) {
+					return sqlite3_mprintf("bad hex character: '%c'", *value);
+				}
+				key[0] = static_cast<char>(v);
+				--value;
+			}
+
+			for (; i < key.size(); ++i) {
+				for (auto j = 0; j < 2; ++j) {
+					const auto c = value[i * 2 + j];
+					const auto v = convert(c);
+					if (v < 0) {
+						return sqlite3_mprintf("bad hex character: '%c'", c);
+					}
+					key[i] = static_cast<char>(key[i] << 4 | v);
+				}
+			}
+		} else {
+			return sqlite3_mprintf("unknown format");
 		}
 
-		if (!PKCS5_PBKDF2_HMAC(key.c_str() + 1, static_cast<int>(key.size() - 2), nullptr, 0, 200000,
-		                       EVP_sha512(), static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
-			return sqlite3_mprintf("%s", "failed to generate new key");
+		if (!PKCS5_PBKDF2_HMAC(key.c_str(), static_cast<int>(key.size()), nullptr, 0, 200000, EVP_sha512(),
+		                       static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
+			return sqlite3_mprintf("failed to generate new key");
 		}
-		return sqlite3_mprintf("%s", "ok");
+		return sqlite3_mprintf("ok");
 	}
 };
 #endif

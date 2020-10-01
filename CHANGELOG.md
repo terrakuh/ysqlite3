@@ -3,7 +3,10 @@
 ## [Unreleased]
 ### Added
 - Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`
-- Multiple key format support with `PRAGMA key="r'my raw key'"`
+- Multiple key format support with `PRAGMA key="r'my raw key'"` or `PRAGMA key="x'070617373776f7264313233'"`
+
+### Changed
+- Error code from `generic` to `not_a_database` when decryption of database fails
 
 ### Removed
 - `PRAGMA plain_key`

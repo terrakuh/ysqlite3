@@ -200,8 +200,8 @@ private:
 			return sqlite3_mprintf("unknown format");
 		}
 
-		if (!PKCS5_PBKDF2_HMAC(key.c_str(), static_cast<int>(key.size()), nullptr, 0, 200000, EVP_sha512(),
-		                       static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
+		if (!PKCS5_PBKDF2_HMAC(key.c_str(), static_cast<int>(key.size()), file_data.data(), 8, 200000,
+		                       EVP_sha512(), static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
 			return sqlite3_mprintf("failed to generate new key");
 		}
 		return sqlite3_mprintf("ok");

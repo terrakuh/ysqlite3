@@ -4,6 +4,7 @@
 #include "../error.hpp"
 #include "file.hpp"
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -31,6 +32,11 @@ public:
 		if (_is_page(buffer.size(), offset)) {
 			Parent::read(buffer, offset);
 
+			if (this->format == file_format::main_db && offset == 0) {
+				std::memcpy(file_data.data(), buffer.begin(), file_data.size());
+				std::memcpy(buffer.begin(), "SQLite format 3", 16);
+			}
+
 			// do not decode header
 			if (this->format == file_format::main_db && !offset) {
 				decode_page(buffer.subspan(100));
@@ -44,12 +50,7 @@ public:
 			Parent::read(buffer, offset);
 		}
 
-		// check reserve size
-		if (this->format == file_format::main_db && offset <= 20 && offset + buffer.size() >= 21) {
-			if (!check_reserve_size(buffer.begin()[20 - offset])) {
-				throw std::system_error{ sqlite3_errc::generic, "bad reserve size" };
-			}
-		}
+		_parse_parameters(buffer.cast<const std::uint8_t*>(), offset);
 	}
 	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
@@ -57,12 +58,7 @@ public:
 		printf("write to %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
 #endif
 
-		// check reserve size
-		if (this->format == file_format::main_db && offset <= 20 && offset + buffer.size() >= 21) {
-			if (!check_reserve_size(buffer.begin()[20 - offset])) {
-				throw std::system_error{ sqlite3_errc::generic, "bad reserve size" };
-			}
-		}
+		_parse_parameters(buffer, offset);
 
 		if (_is_page(buffer.size(), offset)) {
 			_tmp_buffer.resize(buffer.size());
@@ -75,6 +71,10 @@ public:
 				encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
 			}
 
+			if (this->format == file_format::main_db && offset == 0) {
+				std::memcpy(_tmp_buffer.data(), file_data.data(), file_data.size());
+			}
+
 			Parent::write({ _tmp_buffer.data(), _tmp_buffer.size() }, offset);
 		} else {
 #if PRINT_DEBUG
@@ -85,6 +85,8 @@ public:
 	}
 
 protected:
+	std::array<std::uint8_t, 16> file_data{};
+
 	virtual void encode_page(span<std::uint8_t*> page) = 0;
 	virtual void decode_page(span<std::uint8_t*> page) = 0;
 	virtual bool check_reserve_size(std::uint8_t size) const noexcept
@@ -94,12 +96,31 @@ protected:
 
 private:
 	std::vector<std::uint8_t> _tmp_buffer;
+	std::uint32_t _page_size = 0;
 
 	bool _is_page(std::size_t size, sqlite3_int64 offset) const noexcept
 	{
 		return (this->format == file_format::main_db /* ||
 		        (this->format == file_format::main_journal && offset) */) &&
 		       size >= 512;
+	}
+	void _parse_parameters(span<const std::uint8_t*> buffer, sqlite3_int64 offset)
+	{
+		if (this->format == file_format::main_db) {
+			// read page size
+			if (offset <= 16 && offset + buffer.size() >= 18) {
+				_page_size = buffer.begin()[16 - offset] << 8 | buffer.begin()[17 - offset];
+				if (_page_size == 1) {
+					_page_size = 65536;
+				}
+			}
+
+			// check reserve size
+			if (offset <= 20 && offset + buffer.size() >= 21 &&
+			    !check_reserve_size(buffer.begin()[20 - offset])) {
+				throw std::system_error{ sqlite3_errc::generic, "bad reserve size" };
+			}
+		}
 	}
 };
 

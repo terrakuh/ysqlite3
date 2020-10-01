@@ -29,9 +29,15 @@ target_link_libraries(main ysqlite3::ysqlite3)
 ### Simple example
 
 ```cpp
-ysqlite3::database db("my.db");
+#include <ysqlite3/database.hpp>
 
-db.execute(R"(
+using namespace ysqlite3;
+
+int main()
+{
+	database db{"my.db"};
+
+	db.execute(R"(
 
 CREATE TABLE IF NOT EXISTS t(
 	name text
@@ -39,54 +45,62 @@ CREATE TABLE IF NOT EXISTS t(
 
 INSERT INTO t(name) VALUES('hello'), ('world'), (NULL);
 
-)");
+	)");
 
-auto stmt = db.prepare_statement("SELECT name FROM t WHERE name!=?;");
-ysqlite3::results results;
+	auto stmt = db.prepare_statement("SELECT * FROM t WHERE name!=?;");
+	results r;
+	stmt.bind(1, nullptr);
 
-stmt.bind(1, nullptr);
-
-while ((results = stmt.step())) {
-	std::cout << "Name: " << results.text("name") << std::endl;
+	while ((r = stmt.step())) {
+		for (const auto& column : stmt.columns()) {
+			const auto text = r.text(column.c_str());
+			std::cout << column << ": " << (!text ? "<null>" : text) << '\n';
+		}
+	}
 }
 ```
 
 ### Custom VFS layers
 
 ```cpp
+#include <ysqlite3/database.hpp>
+#include <ysqlite3/vfs/page_transforming_file.hpp>
+#include <ysqlite3/vfs/sqlite3_file_wrapper.hpp>
+#include <ysqlite3/vfs/sqlite3_vfs_wrapper.hpp>
+
 using namespace ysqlite3;
 
-class rot13_layer : public vfs::layer::layer
+class rot13_file : public vfs::page_transforming_file<vfs::sqlite3_file_wrapper>
 {
 public:
-	void encode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
+	using parent = vfs::page_transforming_file<vfs::sqlite3_file_wrapper>;
+	using parent::parent;
+
+protected:
+	void encode_page(span<std::uint8_t*> page) override
 	{
-		for (auto& i : buffer) {
-			i = static_cast<gsl::byte>(static_cast<unsigned char>(i) + 13);
+		for (auto& i : page) {
+			i += 13;
 		}
 	}
-	void decode(gsl::span<gsl::byte> buffer, sqlite3_int64) override
+	void decode_page(span<std::uint8_t*> page) override
 	{
-		for (auto& i : buffer) {
-			i = static_cast<gsl::byte>(static_cast<unsigned char>(i) - 13);
+		for (auto& i : page) {
+			i -= 13;
 		}
 	}
 };
 
-// adds a Rot13 encoder on top of the default VFS
-auto v = std::make_shared<vfs::layer::layered_vfs<vfs::sqlite3_vfs_wrapper<>,
-                          vfs::layer::layered_file>>(
-			  vfs::find_vfs(nullptr), "myvfs");
+int main()
+{
+	vfs::register_vfs(std::make_shared<vfs::sqlite3_vfs_wrapper<rot13_file>>(vfs::find_vfs(nullptr), "rot13"),
+	                  false);
 
-v->add_layer<rot13_layer>();
-
-// register and don't make it the new default
-vfs::register_vfs(v, false);
-
-// open database with custom VFS
-db.open("my.db", database::open_flag_readwrite | database::open_flag_create, "myvfs");
+	database db;
+	db.open("test.db", open_flag_readwrite | open_flag_create, "rot13");
+}
 ```
 
 ## License
 
-The wrapper is put into the public domain.
+[MIT](https://github.com/terrakuh/ysqlite3/blob/master/LICENSE) License.

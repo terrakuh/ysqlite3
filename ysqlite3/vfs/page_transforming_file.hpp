@@ -13,16 +13,6 @@
 namespace ysqlite3 {
 namespace vfs {
 
-inline const char* name(ysqlite3::vfs::file_format format) noexcept
-{
-	using namespace ysqlite3::vfs;
-	switch (format) {
-	case file_format::main_db: return "main db";
-	case file_format::main_journal: return "main journal";
-	default: return "unkown";
-	}
-}
-
 template<typename Parent>
 class page_transforming_file : public Parent
 {
@@ -35,12 +25,18 @@ public:
 	void read(span<std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
 #if PRINT_DEBUG
-		printf("read from %s: %zi from %lli\n", name(this->format), buffer.size(), offset);
+		printf("read from %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
 #endif
 
 		if (_is_page(buffer.size(), offset)) {
 			Parent::read(buffer, offset);
-			decode_page(buffer);
+
+			// do not decode header
+			if (this->format == file_format::main_db && !offset) {
+				decode_page(buffer.subspan(100));
+			} else {
+				decode_page(buffer);
+			}
 		} else {
 #if PRINT_DEBUG
 			puts("forwarding read");
@@ -58,7 +54,7 @@ public:
 	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
 #if PRINT_DEBUG
-		printf("write to %s: %zi from %lli\n", name(this->format), buffer.size(), offset);
+		printf("write to %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
 #endif
 
 		// check reserve size
@@ -71,7 +67,14 @@ public:
 		if (_is_page(buffer.size(), offset)) {
 			_tmp_buffer.resize(buffer.size());
 			std::memcpy(_tmp_buffer.data(), buffer.begin(), _tmp_buffer.size());
-			encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
+
+			// do not encode header
+			if (this->format == file_format::main_db && !offset) {
+				encode_page({ _tmp_buffer.data() + 100, _tmp_buffer.size() - 100 });
+			} else {
+				encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
+			}
+
 			Parent::write({ _tmp_buffer.data(), _tmp_buffer.size() }, offset);
 		} else {
 #if PRINT_DEBUG

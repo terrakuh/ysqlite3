@@ -80,6 +80,15 @@ enum class file_cntl
 	checkpoint_start      = SQLITE_FCNTL_CKPT_START,
 };
 
+inline const char* name_of(file_format format) noexcept
+{
+	switch (format) {
+	case file_format::main_db: return "main db";
+	case file_format::main_journal: return "main journal";
+	default: return "unkown";
+	}
+}
+
 class file
 {
 public:

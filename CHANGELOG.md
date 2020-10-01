@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`
 
 ## [0.2.0] - 2020-09-29
 ### Added

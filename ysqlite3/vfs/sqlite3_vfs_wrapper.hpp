@@ -32,6 +32,10 @@ public:
 	std::unique_ptr<file> open(const char* name, file_format format, open_flag_type flags,
 	                           open_flag_type& output_flags) override
 	{
+#if PRINT_DEBUG
+		printf("opening new file: %s\n", name_of(format));
+#endif
+
 		std::shared_ptr<sqlite3_file> tmp_file(
 		    reinterpret_cast<sqlite3_file*>(new std::uint8_t[_parent->szOsFile]{}),
 		    [](sqlite3_file* x) { delete[] reinterpret_cast<std::uint8_t*>(x); });

@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.0] - 2020-10-01
 ### Added
 - Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`
 - Multiple key format support with `PRAGMA key="r'my raw key'"` or `PRAGMA key="x'070617373776f7264313233'"`
@@ -35,6 +35,7 @@
 - `backward.hpp` 3rd party
 - `microsoft/gsl` 3rd party
 
-[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.2.0...dev
+[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.3.0...dev
+[0.3.0]: https://github.com/terrakuh/ysqlite3/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/terrakuh/ysqlite3/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/terrakuh/ysqlite3/compare/v0.0.0...v0.1.0

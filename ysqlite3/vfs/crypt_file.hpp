@@ -51,20 +51,7 @@ public:
 					name = sqlite3_mprintf("bad argument");
 				}
 			} else if (!std::strcmp(name, "cipher")) {
-				auto& cipher = _transform ? _transformation.cipher : _current.cipher;
-				if (!std::strcmp(value, "null")) {
-					cipher = nullptr;
-				} else if (!std::strcmp(value, "aes-256-gcm")) {
-					cipher = EVP_aes_256_gcm();
-				} else if (!std::strcmp(value, "aes-192-gcm")) {
-					cipher = EVP_aes_192_gcm();
-				} else if (!std::strcmp(value, "aes-128-gcm")) {
-					cipher = EVP_aes_128_gcm();
-				} else {
-					name = sqlite3_mprintf("unkown cipher");
-					return;
-				}
-				name = sqlite3_mprintf("ok");
+				name = _set_chiper(value, _transform ? _transformation : _current);
 			} else {
 				goto gt_parent;
 			}
@@ -77,7 +64,8 @@ public:
 protected:
 	void encode_page(span<std::uint8_t*> page) override
 	{
-		auto& enc = _transform ? _transformation : _current;
+		_initialized = true;
+		auto& enc    = _transform ? _transformation : _current;
 		if (enc.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());
 			page      = page.subspan(0, page.size() - crypt_file_reserve_size());
@@ -88,6 +76,7 @@ protected:
 	}
 	void decode_page(span<std::uint8_t*> page) override
 	{
+		_initialize();
 		if (_current.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());
 			page      = page.subspan(0, page.size() - crypt_file_reserve_size());
@@ -108,9 +97,24 @@ private:
 
 	EVP_CIPHER_CTX* _context = EVP_CIPHER_CTX_new();
 	bool _transform          = false;
+	bool _initialized        = false;
 	encryptor _current;
 	encryptor _transformation;
 
+	void _initialize()
+	{
+		if (!_initialized) {
+			if (const char* key = sqlite3_uri_parameter(this->name, "key")) {
+				sqlite3_free(_generate_key(key, _current));
+			}
+
+			if (const char* cipher = sqlite3_uri_parameter(this->name, "cipher")) {
+				sqlite3_free(_set_chiper(cipher, _current));
+			}
+
+			_initialized = true;
+		}
+	}
 	void _crypt(span<std::uint8_t*> buffer, span<std::uint8_t*> data, encryptor& encryptor, bool encrypt)
 	{
 		EVP_CIPHER_CTX_reset(_context);
@@ -200,9 +204,24 @@ private:
 			return sqlite3_mprintf("unknown format");
 		}
 
-		if (!PKCS5_PBKDF2_HMAC(key.c_str(), static_cast<int>(key.size()), file_data.data(), 8, 200000,
-		                       EVP_sha512(), static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
+		if (!PKCS5_PBKDF2_HMAC(key.c_str(), static_cast<int>(key.size()), nullptr, 0, 200000, EVP_sha512(),
+		                       static_cast<int>(encryptor.key.size()), encryptor.key.data())) {
 			return sqlite3_mprintf("failed to generate new key");
+		}
+		return sqlite3_mprintf("ok");
+	}
+	char* _set_chiper(const char* value, encryptor& encryptor)
+	{
+		if (!std::strcmp(value, "null")) {
+			encryptor.cipher = nullptr;
+		} else if (!std::strcmp(value, "aes-256-gcm")) {
+			encryptor.cipher = EVP_aes_256_gcm();
+		} else if (!std::strcmp(value, "aes-192-gcm")) {
+			encryptor.cipher = EVP_aes_192_gcm();
+		} else if (!std::strcmp(value, "aes-128-gcm")) {
+			encryptor.cipher = EVP_aes_128_gcm();
+		} else {
+			return sqlite3_mprintf("unkown cipher");
 		}
 		return sqlite3_mprintf("ok");
 	}

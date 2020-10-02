@@ -95,7 +95,7 @@ public:
 	/**
 	 Constructor.
 	*/
-	file(file_format format) noexcept;
+	file(const char* name, file_format format) noexcept;
 	virtual ~file() = default;
 	sqlite3_io_methods* methods() noexcept
 	{
@@ -125,9 +125,16 @@ public:
 	 *
 	 * @return device characteristics
 	 */
-	virtual int device_characteristics() const noexcept = 0;
+	virtual int device_characteristics() const noexcept                                         = 0;
+	virtual void shm_map(int page, int page_size, bool is_write, void volatile** mapped_memory) = 0;
+	virtual void shm_lock(int offset, int n, int flags)                                         = 0;
+	virtual void shm_barrier() noexcept                                                         = 0;
+	virtual void shm_unmap(int delete_flag)                                                     = 0;
+	virtual void fetch(sqlite3_int64 offset, int amount, void** buffer)                         = 0;
+	virtual void unfetch(sqlite3_int64 offset, void* buffer)                                    = 0;
 
 protected:
+	const char* const name;
 	const file_format format;
 
 private:

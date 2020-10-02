@@ -1,5 +1,10 @@
 # Change Log
 
+## [Unreleased]
+- Add file name to VFS file
+- Add file support for version 3
+- Add URI parameter support to crypt file for `key` and `cipher`
+
 ## [0.3.0] - 2020-10-01
 ### Added
 - Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`

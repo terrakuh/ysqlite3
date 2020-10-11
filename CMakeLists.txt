@@ -12,6 +12,7 @@ set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
 	STRINGS "none" "OpenSSL")
+# add_compile_options("-DPRINT_DEBUG")
 
 find_package(ZLIB)
 find_package(Threads REQUIRED)
@@ -64,6 +65,10 @@ endif()
 if(YSQLITE3_BUILD_EXTENSIONS)
 	add_subdirectory(extensions)
 endif()
+
+include(CTest)
+enable_testing()
+add_subdirectory(tests)
 
 # install
 install(TARGETS ysqlite3

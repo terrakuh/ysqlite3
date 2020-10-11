@@ -3,6 +3,7 @@
 
 #include "results.hpp"
 #include "sqlite3.h"
+#include "span.hpp"
 
 #include <cstddef>
 #include <string>
@@ -79,6 +80,7 @@ public:
 	results step();
 	statement& bind_reference(index index, const char* value);
 	statement& bind_reference(index index, const std::string& value);
+	statement& bind_reference(index index, span<const std::uint8_t*> blob);
 	statement& bind(index index, const char* value);
 	statement& bind(index index, const std::string& value);
 	statement& bind(index index, std::nullptr_t);

@@ -64,7 +64,7 @@ public:
 protected:
 	void encode_page(span<std::uint8_t*> page) override
 	{
-		_initialized = true;
+		_initialize();
 		auto& enc    = _transform ? _transformation : _current;
 		if (enc.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());

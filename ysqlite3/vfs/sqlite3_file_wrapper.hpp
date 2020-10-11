@@ -19,6 +19,9 @@ public:
 	{}
 	void close() override
 	{
+#if PRINT_DEBUG
+		printf("closing file: %s\n", name_of(format));
+#endif
 		const auto _ = finally([this] { _parent = nullptr; });
 		_check_error(_parent->pMethods->xClose(_parent.get()));
 	}

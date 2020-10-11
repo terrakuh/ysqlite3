@@ -32,11 +32,6 @@ public:
 		if (_is_page(buffer.size(), offset)) {
 			Parent::read(buffer, offset);
 
-			if (this->format == file_format::main_db && offset == 0) {
-				std::memcpy(file_data.data(), buffer.begin(), file_data.size());
-				std::memcpy(buffer.begin(), "SQLite format 3", 16);
-			}
-
 			// do not decode header
 			if (this->format == file_format::main_db && !offset) {
 				decode_page(buffer.subspan(100));
@@ -71,10 +66,6 @@ public:
 				encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
 			}
 
-			if (this->format == file_format::main_db && offset == 0) {
-				std::memcpy(_tmp_buffer.data(), file_data.data(), file_data.size());
-			}
-
 			Parent::write({ _tmp_buffer.data(), _tmp_buffer.size() }, offset);
 		} else {
 #if PRINT_DEBUG
@@ -85,8 +76,6 @@ public:
 	}
 
 protected:
-	std::array<std::uint8_t, 16> file_data{};
-
 	virtual void encode_page(span<std::uint8_t*> page) = 0;
 	virtual void decode_page(span<std::uint8_t*> page) = 0;
 	virtual bool check_reserve_size(std::uint8_t size) const noexcept

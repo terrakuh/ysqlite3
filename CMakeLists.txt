@@ -12,7 +12,7 @@ set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
 	STRINGS "none" "OpenSSL")
-# add_compile_options("-DPRINT_DEBUG")
+#add_compile_options("-DPRINT_DEBUG")
 
 find_package(ZLIB)
 find_package(Threads REQUIRED)

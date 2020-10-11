@@ -33,14 +33,17 @@ public:
 	                           open_flag_type& output_flags) override
 	{
 #if PRINT_DEBUG
-		printf("opening new file: %s\n", name_of(format));
+		printf("opening new file (%s) '%s'\n", name_of(format), name);
 #endif
-
 		std::shared_ptr<sqlite3_file> tmp_file(
 		    reinterpret_cast<sqlite3_file*>(new std::uint8_t[_parent->szOsFile]{}),
 		    [](sqlite3_file* x) { delete[] reinterpret_cast<std::uint8_t*>(x); });
 		_check_error(_parent->xOpen(_parent, name, tmp_file.get(), flags, &output_flags));
-		return std::unique_ptr<file>{ new File{ name, format, std::move(tmp_file) } };
+		std::unique_ptr<file> tmp{ new File{ name, format, std::move(tmp_file) } };
+#if PRINT_DEBUG
+		printf("opening new file (%s) '%s' done\n", name_of(format), name);
+#endif
+		return tmp;
 	}
 	void delete_file(const char* name, bool sync_directory) override
 	{

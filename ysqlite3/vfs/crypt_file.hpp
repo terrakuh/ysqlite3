@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <string>
+#include <utility>
 
 namespace ysqlite3 {
 namespace vfs {
@@ -27,10 +28,22 @@ template<typename File>
 class crypt_file : public page_transforming_file<File>
 {
 public:
-	using page_transforming_file<File>::page_transforming_file;
+	template<typename... Args>
+	crypt_file(Args&&... args) : page_transforming_file<File>{ std::forward<Args>(args)... }
+	{
+		if (const char* key = sqlite3_uri_parameter(this->name, "key")) {
+			sqlite3_free(_generate_key(key, _current));
+		}
+
+		if (const char* cipher = sqlite3_uri_parameter(this->name, "cipher")) {
+			sqlite3_free(_set_chiper(cipher, _current));
+		}
+	}
 	~crypt_file()
 	{
 		EVP_CIPHER_CTX_free(_context);
+		std::memset(_current.key.data(), 0, _current.key.size());
+		std::memset(_transformation.key.data(), 0, _transformation.key.size());
 	}
 	void file_control(file_cntl operation, void* arg) override
 	{
@@ -55,6 +68,7 @@ public:
 			} else {
 				goto gt_parent;
 			}
+			return;
 		}
 
 	gt_parent:
@@ -64,8 +78,7 @@ public:
 protected:
 	void encode_page(span<std::uint8_t*> page) override
 	{
-		_initialize();
-		auto& enc    = _transform ? _transformation : _current;
+		auto& enc = _transform ? _transformation : _current;
 		if (enc.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());
 			page      = page.subspan(0, page.size() - crypt_file_reserve_size());
@@ -76,7 +89,6 @@ protected:
 	}
 	void decode_page(span<std::uint8_t*> page) override
 	{
-		_initialize();
 		if (_current.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());
 			page      = page.subspan(0, page.size() - crypt_file_reserve_size());
@@ -97,28 +109,12 @@ private:
 
 	EVP_CIPHER_CTX* _context = EVP_CIPHER_CTX_new();
 	bool _transform          = false;
-	bool _initialized        = false;
 	encryptor _current;
 	encryptor _transformation;
 
-	void _initialize()
-	{
-		if (!_initialized) {
-			if (const char* key = sqlite3_uri_parameter(this->name, "key")) {
-				sqlite3_free(_generate_key(key, _current));
-			}
-
-			if (const char* cipher = sqlite3_uri_parameter(this->name, "cipher")) {
-				sqlite3_free(_set_chiper(cipher, _current));
-			}
-
-			_initialized = true;
-		}
-	}
 	void _crypt(span<std::uint8_t*> buffer, span<std::uint8_t*> data, encryptor& encryptor, bool encrypt)
 	{
 		EVP_CIPHER_CTX_reset(_context);
-
 		if (!EVP_CipherInit_ex(_context, encryptor.cipher, nullptr, encryptor.key.data(), data.begin(),
 		                       encrypt)) {
 			throw std::system_error{ sqlite3_errc::generic, "failed to encrypt/decrypt" };

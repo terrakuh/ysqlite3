@@ -22,16 +22,25 @@ database::~database()
 	close(true);
 }
 
-void database::set_reserved_size(std::uint8_t size)
+std::uint8_t database::set_reserved_size(std::uint8_t size, bool vacuum)
 {
 	if (!is_open()) {
 		throw std::system_error{ errc::database_is_closed };
 	}
 
-	int n = size;
-	if (const auto ec = sqlite3_file_control(_database, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n)) {
+	int n   = size;
+	auto ec = sqlite3_file_control(_database, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n);
+	if (!ec && vacuum && n != static_cast<int>(size)) {
+		ec = sqlite3_exec(_database, "VACUUM", nullptr, nullptr, nullptr);
+		// reset
+		if (ec) {
+			sqlite3_file_control(_database, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n);
+		}
+	}
+	if (ec) {
 		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
+	return static_cast<std::uint8_t>(size);
 }
 
 void database::set_journal_mode(journal_mode mode)

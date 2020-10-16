@@ -90,7 +90,14 @@ public:
 	 * @see force-closing with database::close()
 	 */
 	virtual ~database();
-	void set_reserved_size(std::uint8_t size);
+	/**
+	 * Sets the reserved size and vacuums the database if requried and desired.
+	 * 
+	 * @param size the desired size
+	 * @param vacuum vacuums if the reserved size was changed; needs to be done
+	 * @return the old reserved size
+	*/
+	std::uint8_t set_reserved_size(std::uint8_t size, bool vacuum = true);
 	/**
 	 * Sets the database journaling mode.
 	 *

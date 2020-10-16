@@ -19,7 +19,7 @@ int wrap(Action&& action, int default_error = SQLITE_ERROR) noexcept
 		action();
 		return SQLITE_OK;
 	} catch (const std::system_error& e) {
-		return e.code().value();
+		return e.code().category() == ysqlite3::sqlite3_category() ? e.code().value() : default_error;
 	} catch (...) {
 		return default_error;
 	}
@@ -93,7 +93,7 @@ int lock(sqlite3_file* file, int flag) noexcept
 
 int unlock(sqlite3_file* file, int flag) noexcept
 {
-	return wrap([&] { self(file)->lock(lock_flag(flag)); }, SQLITE_IOERR_UNLOCK);
+	return wrap([&] { self(file)->unlock(lock_flag(flag)); }, SQLITE_IOERR_UNLOCK);
 }
 
 int check_reserved_lock(sqlite3_file* file, int* out) noexcept

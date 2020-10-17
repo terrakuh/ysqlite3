@@ -11,22 +11,43 @@ using namespace ysqlite3;
 #ifdef _WIN32
 __declspec(dllexport)
 #endif
-    extern "C" int sqlite3_ysqlitecryptvfs_init(sqlite3* db, char** error_message,
-                                                const sqlite3_api_routines* api) noexcept
+    extern "C" int ysqlite3_init_crypt_db(sqlite3* db, char** error_message,
+                                          const sqlite3_api_routines* api) noexcept
 {
-	int rc = SQLITE_OK;
 	SQLITE_EXTENSION_INIT2(api);
+	int n   = vfs::crypt_file_reserve_size();
+	auto ec = sqlite3_file_control(db, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n);
+	if (!ec && n != vfs::crypt_file_reserve_size()) {
+		ec = sqlite3_exec(db, "VACUUM", nullptr, nullptr, nullptr);
+		if (ec) {
+			sqlite3_file_control(db, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n);
+		}
+	}
+	return ec;
+}
+
+#ifdef _WIN32
+__declspec(dllexport)
+#endif
+    extern "C" int ysqlite3_register_crypt_vfs(sqlite3* db, char** error_message,
+                                               const sqlite3_api_routines* api) noexcept
+{
+	SQLITE_EXTENSION_INIT2(api);
+
+	// check version
+	if (sqlite3_libversion_number() < 3032000) {
+		*error_message = sqlite3_mprintf("incompatible SQLite3 version; min 3.32.0");
+		return SQLITE_ERROR;
+	}
 
 	try {
 		vfs::register_vfs(
 		    std::make_shared<vfs::sqlite3_vfs_wrapper<vfs::crypt_file<vfs::sqlite3_file_wrapper>>>(
 		        vfs::find_vfs(nullptr), "ysqlite3-crypt-vfs"),
 		    false);
-		int n = vfs::crypt_file_reserve_size();
-		rc    = sqlite3_file_control(db, nullptr, SQLITE_FCNTL_RESERVE_BYTES, &n);
 	} catch (...) {
 		return SQLITE_ERROR;
 	}
 
-	return rc == SQLITE_OK ? SQLITE_OK_LOAD_PERMANENTLY : rc;
+	return SQLITE_OK_LOAD_PERMANENTLY;
 }

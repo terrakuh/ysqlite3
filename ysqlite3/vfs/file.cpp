@@ -19,7 +19,7 @@ int wrap(Action&& action, int default_error = SQLITE_ERROR) noexcept
 		action();
 		return SQLITE_OK;
 	} catch (const std::system_error& e) {
-		return e.code().value();
+		return e.code().category() == ysqlite3::sqlite3_category() ? e.code().value() : default_error;
 	} catch (...) {
 		return default_error;
 	}
@@ -93,7 +93,7 @@ int lock(sqlite3_file* file, int flag) noexcept
 
 int unlock(sqlite3_file* file, int flag) noexcept
 {
-	return wrap([&] { self(file)->lock(lock_flag(flag)); }, SQLITE_IOERR_UNLOCK);
+	return wrap([&] { self(file)->unlock(lock_flag(flag)); }, SQLITE_IOERR_UNLOCK);
 }
 
 int check_reserved_lock(sqlite3_file* file, int* out) noexcept
@@ -121,21 +121,41 @@ int device_characteristics(sqlite3_file* file) noexcept
 	return self(file)->device_characteristics();
 }
 
-// /*static int _shm_map(sqlite3_file*, int iPg, int pgsz, int, void volatile**);
-// static int _shm_lock(sqlite3_file*, int offset, int n, int flags);
-// static void _shm_barrier(sqlite3_file*);
-// static int _shm_unmap(sqlite3_file*, int deleteFlag);
+int shm_map(sqlite3_file* file, int page, int page_size, int is_write, void volatile** mapped_memory)
+{
+	return wrap([&] { self(file)->shm_map(page, page_size, is_write, mapped_memory); });
+}
 
-// static int _fetch(sqlite3_file*, sqlite3_int64 iOfst, int iAmt, void** pp);
-// static int _unfetch(sqlite3_file*, sqlite3_int64 iOfst, void* p);
-// /* Methods above are valid for version 3 */
-// /* Additional methods may be added in future releases */
+int shm_lock(sqlite3_file* file, int offset, int n, int flags)
+{
+	return wrap([&] { self(file)->shm_lock(offset, n, flags); });
+}
+
+void shm_barrier(sqlite3_file* file)
+{
+	self(file)->shm_barrier();
+}
+
+int shm_unmap(sqlite3_file* file, int delete_flag)
+{
+	return wrap([&] { self(file)->shm_unmap(delete_flag); });
+}
+
+int fetch(sqlite3_file* file, sqlite3_int64 offset, int amount, void** buffer)
+{
+	return wrap([&] { self(file)->fetch(offset, amount, buffer); });
+}
+
+int unfetch(sqlite3_file* file, sqlite3_int64 offset, void* buffer)
+{
+	return wrap([&] { self(file)->unfetch(offset, buffer); });
+}
 
 } // namespace
 
-file::file(file_format format) noexcept : format{ format }, _methods{}
+file::file(const char* name, file_format format) noexcept : name{ name }, format{ format }, _methods{}
 {
-	_methods.iVersion               = 1;
+	_methods.iVersion               = 3;
 	_methods.xClose                 = &::close;
 	_methods.xRead                  = &::read;
 	_methods.xWrite                 = &::write;
@@ -148,12 +168,10 @@ file::file(file_format format) noexcept : format{ format }, _methods{}
 	_methods.xFileControl           = &::file_control;
 	_methods.xSectorSize            = &::sector_size; // opt
 	_methods.xDeviceCharacteristics = &::device_characteristics;
-
-	/*_methods.xShmLock    = _shm_lock; // for wal
-	_methods.xShmMap     = _shm_map;
-	_methods.xShmBarrier = _shm_barrier;
-	_methods.xShmUnmap   = _shm_unmap;
-
-	_methods.xFetch   = _fetch; // if SQLITE_MAX_MMAP_SIZE > 0
-	_methods.xUnfetch = _unfetch;*/
+	_methods.xShmLock               = &::shm_lock; // for wal
+	_methods.xShmMap                = &::shm_map;
+	_methods.xShmBarrier            = &::shm_barrier;
+	_methods.xShmUnmap              = &::shm_unmap;
+	_methods.xFetch                 = &::fetch; // if SQLITE_MAX_MMAP_SIZE > 0
+	_methods.xUnfetch               = &::unfetch;
 }

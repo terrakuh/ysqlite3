@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.4.0] - 2020-10-17
+### Added
+- File name to VFS file
+- File support for version 3
+- URI parameter support to crypt file for `key` and `cipher`
+- Shell program with `ysqlite3-crypt-vfs` VFS
+- Encryption extension
+
+### Fixed
+- Unlocking in VFS file
+
 ## [0.3.0] - 2020-10-01
 ### Added
 - Re-encryption with the new `PRAGMA`s `crypt_transformation` and `chipher`
@@ -35,7 +46,8 @@
 - `backward.hpp` 3rd party
 - `microsoft/gsl` 3rd party
 
-[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.3.0...dev
+[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.4.0...dev
+[0.4.0]: https://github.com/terrakuh/ysqlite3/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/terrakuh/ysqlite3/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/terrakuh/ysqlite3/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/terrakuh/ysqlite3/compare/v0.0.0...v0.1.0

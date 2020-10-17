@@ -114,6 +114,11 @@ statement& statement::bind_reference(index index, const std::string& value)
 	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_STATIC);
 }
 
+statement& statement::bind_reference(index index, span<const std::uint8_t*> blob)
+{
+	return _bind(index, sqlite3_bind_blob64, blob.begin(), blob.size(), SQLITE_STATIC);
+}
+
 statement& statement::bind(index index, const char* value)
 {
 	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_TRANSIENT);
@@ -221,15 +226,12 @@ int statement::_to_parameter_index(index index)
 {
 	if (index.name) {
 		const auto idx = sqlite3_bind_parameter_index(_statement, index.name);
-
 		if (!idx) {
 			throw std::system_error{ errc::unknown_parameter };
 		}
-
 		return idx;
-	} else if (index.value < 1 || index.value > sqlite3_bind_parameter_count(_statement)) {
+	} else if (index.value < 0 || index.value >= sqlite3_bind_parameter_count(_statement)) {
 		throw std::system_error{ errc::parameter_out_of_range };
 	}
-
-	return index.value;
+	return index.value + 1;
 }

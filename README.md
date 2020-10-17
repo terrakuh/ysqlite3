@@ -101,6 +101,37 @@ int main()
 }
 ```
 
+### As Extension
+
+```c
+sqlite3 db;
+// register vfs for the 'real' database
+sqlite3_open(":memory:", &db);
+sqlite3_enable_load_extension(db, 1);
+sqlite3_load_extension(db, "/path/to/ysqlite3_crypt_vfs.ext", "ysqlite3_register_crypt_vfs", 0);
+sqlite3_close(db);
+
+sqlite3_open_v2("file:real.db?key=x'0f23eabc39'&cipher=aes-256-gcm", &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI, "ysqlite3-crypt-vfs");
+// automatically initializes the database
+sqlite3_enable_load_extension(db, 1);
+sqlite3_load_extension(db, "/path/to/ysqlite3_crypt_vfs.ext", "ysqlite3_init_crypt_db", 0);
+sqlite3_enable_load_extension(db, 0);
+// call the following if you don't want to use the method above
+// note: if the db already exists you may need to call 'VACUUM'
+int n = 32;
+sqlite3_file_control(db, 0, SQLITE_FCNTL_RESERVE_BYTES, &n);
+
+```
+
+## Shell
+
+```sh
+ysqlite3 -vfs ysqlite3-crypt-vfs encrypted.db
+sqlite> .filectrl reserve_bytes 32 #only required if first created
+sqlite> PRAGMA cipher="aes-256-gcm";
+sqlite> PRAGMA key="r'password123'";
+```
+
 ## License
 
 [MIT](https://github.com/terrakuh/ysqlite3/blob/master/LICENSE) License.

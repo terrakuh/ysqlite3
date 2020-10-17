@@ -97,7 +97,7 @@ protected:
 	}
 	bool check_reserve_size(std::uint8_t size) const noexcept override
 	{
-		return size == crypt_file_reserve_size();
+		return !(_transform ? _transformation : _current).cipher || size == crypt_file_reserve_size();
 	}
 
 private:

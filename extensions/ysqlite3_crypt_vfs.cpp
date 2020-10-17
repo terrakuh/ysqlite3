@@ -11,7 +11,8 @@ using namespace ysqlite3;
 #ifdef _WIN32
 __declspec(dllexport)
 #endif
-    extern "C" int init_db(sqlite3* db, char** error_message, const sqlite3_api_routines* api) noexcept
+    extern "C" int ysqlite3_init_crypt_db(sqlite3* db, char** error_message,
+                                          const sqlite3_api_routines* api) noexcept
 {
 	SQLITE_EXTENSION_INIT2(api);
 	int n   = vfs::crypt_file_reserve_size();
@@ -28,7 +29,8 @@ __declspec(dllexport)
 #ifdef _WIN32
 __declspec(dllexport)
 #endif
-    extern "C" int register_vfs(sqlite3* db, char** error_message, const sqlite3_api_routines* api) noexcept
+    extern "C" int ysqlite3_register_crypt_vfs(sqlite3* db, char** error_message,
+                                               const sqlite3_api_routines* api) noexcept
 {
 	SQLITE_EXTENSION_INIT2(api);
 

@@ -40,7 +40,7 @@ std::uint8_t database::set_reserved_size(std::uint8_t size, bool vacuum)
 	if (ec) {
 		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
 	}
-	return static_cast<std::uint8_t>(size);
+	return static_cast<std::uint8_t>(n);
 }
 
 void database::set_journal_mode(journal_mode mode)

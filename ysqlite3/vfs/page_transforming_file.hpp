@@ -38,14 +38,14 @@ public:
 			} else {
 				decode_page(buffer);
 			}
+
+			_parse_parameters(buffer.cast<const std::uint8_t*>(), offset);
 		} else {
 #if PRINT_DEBUG
 			puts("forwarding read");
 #endif
 			Parent::read(buffer, offset);
 		}
-
-		_parse_parameters(buffer.cast<const std::uint8_t*>(), offset);
 	}
 	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
@@ -53,9 +53,8 @@ public:
 		printf("write to %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
 #endif
 
-		_parse_parameters(buffer, offset);
-
 		if (_is_page(buffer.size(), offset)) {
+			_parse_parameters(buffer, offset);
 			_tmp_buffer.resize(buffer.size());
 			std::memcpy(_tmp_buffer.data(), buffer.begin(), _tmp_buffer.size());
 

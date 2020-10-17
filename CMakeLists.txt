@@ -8,6 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." ON)
 option(YSQLITE3_BUILD_EXTENSIONS "Build the extensions." ON)
+option(YSQLITE3_BUILD_TESTS "Build the tests." ON)
+option(YSQLITE3_BUILD_SHELL "Build the shell." ON)
 set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
@@ -66,9 +68,15 @@ if(YSQLITE3_BUILD_EXTENSIONS)
 	add_subdirectory(extensions)
 endif()
 
-include(CTest)
-enable_testing()
-add_subdirectory(tests)
+if(YSQLITE3_BUILD_SHELL)
+	add_subdirectory(shell)
+endif()
+
+if(YSQLITE3_BUILD_TESTS)
+	include(CTest)
+	enable_testing()
+	add_subdirectory(tests)
+endif()
 
 # install
 install(TARGETS ysqlite3
@@ -77,7 +85,7 @@ install(TARGETS ysqlite3
 	LIBRARY DESTINATION "lib")
 install(DIRECTORY "ysqlite3"
 	DESTINATION "include"
-	FILES_MATCHING REGEX "*.h(pp)?$")
+	FILES_MATCHING REGEX ".*\.h(pp)?$")
 install(EXPORT ysqlite3
 	DESTINATION "lib/cmake/ysqlite3"
 	NAMESPACE ysqlite3::

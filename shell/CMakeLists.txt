@@ -18,22 +18,22 @@ set_target_properties(shell PROPERTIES
 
 # json
 if(YSQLITE3_SHELL_ENABLE_JSON)
-	target_compile_options(shell PRIVATE -DSQLITE_ENABLE_JSON1)
+	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_JSON1)
 endif()
 
 # comments
 if(YSQLITE3_SHELL_ENABLE_EXPLAIN_COMMENTS)
-	target_compile_options(shell PRIVATE -DSQLITE_ENABLE_EXPLAIN_COMMENTS)
+	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_EXPLAIN_COMMENTS)
 endif()
 
 # rtree
 if(YSQLITE3_SHELL_ENABLE_RTREE)
-	target_compile_options(shell PRIVATE -DSQLITE_ENABLE_RTREE)
+	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_RTREE)
 endif()
 
 # fts
 if(NOT YSQLITE3_SHELL_ENABLE_FULL_TEXT_SEARCH STREQUAL "no")
-	target_compile_options(shell PRIVATE -DSQLITE_ENABLE_${YSQLITE3_SHELL_ENABLE_FULL_TEXT_SEARCH})
+	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_${YSQLITE3_SHELL_ENABLE_FULL_TEXT_SEARCH})
 endif()
 
 # readline
@@ -43,7 +43,7 @@ find_path(READLINE_INCLUDE_DIR readline/readline.h)
 if(NOT YSQLITE3_SHELL_DISABLE_READLINE AND READLINE_INCLUDE_DIR AND READLINE_LIBRARY)
 	message(STATUS "Found readline ${READLINE_INCLUDE_DIR} AND ${READLINE_LIBRARY}")
 	target_link_libraries(shell "${READLINE_LIBRARY}")
-	target_compile_options(shell PRIVATE -DHAVE_READLINE)
+	target_compile_definitions(shell PRIVATE HAVE_READLINE)
 endif()
 
 install(TARGETS shell

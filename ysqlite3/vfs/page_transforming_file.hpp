@@ -15,15 +15,15 @@ namespace ysqlite3 {
 namespace vfs {
 
 template<typename Parent>
-class page_transforming_file : public Parent
+class Page_transforming_file : public Parent
 {
 public:
-	static_assert(std::is_base_of<file, Parent>::value, "parent must derive file");
+	static_assert(std::is_base_of<File, Parent>::value, "Parent must derive File");
 
-	using page_transformer = page_transforming_file<Parent>;
+	using Page_transformer = Page_transforming_file<Parent>;
 	using Parent::Parent;
 
-	void read(span<std::uint8_t*> buffer, sqlite3_int64 offset) override
+	void read(Span<std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
 #if PRINT_DEBUG
 		printf("read from %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
@@ -31,14 +31,12 @@ public:
 
 		if (_is_page(buffer.size(), offset)) {
 			Parent::read(buffer, offset);
-
 			// do not decode header
-			if (this->format == file_format::main_db && !offset) {
+			if (this->format == File_format::main_db && !offset) {
 				decode_page(buffer.subspan(100));
 			} else {
 				decode_page(buffer);
 			}
-
 			_parse_parameters(buffer.cast<const std::uint8_t*>(), offset);
 		} else {
 #if PRINT_DEBUG
@@ -47,7 +45,7 @@ public:
 			Parent::read(buffer, offset);
 		}
 	}
-	void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
+	void write(Span<const std::uint8_t*> buffer, sqlite3_int64 offset) override
 	{
 #if PRINT_DEBUG
 		printf("write to %s: %zi from %lli\n", name_of(this->format), buffer.size(), offset);
@@ -57,14 +55,12 @@ public:
 			_parse_parameters(buffer, offset);
 			_tmp_buffer.resize(buffer.size());
 			std::memcpy(_tmp_buffer.data(), buffer.begin(), _tmp_buffer.size());
-
 			// do not encode header
-			if (this->format == file_format::main_db && !offset) {
+			if (this->format == File_format::main_db && !offset) {
 				encode_page({ _tmp_buffer.data() + 100, _tmp_buffer.size() - 100 });
 			} else {
 				encode_page({ _tmp_buffer.data(), _tmp_buffer.size() });
 			}
-
 			Parent::write({ _tmp_buffer.data(), _tmp_buffer.size() }, offset);
 		} else {
 #if PRINT_DEBUG
@@ -75,8 +71,9 @@ public:
 	}
 
 protected:
-	virtual void encode_page(span<std::uint8_t*> page) = 0;
-	virtual void decode_page(span<std::uint8_t*> page) = 0;
+	virtual void encode_page(Span<std::uint8_t*> page) = 0;
+	virtual void decode_page(Span<std::uint8_t*> page) = 0;
+	/// Callback to check the set reserve size of the database.
 	virtual bool check_reserve_size(std::uint8_t size) const noexcept
 	{
 		return true;
@@ -84,17 +81,18 @@ protected:
 
 private:
 	std::vector<std::uint8_t> _tmp_buffer;
+	/// Caches the page size.
 	std::uint32_t _page_size = 0;
 
 	bool _is_page(std::size_t size, sqlite3_int64 offset) const noexcept
 	{
-		return (this->format == file_format::main_db /* ||
-		        (this->format == file_format::main_journal && offset) */) &&
+		return (this->format == File_format::main_db /* ||
+		        (this->format == File_format::main_journal && offset) */) &&
 		       size >= 512;
 	}
-	void _parse_parameters(span<const std::uint8_t*> buffer, sqlite3_int64 offset)
+	void _parse_parameters(Span<const std::uint8_t*> buffer, sqlite3_int64 offset)
 	{
-		if (this->format == file_format::main_db) {
+		if (this->format == File_format::main_db) {
 			// read page size
 			if (offset <= 16 && offset + buffer.size() >= 18) {
 				_page_size = buffer.begin()[16 - offset] << 8 | buffer.begin()[17 - offset];
@@ -102,11 +100,10 @@ private:
 					_page_size = 65536;
 				}
 			}
-
 			// check reserve size
 			if (offset <= 20 && offset + buffer.size() >= 21 &&
 			    !check_reserve_size(buffer.begin()[20 - offset])) {
-				throw std::system_error{ sqlite3_errc::generic, "bad reserve size" };
+				throw std::system_error{ SQLite3_code::generic, "bad reserve size" };
 			}
 		}
 	}

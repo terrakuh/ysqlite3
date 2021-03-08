@@ -10,18 +10,18 @@
 
 namespace ysqlite3 {
 
-struct index
+struct Index
 {
 	int value        = 0;
 	const char* name = nullptr;
 	std::locale locale;
 
-	index(int value) noexcept : value{ value }
+	Index(int value) noexcept : value{ value }
 	{}
-	index(const char* name, std::locale locale = {}) : name{ name }, locale{ std::move(locale) }
+	Index(const char* name, std::locale locale = {}) : name{ name }, locale{ std::move(locale) }
 	{
 		if (!name) {
-			throw std::system_error{ errc::bad_index_name };
+			throw std::system_error{ Error::bad_index_name };
 		}
 	}
 };
@@ -32,7 +32,7 @@ struct index
  *
  * @see more information about conversion can be found [here](https://www.sqlite.org/c3ref/column_blob.html)
  */
-class results
+class Results
 {
 public:
 	enum class type
@@ -44,14 +44,14 @@ public:
 		null
 	};
 
-	results() = default;
+	Results() = default;
 	/**
 	 * Constructor. Either both parameters are `nullptr` or none.
 	 *
 	 * @param[in] statement the statement
 	 * @param[in] database the database
 	 */
-	results(sqlite3_stmt* statement, sqlite3* database) noexcept;
+	Results(sqlite3_stmt* statement, sqlite3* database) noexcept;
 	/**
 	 * Checks if the value at the index is null.
 	 *
@@ -61,7 +61,7 @@ public:
 	 * @param index the column
 	 * @return `true` if null, otherwise `false`
 	 */
-	bool is_null(index index);
+	bool is_null(Index index);
 	/**
 	 * Returns the value at the index as an integer.
 	 *
@@ -71,7 +71,7 @@ public:
 	 * @param index the column
 	 * @return the integer value
 	 */
-	sqlite3_int64 integer(index index);
+	sqlite3_int64 integer(Index index);
 	/**
 	 * Returns the value at the index as a double.
 	 *
@@ -81,7 +81,7 @@ public:
 	 * @param index the column
 	 * @return the double value
 	 */
-	double real(index index);
+	double real(Index index);
 	/**
 	 * Returns the value at the index as a blob.
 	 *
@@ -91,7 +91,7 @@ public:
 	 * @param index the column
 	 * @return the blob of data
 	 */
-	span<const std::uint8_t*> blob(index index);
+	Span<const std::uint8_t*> blob(Index index);
 	/**
 	 * Returns the value at the index as text.
 	 *
@@ -101,7 +101,7 @@ public:
 	 * @param index the column
 	 * @return the text
 	 */
-	const char* text(index index);
+	const char* text(Index index);
 	/**
 	 * Returns the size of the value at the index.
 	 *
@@ -111,7 +111,7 @@ public:
 	 * @param index the column
 	 * @return the size in bytes
 	 */
-	int size_of(index index);
+	int size_of(Index index);
 	/**
 	 * Returns the type of the value at the index.
 	 *
@@ -121,7 +121,7 @@ public:
 	 * @param index the column
 	 * @return the type
 	 */
-	type type_of(index index);
+	type type_of(Index index);
 	/**
 	 * Checks if this has a statement.
 	 *
@@ -140,7 +140,7 @@ private:
 	 * @param index the column
 	 * @return the integer index
 	 */
-	int _to_column_index(index index);
+	int _to_column_index(Index index);
 };
 
 } // namespace ysqlite3

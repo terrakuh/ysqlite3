@@ -42,8 +42,8 @@ __declspec(dllexport)
 
 	try {
 		vfs::register_vfs(
-		    std::make_shared<vfs::sqlite3_vfs_wrapper<vfs::crypt_file<vfs::sqlite3_file_wrapper>>>(
-		        vfs::find_vfs(nullptr), "ysqlite3-crypt-vfs"),
+		    std::make_shared<vfs::SQLite3_vfs_wrapper<vfs::Crypt_file<vfs::SQLite3_file_wrapper>>>(
+		        vfs::find_vfs(nullptr), YSQLITE3_CRYPT_VFS_NAME),
 		    false);
 	} catch (...) {
 		return SQLITE_ERROR;

@@ -10,26 +10,14 @@
 
 using namespace ysqlite3;
 
-class test : public vfs::page_transforming_file<vfs::sqlite3_file_wrapper>
-{
-public:
-	using page_transforming_file<vfs::sqlite3_file_wrapper>::page_transforming_file;
-
-protected:
-	void encode_page(span<std::uint8_t*> page) override
-	{}
-	void decode_page(span<std::uint8_t*> page) override
-	{}
-};
-
 int main(int args, char** argv)
 try {
 	// register encryption VFS
-	vfs::register_vfs(std::make_shared<vfs::sqlite3_vfs_wrapper<vfs::crypt_file<vfs::sqlite3_file_wrapper>>>(
+	vfs::register_vfs(std::make_shared<vfs::SQLite3_vfs_wrapper<vfs::Crypt_file<vfs::SQLite3_file_wrapper>>>(
 	                      vfs::find_vfs(nullptr), "aes-gcm"),
 	                  true);
 
-	database db;
+	Database db;
 	// std::remove("test.db");
 	// std::remove("test.db-journal");
 	// std::remove("test.db-wal");
@@ -68,7 +56,7 @@ PRAGMA cipher="aes-256-gcm";
 
 		)");
 		auto stmt = db.prepare_statement("SELECT * FROM tm");
-		results r;
+		Results r;
 
 		while ((r = stmt.step())) {
 			for (const auto& column : stmt.columns()) {
@@ -105,7 +93,7 @@ INSERT INTO tast(noim) VALUES('heyho');
 	db.execute("COMMIT");
 
 	auto stmt = db.prepare_statement("SELECT * FROM tast");
-	results r;
+	Results r;
 
 	while ((r = stmt.step())) {
 		for (const auto& column : stmt.columns()) {

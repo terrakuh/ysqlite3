@@ -6,10 +6,10 @@
 namespace ysqlite3 {
 namespace function {
 
-class regexp : public function
+class Regexp : public Function
 {
 public:
-	regexp() noexcept;
+	Regexp() noexcept;
 
 protected:
 	void run(sqlite3_context* context, int argc, sqlite3_value** argv) override;

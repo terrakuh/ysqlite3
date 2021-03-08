@@ -13,9 +13,9 @@
 
 namespace ysqlite3 {
 
-typedef int open_flag_type;
+typedef int Open_flags;
 
-enum open_flag
+enum
 {
 	open_flag_readonly        = SQLITE_OPEN_READONLY,
 	open_flag_readwrite       = SQLITE_OPEN_READWRITE,
@@ -39,7 +39,7 @@ enum open_flag
 	open_flag_wal             = SQLITE_OPEN_WAL
 };
 
-enum class journal_mode
+enum class Journal_mode
 {
 	delete_,
 	truncate,
@@ -49,73 +49,58 @@ enum class journal_mode
 	off
 };
 
-enum class text_encoding
+enum class Text_encoding
 {
 	utf8    = SQLITE_UTF8,
 	utf16be = SQLITE_UTF16BE,
 	utf16le = SQLITE_UTF16LE
 };
 
-/**
- * The database class. This class manages a single database connection.
- */
-class database
+class Database
 {
 public:
-	/**
-	 * Creates a database without a connection.
-	 */
-	database() = default;
+	/// Empty database.
+	Database() = default;
 	/**
 	 * Creates a database and opens the given file.
 	 *
-	 * @exception see database::open()
+	 * @exception see Database::open()
 	 * @param file the database file
 	 */
-	database(const char* file);
-	database(const database& copy) = delete;
+	Database(const char* file);
+	/// The moved object will be closed.
+	Database(Database&& move) noexcept;
+	/// Closes the database forcefully if it is open.
+	~Database() noexcept;
 	/**
-	 * Move-Constructor.
+	 * Sets the reserved size and vacuums the database if requried/desired. The reserved size is required for
+	 * the encryption VFS in order to store some custom data like authentication tags or IVs.
 	 *
-	 * @post `move` is closed
-	 *
-	 * @param[in,out] move the other database
-	 */
-	database(database&& move) noexcept;
-	/**
-	 * Destructor.
-	 *
-	 * @post the database is closed
-	 *
-	 * @see force-closing with database::close()
-	 */
-	virtual ~database();
-	/**
-	 * Sets the reserved size and vacuums the database if requried and desired.
-	 * 
+	 * @exception std::system_error - see sqlite3_file_control() and sqlite3_exec() for error codes
 	 * @param size the desired size
-	 * @param vacuum vacuums if the reserved size was changed; needs to be done
+	 * @param vacuum vacuums if the reserved size was changed; needs to be done if this is an existing
+	 * database
 	 * @return the old reserved size
-	*/
+	 */
 	std::uint8_t set_reserved_size(std::uint8_t size, bool vacuum = true);
 	/**
 	 * Sets the database journaling mode.
 	 *
-	 * @exception see database::execute()
+	 * @exception see Database::execute()
 	 * @param mode the journal modus
 	 */
-	void set_journal_mode(journal_mode mode);
+	void set_journal_mode(Journal_mode mode);
 	/**
 	 * Enables or disables foreign key support.
 	 *
-	 * @exception see database::execute()
+	 * @exception see Database::execute()
 	 * @param enable whether to enable support or not
 	 */
 	void enable_foreign_keys(bool enable = true);
 	/**
 	 * Closes this database. Closing a closed database is a noop.
 	 *
-	 * @exception std::system_error if `force == false` and if the database is busy
+	 * @exception std::system_error - see sqlite3_close() if *force* is `false`
 	 * @param force if `true` the database is closed when every statement was finalized and/or backups
 	 * finished
 	 */
@@ -124,66 +109,45 @@ public:
 	/**
 	 * Opens the given file with the specified parameters. If a database is already open, it will be closed.
 	 *
-	 * @post the database is opened (`closed() == false`)
-	 *
+	 * @exception std::system_error
+	 *   - see sqlite3_open_v2()
+	 *   - Error::bad_vfs_name if the *vfs* is invalid
+	 * @exception see Database::close()
 	 * @param file the file name
 	 * @param flags (opt) the open flags, by default the file will be opened with `open_flag_readwrite |
-	 * open_flag_create`; see database::open_flag
+	 * open_flag_create`
 	 * @param vfs (opt) the virtual filesystem that should be used; if empty, the default vfs will be used
-	 * @throw exception::database_exception if the database could not be opened
-	 * @throw see database::close()
 	 */
-	void open(const char* file, open_flag_type flags = open_flag_readwrite | open_flag_create,
+	void open(const char* file, Open_flags flags = open_flag_readwrite | open_flag_create,
 	          const char* vfs = nullptr);
 	/**
 	 * Registers a normal function which can then be used in SQL statements.
 	 *
-	 * @pre the database is openend
-	 *
-	 * @tparam T the function; must inherit function::function
-	 * @tparam Args the arg types for instantiating `T` inplace
+	 * @exception std::system_error
+	 *   - Error::database_is_closed
+	 *   - Error::null_function
+	 *   - see sqlite3_create_function_v2()
 	 * @param name the name of the function
-	 * @param args the arguments for `T`
-	 * @throw exception::database_exception if the function could not be registered
-	 * @throw see T()
+	 * @param function the function
 	 */
-	template<typename Type, typename... Args>
-	typename std::enable_if<std::is_base_of<function::function, Type>::value>::type
-	    register_function(const char* name, Args... args)
-	{
-		if (!is_open()) {
-			throw std::system_error{ errc::database_is_closed };
-		}
-
-		std::unique_ptr<Type> instance{ new Type{ std::forward<Args>(args)... } };
-		const auto ec = sqlite3_create_function_v2(
-		    _database, name, instance->_argc, instance->_flags, instance.get(), function::function::xfunc,
-		    nullptr, nullptr, [](void* instance) { delete static_cast<Type*>(instance); });
-
-		if (ec) {
-			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
-		}
-
-		instance.release();
-	}
-	inline void register_function(const char* name, void (*function)(sqlite3_context*, int, sqlite3_value**),
-	                              function::text_encoding encoding, bool deterministic = true,
-	                              bool direct_only = false)
-	{
-		if (!is_open()) {
-			throw std::system_error{ errc::database_is_closed };
-		}
-
-		const auto ec =
-		    sqlite3_create_function_v2(_database, name, -1,
-		                               static_cast<int>(encoding) | SQLITE_DETERMINISTIC * deterministic |
-		                                   SQLITE_DIRECTONLY * direct_only,
-		                               nullptr, function, nullptr, nullptr, nullptr);
-
-		if (ec) {
-			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
-		}
-	}
+	void register_function(const char* name, std::unique_ptr<function::Function> function);
+	/**
+	 * Registers a normal function which can then be used in SQL statements.
+	 *
+	 * @exception std::system_error
+	 *   - Error::database_is_closed
+	 *   - Error::null_function
+	 *   - see sqlite3_create_function_v2()
+	 * @param name the name of the function
+	 * @param function the function
+	 * @param encoding the desired text encoding
+	 * @param deterministic whether the function is deterministic or not
+	 * @see more information can be found on the
+	 * [SQLite-page](https://www.sqlite.org/c3ref/create_function.html)
+	 */
+	void register_function(const char* name, void (*function)(sqlite3_context*, int, sqlite3_value**),
+	                       function::text_encoding encoding, bool deterministic = true,
+	                       bool direct_only = false);
 	/**
 	 * Runs the SQL statement and ignores the result values.
 	 *
@@ -195,11 +159,7 @@ public:
 	 * @e exception::sql_exception if the SQL statement is invalid
 	 */
 	std::size_t execute(const char* sql);
-	/**
-	 * Returns the rowid of the last insert statement of this connection or 0 if no insert was made.
-	 *
-	 * @return the last rowid
-	 */
+	/// Returns the rowid of the last insert statement of this connection or 0 if no insert was made.
 	sqlite3_int64 last_insert_rowid() const noexcept;
 	/**
 	 * Creates a prepared statement. Prepared statement can have parameters descibed by any of the following:
@@ -216,7 +176,7 @@ public:
 	 * @param sql the SQL statement
 	 * @return the prepared statement
 	 */
-	statement prepare_statement(const char* sql);
+	Statement prepare_statement(const char* sql);
 	/**
 	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will
 	 * remain open.
@@ -226,24 +186,16 @@ public:
 	 * @return the handle or `nullptr`
 	 */
 	sqlite3* release_handle() noexcept;
-	/**
-	 * Returns the SQLite3 database handle.
-	 *
-	 * @return the database handle or `nullptr` if the database is closed
-	 */
+	/// The SQLite3 database handle or `nullptr` if the database is closed.
 	sqlite3* handle() noexcept;
-	/**
-	 * Returns the SQLite3 database handle.
-	 *
-	 * @return the database handle or `nullptr` if the database is closed
-	 */
+	/// The SQLite3 database handle or `nullptr` if the database is closed.
 	const sqlite3* handle() const noexcept;
-	database& operator=(database&& move) noexcept;
+	Database& operator=(Database&& move) noexcept;
 
 private:
-	friend transaction;
+	friend Transaction;
 
-	/** the underlying sqlite3 database connection */
+	/// Underlying sqlite3 database handle.
 	sqlite3* _database = nullptr;
 
 	template<typename Functor>

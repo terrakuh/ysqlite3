@@ -8,7 +8,7 @@
 
 namespace ysqlite3 {
 
-enum class sqlite3_errcond
+enum class SQLite3_condition
 {
 	success = 0,
 	/** Generic error */
@@ -69,7 +69,7 @@ enum class sqlite3_errcond
 	warning = 28,
 };
 
-enum class sqlite3_errc
+enum class SQLite3_code
 {
 	success = 0,
 	/** Generic error */
@@ -129,82 +129,83 @@ enum class sqlite3_errc
 	/** Warnings from sqlite3_log() */
 	warning = 28,
 
-	missing_collseq   = (generic | (1 << 8)),
-	retry             = (generic | (2 << 8)),
-	snapshot          = (generic | (3 << 8)),
-	read              = (io | (1 << 8)),
-	short_read        = (io | (2 << 8)),
-	write             = (io | (3 << 8)),
-	fsync             = (io | (4 << 8)),
-	dir_fsync         = (io | (5 << 8)),
-	truncate          = (io | (6 << 8)),
-	fstat             = (io | (7 << 8)),
-	unlock            = (io | (8 << 8)),
-	rdlock            = (io | (9 << 8)),
-	delete_           = (io | (10 << 8)),
-	blocked           = (io | (11 << 8)),
-	nomem             = (io | (12 << 8)),
-	access            = (io | (13 << 8)),
-	checkreservedlock = (io | (14 << 8)),
-	lock              = (io | (15 << 8)),
-	close             = (io | (16 << 8)),
-	dir_close         = (io | (17 << 8)),
-	shmopen           = (io | (18 << 8)),
-	shmsize           = (io | (19 << 8)),
-	shmlock           = (io | (20 << 8)),
-	shmmap            = (io | (21 << 8)),
-	seek              = (io | (22 << 8)),
-	delete_noent      = (io | (23 << 8)),
-	mmap              = (io | (24 << 8)),
-	gettemppath       = (io | (25 << 8)),
-	convpath          = (io | (26 << 8)),
-	vnode             = (io | (27 << 8)),
-	auth              = (io | (28 << 8)),
-	begin_atomic      = (io | (29 << 8)),
-	commit_atomic     = (io | (30 << 8)),
-	rollback_atomic   = (io | (31 << 8)),
-	data              = (io | (32 << 8)),
-	sharedcache       = (locked | (1 << 8)),
-	vtab_locked       = (locked | (2 << 8)),
-	recovery          = (busy | (1 << 8)),
-	busy_snapshot     = (busy | (2 << 8)),
-	timeout           = (busy | (3 << 8)),
-	notempdir         = (bad_database | (1 << 8)),
-	isdir             = (bad_database | (2 << 8)),
-	fullpath          = (bad_database | (3 << 8)),
-	bad_convpath      = (bad_database | (4 << 8)),
-	dirtywal          = (bad_database | (5 << 8)) /* Not Used */,
-	bad_symlink       = (bad_database | (6 << 8)),
-	corrupt_vtab      = (corrupt | (1 << 8)),
-	sequence          = (corrupt | (2 << 8)),
-	index             = (corrupt | (3 << 8)),
-	recovery_denied   = (read_only | (1 << 8)),
-	cantlock          = (read_only | (2 << 8)),
-	rollback          = (read_only | (3 << 8)),
-	dbmoved           = (read_only | (4 << 8)),
-	cantinit          = (read_only | (5 << 8)),
-	directory         = (read_only | (6 << 8)),
-	rollback_aborted  = (abort | (2 << 8)),
-	check             = (sql_constraint | (1 << 8)),
-	commithook        = (sql_constraint | (2 << 8)),
-	foreignkey        = (sql_constraint | (3 << 8)),
-	function          = (sql_constraint | (4 << 8)),
-	notnull           = (sql_constraint | (5 << 8)),
-	primarykey        = (sql_constraint | (6 << 8)),
-	trigger           = (sql_constraint | (7 << 8)),
-	unique            = (sql_constraint | (8 << 8)),
-	vtab              = (sql_constraint | (9 << 8)),
-	rowid             = (sql_constraint | (10 << 8)),
-	pinned            = (sql_constraint | (11 << 8)),
-	recover_wal       = (notice | (1 << 8)),
-	recover_rollback  = (notice | (2 << 8)),
-	autoindex         = (warning | (1 << 8)),
-	user              = (auth_denied | (1 << 8)),
-	load_permanently  = (success | (1 << 8)),
-	symlink           = (success | (2 << 8)),
+	missing_collseq    = (generic | (1 << 8)),
+	retry              = (generic | (2 << 8)),
+	snapshot           = (generic | (3 << 8)),
+	read               = (io | (1 << 8)),
+	short_read         = (io | (2 << 8)),
+	write              = (io | (3 << 8)),
+	fsync              = (io | (4 << 8)),
+	dir_fsync          = (io | (5 << 8)),
+	truncate           = (io | (6 << 8)),
+	fstat              = (io | (7 << 8)),
+	unlock             = (io | (8 << 8)),
+	rdlock             = (io | (9 << 8)),
+	delete_            = (io | (10 << 8)),
+	blocked            = (io | (11 << 8)),
+	nomem              = (io | (12 << 8)),
+	access             = (io | (13 << 8)),
+	checkreservedlock  = (io | (14 << 8)),
+	lock               = (io | (15 << 8)),
+	close              = (io | (16 << 8)),
+	dir_close          = (io | (17 << 8)),
+	shmopen            = (io | (18 << 8)),
+	shmsize            = (io | (19 << 8)),
+	shmlock            = (io | (20 << 8)),
+	shmmap             = (io | (21 << 8)),
+	seek               = (io | (22 << 8)),
+	delete_noent       = (io | (23 << 8)),
+	mmap               = (io | (24 << 8)),
+	gettemppath        = (io | (25 << 8)),
+	convpath           = (io | (26 << 8)),
+	vnode              = (io | (27 << 8)),
+	auth               = (io | (28 << 8)),
+	begin_atomic       = (io | (29 << 8)),
+	commit_atomic      = (io | (30 << 8)),
+	rollback_atomic    = (io | (31 << 8)),
+	data               = (io | (32 << 8)),
+	corrupt_filesystem = (io | (33 << 8)),
+	sharedcache        = (locked | (1 << 8)),
+	vtab_locked        = (locked | (2 << 8)),
+	recovery           = (busy | (1 << 8)),
+	busy_snapshot      = (busy | (2 << 8)),
+	timeout            = (busy | (3 << 8)),
+	notempdir          = (bad_database | (1 << 8)),
+	isdir              = (bad_database | (2 << 8)),
+	fullpath           = (bad_database | (3 << 8)),
+	bad_convpath       = (bad_database | (4 << 8)),
+	dirtywal           = (bad_database | (5 << 8)) /* Not Used */,
+	bad_symlink        = (bad_database | (6 << 8)),
+	corrupt_vtab       = (corrupt | (1 << 8)),
+	sequence           = (corrupt | (2 << 8)),
+	index              = (corrupt | (3 << 8)),
+	recovery_denied    = (read_only | (1 << 8)),
+	cantlock           = (read_only | (2 << 8)),
+	rollback           = (read_only | (3 << 8)),
+	dbmoved            = (read_only | (4 << 8)),
+	cantinit           = (read_only | (5 << 8)),
+	directory          = (read_only | (6 << 8)),
+	rollback_aborted   = (abort | (2 << 8)),
+	check              = (sql_constraint | (1 << 8)),
+	commithook         = (sql_constraint | (2 << 8)),
+	foreignkey         = (sql_constraint | (3 << 8)),
+	function           = (sql_constraint | (4 << 8)),
+	notnull            = (sql_constraint | (5 << 8)),
+	primarykey         = (sql_constraint | (6 << 8)),
+	trigger            = (sql_constraint | (7 << 8)),
+	unique             = (sql_constraint | (8 << 8)),
+	vtab               = (sql_constraint | (9 << 8)),
+	rowid              = (sql_constraint | (10 << 8)),
+	pinned             = (sql_constraint | (11 << 8)),
+	recover_wal        = (notice | (1 << 8)),
+	recover_rollback   = (notice | (2 << 8)),
+	autoindex          = (warning | (1 << 8)),
+	user               = (auth_denied | (1 << 8)),
+	load_permanently   = (success | (1 << 8)),
+	symlink            = (success | (2 << 8)),
 };
 
-inline const std::error_category& sqlite3_category() noexcept
+inline const std::error_category& sqlite3_category()
 {
 	static class : public std::error_category
 	{
@@ -218,21 +219,25 @@ inline const std::error_category& sqlite3_category() noexcept
 			if (const auto str = sqlite3_errstr(ec)) {
 				return str;
 			}
-
 			return "(unknown SQLite3 error)";
 		}
 	} category;
 	return category;
 }
 
-inline std::error_code make_error_code(sqlite3_errc ec) noexcept
+inline std::error_code make_error_code(SQLite3_code ec) noexcept
 {
 	return { static_cast<int>(ec), sqlite3_category() };
 }
 
-enum class errc
+enum class Error
 {
-	bad_vfs_name = 1,
+	success,
+
+	// bad input
+	bad_vfs_name,
+	null_function,
+
 	database_is_closed,
 	statement_is_closed,
 	unknown_parameter,
@@ -244,7 +249,13 @@ enum class errc
 	out_of_bounds
 };
 
-inline const std::error_category& ysqlite3_category() noexcept
+enum class Condition
+{
+	success,
+	bad_input,
+};
+
+inline std::error_code make_error_code(Error ec) noexcept
 {
 	static class : public std::error_category
 	{
@@ -255,17 +266,12 @@ inline const std::error_category& ysqlite3_category() noexcept
 		}
 		std::string message(int ec) const override
 		{
-			switch (static_cast<errc>(ec)) {
+			switch (static_cast<Error>(ec)) {
 			default: return "(unknown error code)";
 			}
 		}
 	} category;
-	return category;
-}
-
-inline std::error_code make_error_code(errc ec) noexcept
-{
-	return { static_cast<int>(ec), ysqlite3_category() };
+	return { static_cast<int>(ec), category };
 }
 
 } // namespace ysqlite3
@@ -273,11 +279,11 @@ inline std::error_code make_error_code(errc ec) noexcept
 namespace std {
 
 template<>
-struct is_error_code_enum<ysqlite3::errc> : true_type
+struct is_error_code_enum<ysqlite3::Error> : true_type
 {};
 
 template<>
-struct is_error_code_enum<ysqlite3::sqlite3_errc> : true_type
+struct is_error_code_enum<ysqlite3::SQLite3_code> : true_type
 {};
 
 } // namespace std

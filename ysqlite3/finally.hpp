@@ -6,6 +6,7 @@
 
 namespace ysqlite3 {
 
+/// Executed when this object dies. The action may not throw.
 template<typename Action>
 class final_action
 {
@@ -19,7 +20,7 @@ public:
 		_valid      = move._valid;
 		move._valid = false;
 	}
-	~final_action()
+	~final_action() noexcept
 	{
 		_action();
 	}
@@ -28,7 +29,6 @@ public:
 		if (_valid) {
 			_action();
 		}
-
 		_action     = std::move(move._action);
 		_valid      = move._valid;
 		move._valid = false;
@@ -40,6 +40,7 @@ private:
 	bool _valid = true;
 };
 
+/// Creates a final action.
 template<typename Action>
 inline final_action<typename std::decay<Action>::type> finally(Action&& action)
 {

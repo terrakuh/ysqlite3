@@ -26,12 +26,10 @@ inline void digest(const EVP_MD* md, sqlite3_context* context, int argc, sqlite3
 void ysqlite3::function::digest(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept
 {
 	const auto md = EVP_get_digestbyname(reinterpret_cast<const char*>(sqlite3_value_text(argv[0])));
-
 	if (!md) {
 		sqlite3_result_error(context, "digest method unknown", SQLITE_ERROR);
 		return;
 	}
-
 	digest(md, context, argc - 1, argv + 1);
 }
 
@@ -55,7 +53,6 @@ void ysqlite3::function::sha2(sqlite3_context* context, int argc, sqlite3_value*
 	case 512: md = EVP_sha512(); break;
 	default: sqlite3_result_error(context, "invalid SHA-2 length", SQLITE_ERROR); return;
 	}
-
 	digest(md, context, argc - 1, argv + 1);
 }
 
@@ -69,6 +66,5 @@ void ysqlite3::function::sha3(sqlite3_context* context, int argc, sqlite3_value*
 	case 512: md = EVP_sha3_512(); break;
 	default: sqlite3_result_error(context, "invalid SHA-3 length", SQLITE_ERROR); return;
 	}
-
 	digest(md, context, argc - 1, argv + 1);
 }

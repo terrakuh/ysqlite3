@@ -10,10 +10,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <string>
 #include <utility>
+
+#if YSQLITE3_ENCRYPTION_BACKEND_OPENSSL
+#	include <openssl/evp.h>
+#	include <openssl/rand.h>
+#endif
 
 namespace ysqlite3 {
 namespace vfs {
@@ -24,30 +27,30 @@ constexpr std::uint8_t crypt_file_reserve_size() noexcept
 	return 32;
 }
 
-template<typename File>
-class crypt_file : public page_transforming_file<File>
+template<typename Parent>
+class Crypt_file : public Page_transforming_file<Parent>
 {
 public:
 	template<typename... Args>
-	crypt_file(Args&&... args) : page_transforming_file<File>{ std::forward<Args>(args)... }
+	Crypt_file(Args&&... args) : Page_transforming_file<Parent>{ std::forward<Args>(args)... }
 	{
-		if (const char* key = sqlite3_uri_parameter(this->name, "key")) {
+		if (const auto key = sqlite3_uri_parameter(this->name, "key")) {
 			sqlite3_free(_generate_key(key, _current));
 		}
 
-		if (const char* cipher = sqlite3_uri_parameter(this->name, "cipher")) {
+		if (const auto cipher = sqlite3_uri_parameter(this->name, "cipher")) {
 			sqlite3_free(_set_chiper(cipher, _current));
 		}
 	}
-	~crypt_file()
+	~Crypt_file()
 	{
 		EVP_CIPHER_CTX_free(_context);
 		std::memset(_current.key.data(), 0, _current.key.size());
 		std::memset(_transformation.key.data(), 0, _transformation.key.size());
 	}
-	void file_control(file_cntl operation, void* arg) override
+	void file_control(File_control operation, void* arg) override
 	{
-		if (operation == file_cntl::pragma) {
+		if (operation == File_control::pragma) {
 			auto& name       = static_cast<char**>(arg)[1];
 			const auto value = static_cast<char**>(arg)[2];
 
@@ -72,11 +75,11 @@ public:
 		}
 
 	gt_parent:
-		page_transforming_file<File>::file_control(operation, arg);
+		Page_transforming_file<Parent>::file_control(operation, arg);
 	}
 
 protected:
-	void encode_page(span<std::uint8_t*> page) override
+	void encode_page(Span<std::uint8_t*> page) override
 	{
 		auto& enc = _transform ? _transformation : _current;
 		if (enc.cipher) {
@@ -87,7 +90,7 @@ protected:
 			EVP_CIPHER_CTX_ctrl(_context, EVP_CTRL_GCM_GET_TAG, 16, data.begin() + 12);
 		}
 	}
-	void decode_page(span<std::uint8_t*> page) override
+	void decode_page(Span<std::uint8_t*> page) override
 	{
 		if (_current.cipher) {
 			auto data = page.subspan(page.size() - crypt_file_reserve_size());
@@ -101,7 +104,7 @@ protected:
 	}
 
 private:
-	struct encryptor
+	struct Encryptor
 	{
 		const EVP_CIPHER* cipher = nullptr;
 		std::array<unsigned char, 32> key{};
@@ -109,22 +112,22 @@ private:
 
 	EVP_CIPHER_CTX* _context = EVP_CIPHER_CTX_new();
 	bool _transform          = false;
-	encryptor _current;
-	encryptor _transformation;
+	Encryptor _current;
+	Encryptor _transformation;
 
-	void _crypt(span<std::uint8_t*> buffer, span<std::uint8_t*> data, encryptor& encryptor, bool encrypt)
+	void _crypt(Span<std::uint8_t*> buffer, Span<std::uint8_t*> data, Encryptor& encryptor, bool encrypt)
 	{
 		EVP_CIPHER_CTX_reset(_context);
 		if (!EVP_CipherInit_ex(_context, encryptor.cipher, nullptr, encryptor.key.data(), data.begin(),
 		                       encrypt)) {
-			throw std::system_error{ sqlite3_errc::generic, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3_code::generic, "failed to encrypt/decrypt" };
 		}
 
 		int len = 0;
 		if (!EVP_CipherUpdate(_context, buffer.begin(), &len, buffer.begin(),
 		                      static_cast<int>(buffer.size())) ||
 		    len != static_cast<int>(buffer.size())) {
-			throw std::system_error{ sqlite3_errc::generic, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3_code::generic, "failed to encrypt/decrypt" };
 		}
 
 		// set tag
@@ -133,10 +136,10 @@ private:
 		}
 
 		if (!EVP_CipherFinal_ex(_context, buffer.begin(), &len) || len) {
-			throw std::system_error{ sqlite3_errc::not_a_database, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3_code::not_a_database, "failed to encrypt/decrypt" };
 		}
 	}
-	void _generate_iv(span<std::uint8_t*> iv) const noexcept
+	void _generate_iv(Span<std::uint8_t*> iv) const noexcept
 	{
 		RAND_bytes(reinterpret_cast<unsigned char*>(iv.begin()), static_cast<int>(iv.size() - 4));
 #	if YSQLITE3_BIG_ENDIAN
@@ -147,10 +150,10 @@ private:
 		*reinterpret_cast<std::uint32_t*>(iv.end() - 4) += 1;
 #	endif
 	}
-	char* _generate_key(const char* value, encryptor& encryptor)
+	char* _generate_key(const char* value, Encryptor& encryptor)
 	{
 		std::string key;
-		auto length = std::char_traits<char>::length(value);
+		std::size_t length = std::char_traits<char>::length(value);
 
 		// check for ' or "
 		if (length < 3 || value[1] != value[length - 1] || (value[1] != '\'' && value[1] != '"')) {
@@ -173,12 +176,12 @@ private:
 				}
 				return -1;
 			};
-			auto i = length % 2;
+			std::size_t i = length % 2;
 			value += 2;
 			key.resize(length / 2 + i);
 
 			if (i) {
-				const auto v = convert(*value);
+				const int v = convert(*value);
 				if (v < 0) {
 					return sqlite3_mprintf("bad hex character: '%c'", *value);
 				}
@@ -187,9 +190,9 @@ private:
 			}
 
 			for (; i < key.size(); ++i) {
-				for (auto j = 0; j < 2; ++j) {
-					const auto c = value[i * 2 + j];
-					const auto v = convert(c);
+				for (int j = 0; j < 2; ++j) {
+					const char c = value[i * 2 + j];
+					const int v  = convert(c);
 					if (v < 0) {
 						return sqlite3_mprintf("bad hex character: '%c'", c);
 					}
@@ -206,7 +209,7 @@ private:
 		}
 		return sqlite3_mprintf("ok");
 	}
-	char* _set_chiper(const char* value, encryptor& encryptor)
+	char* _set_chiper(const char* value, Encryptor& encryptor)
 	{
 		if (!std::strcmp(value, "null")) {
 			encryptor.cipher = nullptr;

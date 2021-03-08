@@ -13,18 +13,18 @@ using namespace ysqlite3;
 
 TEST_CASE("opening crypt db")
 {
-	vfs::register_vfs(std::make_shared<vfs::sqlite3_vfs_wrapper<vfs::crypt_file<vfs::sqlite3_file_wrapper>>>(
-	                      vfs::find_vfs(nullptr), "ysqlite3-crypt-vfs"),
+	vfs::register_vfs(std::make_shared<vfs::SQLite3_vfs_wrapper<vfs::Crypt_file<vfs::SQLite3_file_wrapper>>>(
+	                      vfs::find_vfs(nullptr), YSQLITE3_CRYPT_VFS_NAME),
 	                  true);
 
-	REQUIRE(vfs::find_vfs("ysqlite3-crypt-vfs") == vfs::find_vfs(nullptr));
+	REQUIRE(vfs::find_vfs(YSQLITE3_CRYPT_VFS_NAME) == vfs::find_vfs(nullptr));
 	REQUIRE(vfs::find_vfs(nullptr));
 
 	std::vector<std::uint8_t> data;
 
 	{
 		std::remove("test.db");
-		database db{ "test.db" };
+		Database db{ "test.db" };
 		db.set_reserved_size(vfs::crypt_file_reserve_size());
 		db.execute(R"(
 
@@ -50,7 +50,7 @@ TEST_CASE("opening crypt db")
 	}
 
 	{
-		database db;
+		Database db;
 		db.open("test.db", open_flag_readwrite);
 		db.execute(R"(
 
@@ -70,7 +70,7 @@ TEST_CASE("opening crypt db")
 	}
 
 	{
-		database db;
+		Database db;
 		db.open("file:test.db?key=r%27my%20secret%27&cipher=aes-256-gcm",
 		        open_flag_readwrite | open_flag_uri);
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(ysqlite3
-	VERSION 0.3.0
+	VERSION 0.5.0
 	LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -16,10 +16,7 @@ set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
 	STRINGS "none" "OpenSSL")
 #add_compile_options("-DPRINT_DEBUG")
 
-find_package(ZLIB)
 find_package(Threads REQUIRED)
-
-set(YSQLITE3_ZLIB_FOUND ${ZLIB_FOUND})
 
 if("${YSQLITE3_ENCRYPTION_BACKEND}" STREQUAL "OpenSSL")
 	set(YSQLITE3_ENCRYPTION_BACKEND_OPENSSL TRUE)
@@ -49,12 +46,6 @@ target_link_libraries(ysqlite3
 		Threads::Threads
 		"${CMAKE_DL_LIBS}")
 
-if(ZLIB_FOUND)
-	target_link_libraries(ysqlite3 PUBLIC ZLIB::ZLIB)
-else()
-	message(WARN "ZLib not found. Not building compression VFS.")
-endif()
-
 if(YSQLITE3_ENCRYPTION_BACKEND_OPENSSL)
 	find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 	target_link_libraries(ysqlite3 PUBLIC OpenSSL::Crypto)
@@ -72,9 +63,7 @@ if(YSQLITE3_BUILD_SHELL)
 	add_subdirectory(shell)
 endif()
 
-if(YSQLITE3_BUILD_TESTS)
-	include(CTest)
-	enable_testing()
+if(YSQLITE3_BUILD_TESTS)	
 	add_subdirectory(tests)
 endif()
 

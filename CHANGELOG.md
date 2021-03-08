@@ -1,5 +1,10 @@
 # Change Log
 
+## [Unreleased]
+### Added
+- Additional extensions for shell like JSON, rtree, readline and FTS
+- Catch2 as 3rd party submodule
+
 ## [0.4.0] - 2020-10-17
 ### Added
 - File name to VFS file

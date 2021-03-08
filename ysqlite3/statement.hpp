@@ -2,8 +2,8 @@
 #define YSQLITE3_STATEMENT_HPP_
 
 #include "results.hpp"
-#include "sqlite3.h"
 #include "span.hpp"
+#include "sqlite3.h"
 
 #include <cstddef>
 #include <string>
@@ -12,7 +12,7 @@
 
 namespace ysqlite3 {
 
-class statement
+class Statement
 {
 public:
 	/**
@@ -23,7 +23,7 @@ public:
 	 * @param[in] stmt the statement
 	 * @param[in] db the database
 	 */
-	statement(sqlite3_stmt* stmt, sqlite3* db);
+	Statement(sqlite3_stmt* stmt, sqlite3* db);
 	/**
 	 * Move-Constructor.
 	 *
@@ -31,13 +31,13 @@ public:
 	 *
 	 * @param[in,out] move the other statement
 	 */
-	statement(statement&& move) noexcept;
+	Statement(Statement&& move) noexcept;
 	/**
 	 * Destructor.
 	 *
 	 * @post the statement is closed
 	 */
-	virtual ~statement();
+	virtual ~Statement();
 	/**
 	 * Clears all set bindings. If this statement is closed, this is a noop.
 	 */
@@ -77,23 +77,17 @@ public:
 	 * @return the fetched results
 	 * @throw exception::database_exception if the step could not be executed properly
 	 */
-	results step();
-	statement& bind_reference(index index, const char* value);
-	statement& bind_reference(index index, const std::string& value);
-	statement& bind_reference(index index, span<const std::uint8_t*> blob);
-	statement& bind(index index, const char* value);
-	statement& bind(index index, const std::string& value);
-	statement& bind(index index, std::nullptr_t);
-	statement& bind(index index, double value);
-	statement& bind(index index, sqlite3_int64 value);
-	statement& bind_zeros(index index, sqlite3_uint64 size);
-	/**
-	 * Returns whether the statement makes no direct changes to the database.
-	 *
-	 * @pre the statement is not closed
-	 *
-	 * @return `true` if read-only, otherwise `false`
-	 */
+	Results step();
+	Statement& bind_reference(Index index, const char* value);
+	Statement& bind_reference(Index index, const std::string& value);
+	Statement& bind_reference(Index index, Span<const std::uint8_t*> blob);
+	Statement& bind(Index index, const char* value);
+	Statement& bind(Index index, const std::string& value);
+	Statement& bind(Index index, std::nullptr_t);
+	Statement& bind(Index index, double value);
+	Statement& bind(Index index, sqlite3_int64 value);
+	Statement& bind_zeros(Index index, sqlite3_uint64 size);
+	/// Returns whether the statement makes no direct changes to the database.
 	bool readonly();
 	/**
 	 * Returns the parameter count that can be bound.
@@ -141,7 +135,7 @@ public:
 	 * @return the handle
 	 */
 	sqlite3_stmt* release() noexcept;
-	statement& operator=(statement&& move) noexcept;
+	Statement& operator=(Statement&& move) noexcept;
 
 private:
 	sqlite3_stmt* _statement = nullptr;
@@ -154,17 +148,16 @@ private:
 	 * @param index the parameter
 	 * @return the integer index
 	 */
-	int _to_parameter_index(index index);
+	int _to_parameter_index(Index index);
 	template<typename Binder, typename... Args>
-	statement& _bind(const index& index, Binder&& binder, Args&&... args)
+	Statement& _bind(const Index& index, Binder&& binder, Args&&... args)
 	{
 		if (!is_open()) {
-			throw std::system_error{ errc::statement_is_closed };
+			throw std::system_error{ Error::statement_is_closed };
 		} else if (const auto ec =
 		               binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...)) {
-			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+			throw std::system_error{ static_cast<SQLite3_code>(ec) };
 		}
-
 		return *this;
 	}
 };

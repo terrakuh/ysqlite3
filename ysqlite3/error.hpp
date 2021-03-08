@@ -8,7 +8,7 @@
 
 namespace ysqlite3 {
 
-enum class sqlite3_errcond
+enum class SQLite3_condition
 {
 	success = 0,
 	/** Generic error */
@@ -69,7 +69,7 @@ enum class sqlite3_errcond
 	warning = 28,
 };
 
-enum class sqlite3_errc
+enum class SQLite3_code
 {
 	success = 0,
 	/** Generic error */
@@ -204,7 +204,7 @@ enum class sqlite3_errc
 	symlink           = (success | (2 << 8)),
 };
 
-inline const std::error_category& sqlite3_category() noexcept
+inline const std::error_category& sqlite3_category()
 {
 	static class : public std::error_category
 	{
@@ -218,21 +218,25 @@ inline const std::error_category& sqlite3_category() noexcept
 			if (const auto str = sqlite3_errstr(ec)) {
 				return str;
 			}
-
 			return "(unknown SQLite3 error)";
 		}
 	} category;
 	return category;
 }
 
-inline std::error_code make_error_code(sqlite3_errc ec) noexcept
+inline std::error_code make_error_code(SQLite3_code ec) noexcept
 {
 	return { static_cast<int>(ec), sqlite3_category() };
 }
 
-enum class errc
+enum class Error
 {
-	bad_vfs_name = 1,
+	success,
+
+	// bad input
+	bad_vfs_name,
+	null_function,
+
 	database_is_closed,
 	statement_is_closed,
 	unknown_parameter,
@@ -244,7 +248,13 @@ enum class errc
 	out_of_bounds
 };
 
-inline const std::error_category& ysqlite3_category() noexcept
+enum class Condition
+{
+	success,
+	bad_input,
+};
+
+inline std::error_code make_error_code(Error ec) noexcept
 {
 	static class : public std::error_category
 	{
@@ -255,17 +265,12 @@ inline const std::error_category& ysqlite3_category() noexcept
 		}
 		std::string message(int ec) const override
 		{
-			switch (static_cast<errc>(ec)) {
+			switch (static_cast<Error>(ec)) {
 			default: return "(unknown error code)";
 			}
 		}
 	} category;
-	return category;
-}
-
-inline std::error_code make_error_code(errc ec) noexcept
-{
-	return { static_cast<int>(ec), ysqlite3_category() };
+	return { static_cast<int>(ec), category };
 }
 
 } // namespace ysqlite3
@@ -273,11 +278,11 @@ inline std::error_code make_error_code(errc ec) noexcept
 namespace std {
 
 template<>
-struct is_error_code_enum<ysqlite3::errc> : true_type
+struct is_error_code_enum<ysqlite3::Error> : true_type
 {};
 
 template<>
-struct is_error_code_enum<ysqlite3::sqlite3_errc> : true_type
+struct is_error_code_enum<ysqlite3::SQLite3_code> : true_type
 {};
 
 } // namespace std

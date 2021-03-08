@@ -6,7 +6,7 @@
 
 namespace ysqlite3 {
 
-class database;
+class Database;
 
 namespace function {
 
@@ -17,10 +17,8 @@ enum class text_encoding
 	utf16le = SQLITE_UTF16LE
 };
 
-/**
- * A function interface for SQLite.
- */
-class function
+/// Function interface for SQLite3.
+class Function
 {
 public:
 	/**
@@ -29,16 +27,16 @@ public:
 	 * @param argc the maximum allowed parameter count; if this value is negative the is no limit
 	 * @param deterministic whether this function produces the same output with the same input
 	 * @param encoding the preferred text encoding
-	 * @see more information can be found on the [SQLite
-	 * page](https://www.sqlite.org/c3ref/create_function.html)
+	 * @see more information can be found on the
+	 * [SQLite-page](https://www.sqlite.org/c3ref/create_function.html)
 	 */
-	function(int argc, bool deterministic, bool direct_only, text_encoding encoding) noexcept
+	Function(int argc, bool deterministic, bool direct_only, text_encoding encoding) noexcept
 	{
 		_argc  = argc < 0 ? -1 : argc;
 		_flags = static_cast<int>(encoding) | (deterministic ? SQLITE_DETERMINISTIC : 0) |
 		         (direct_only ? SQLITE_DIRECTONLY : 0);
 	}
-	virtual ~function() = default;
+	virtual ~Function() = default;
 	/**
 	 * The function interface for SQLite.
 	 *
@@ -49,7 +47,7 @@ public:
 	static void xfunc(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept
 	{
 		try {
-			static_cast<function*>(sqlite3_user_data(context))->run(context, argc, argv);
+			static_cast<Function*>(sqlite3_user_data(context))->run(context, argc, argv);
 		} catch (const std::exception& e) {
 			sqlite3_result_error(context, e.what(),
 			                     dynamic_cast<const std::system_error*>(&e)
@@ -71,7 +69,7 @@ protected:
 	virtual void run(sqlite3_context* context, int argc, sqlite3_value** argv) = 0;
 
 private:
-	friend database;
+	friend Database;
 
 	int _argc;
 	int _flags;

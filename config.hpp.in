@@ -4,6 +4,7 @@
 // clang-format off
 #cmakedefine01 YSQLITE3_ENCRYPTION_BACKEND_OPENSSL
 #cmakedefine01 YSQLITE3_BIG_ENDIAN
+#define YSQLITE3_CRYPT_VFS_NAME "@YSQLITE3_CRYPT_VFS_NAME@"
 // clang-format on
 
 #endif

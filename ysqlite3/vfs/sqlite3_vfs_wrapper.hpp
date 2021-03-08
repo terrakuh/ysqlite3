@@ -8,16 +8,14 @@
 namespace ysqlite3 {
 namespace vfs {
 
-template<typename File = sqlite3_file_wrapper>
-class sqlite3_vfs_wrapper : public vfs
+template<typename DerivedFile = SQLite3_file_wrapper>
+class SQLite3_vfs_wrapper : public VFS
 {
 public:
-	static_assert(std::is_base_of<sqlite3_file_wrapper, File>::value,
-	              "file must be derive sqlite3_file_wrapper");
+	static_assert(std::is_base_of<SQLite3_file_wrapper, DerivedFile>::value,
+	              "File must derive SQLite3_file_wrapper");
 
-	typedef File file_type;
-
-	sqlite3_vfs_wrapper(sqlite3_vfs* parent, const char* name) : vfs{ name }
+	SQLite3_vfs_wrapper(sqlite3_vfs* parent, const char* name) : VFS{ name }
 	{
 		_parent = parent;
 	}
@@ -29,8 +27,8 @@ public:
 	{
 		return _parent->mxPathname;
 	}
-	std::unique_ptr<file> open(const char* name, file_format format, open_flag_type flags,
-	                           open_flag_type& output_flags) override
+	std::unique_ptr<File> open(const char* name, File_format format, Open_flags flags,
+	                           Open_flags& output_flags) override
 	{
 #if PRINT_DEBUG
 		printf("opening new file (%s) '%s'\n", name_of(format), name);
@@ -38,8 +36,8 @@ public:
 		std::shared_ptr<sqlite3_file> tmp_file(
 		    reinterpret_cast<sqlite3_file*>(new std::uint8_t[_parent->szOsFile]{}),
 		    [](sqlite3_file* x) { delete[] reinterpret_cast<std::uint8_t*>(x); });
-		_check_error(_parent->xOpen(_parent, name, tmp_file.get(), flags, &output_flags));
-		std::unique_ptr<file> tmp{ new File{ name, format, std::move(tmp_file) } };
+		_assert_error(_parent->xOpen(_parent, name, tmp_file.get(), flags, &output_flags));
+		std::unique_ptr<File> tmp{ new DerivedFile{ name, format, std::move(tmp_file) } };
 #if PRINT_DEBUG
 		printf("opening new file (%s) '%s' done\n", name_of(format), name);
 #endif
@@ -47,27 +45,28 @@ public:
 	}
 	void delete_file(const char* name, bool sync_directory) override
 	{
-		_check_error(_parent->xDelete(_parent, name, static_cast<int>(sync_directory)));
+		_assert_error(_parent->xDelete(_parent, name, static_cast<int>(sync_directory)));
 	}
-	bool access(const char* name, access_flag flag) override
+	bool access(const char* name, Access_flag flag) override
 	{
 		int result = 0;
-		_check_error(_parent->xAccess(_parent, name, static_cast<int>(flag), &result));
+		_assert_error(_parent->xAccess(_parent, name, static_cast<int>(flag), &result));
 		return static_cast<bool>(result);
 	}
-	void full_pathname(const char* input, span<char*> output) override
+	void full_pathname(const char* input, Span<char*> output) override
 	{
-		_check_error(_parent->xFullPathname(_parent, input, static_cast<int>(output.size()), output.begin()));
+		_assert_error(
+		    _parent->xFullPathname(_parent, input, static_cast<int>(output.size()), output.begin()));
 	}
 	void* dlopen(const char* filename) noexcept override
 	{
 		return _parent->xDlOpen(_parent, filename);
 	}
-	void dlerror(span<char*> buffer) noexcept override
+	void dlerror(Span<char*> buffer) noexcept override
 	{
 		_parent->xDlError(_parent, static_cast<int>(buffer.size()), buffer.begin());
 	}
-	dlsym_type dlsym(void* handle, const char* symbol) noexcept override
+	Dl_symbol dlsym(void* handle, const char* symbol) noexcept override
 	{
 		return _parent->xDlSym(_parent, handle, symbol);
 	}
@@ -75,22 +74,22 @@ public:
 	{
 		_parent->xDlClose(_parent, handle);
 	}
-	int random(span<std::uint8_t*> buffer) noexcept override
+	int random(Span<std::uint8_t*> buffer) noexcept override
 	{
 		return _parent->xRandomness(_parent, static_cast<int>(buffer.size()),
 		                            reinterpret_cast<char*>(buffer.begin()));
 	}
-	sleep_duration_type sleep(sleep_duration_type time) noexcept override
+	Sleep_duration sleep(Sleep_duration time) noexcept override
 	{
-		return sleep_duration_type{ _parent->xSleep(_parent, time.count()) };
+		return Sleep_duration{ _parent->xSleep(_parent, time.count()) };
 	}
-	time_type current_time() override
+	Time current_time() override
 	{
 		sqlite3_int64 tmp = 0;
-		_check_error(_parent->xCurrentTimeInt64(_parent, &tmp));
-		return time_type{ tmp };
+		_assert_error(_parent->xCurrentTimeInt64(_parent, &tmp));
+		return Time{ tmp };
 	}
-	int last_error(span<char*> buffer) noexcept override
+	int last_error(Span<char*> buffer) noexcept override
 	{
 		return _parent->xGetLastError(_parent, static_cast<int>(buffer.size()), buffer.begin());
 	}
@@ -110,10 +109,10 @@ public:
 private:
 	sqlite3_vfs* _parent;
 
-	static void _check_error(int ec)
+	static void _assert_error(int ec)
 	{
 		if (ec) {
-			throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+			throw std::system_error{ static_cast<SQLite3_code>(ec) };
 		}
 	}
 };
@@ -121,4 +120,4 @@ private:
 } // namespace vfs
 } // namespace ysqlite3
 
-#endif // !YSQLITE3_VFS_SQLITE3_VFS_HPP_
+#endif

@@ -9,7 +9,7 @@
 namespace ysqlite3 {
 namespace vfs {
 
-enum class file_format
+enum class File_format
 {
 	main_db        = SQLITE_OPEN_MAIN_DB,
 	main_journal   = SQLITE_OPEN_MAIN_JOURNAL,
@@ -22,14 +22,14 @@ enum class file_format
 	wal            = SQLITE_OPEN_WAL
 };
 
-enum class sync_flag
+enum class Sync_flag
 {
 	normal    = SQLITE_SYNC_NORMAL,
 	full      = SQLITE_SYNC_FULL,
 	data_only = SQLITE_SYNC_DATAONLY
 };
 
-enum class lock_flag
+enum class Lock_flag
 {
 	none      = SQLITE_LOCK_NONE,
 	shared    = SQLITE_LOCK_SHARED,
@@ -38,7 +38,7 @@ enum class lock_flag
 	exclusive = SQLITE_LOCK_EXCLUSIVE,
 };
 
-enum class file_cntl
+enum class File_control
 {
 	lock_state            = SQLITE_FCNTL_LOCKSTATE,
 	get_lock_proxy_file   = SQLITE_FCNTL_GET_LOCKPROXYFILE,
@@ -80,51 +80,34 @@ enum class file_cntl
 	checkpoint_start      = SQLITE_FCNTL_CKPT_START,
 };
 
-inline const char* name_of(file_format format) noexcept
+inline const char* name_of(File_format format) noexcept
 {
 	switch (format) {
-	case file_format::main_db: return "main db";
-	case file_format::main_journal: return "main journal";
+	case File_format::main_db: return "main db";
+	case File_format::main_journal: return "main journal";
 	default: return "unkown";
 	}
 }
 
-class file
+class File
 {
 public:
-	/**
-	 Constructor.
-	*/
-	file(const char* name, file_format format) noexcept;
-	virtual ~file() = default;
-	sqlite3_io_methods* methods() noexcept
-	{
-		return &_methods;
-	}
+	File(const char* name, File_format format) noexcept;
+	virtual ~File() = default;
+	sqlite3_io_methods* methods() noexcept;
 	virtual void close()                                                       = 0;
-	virtual void read(span<std::uint8_t*> buffer, sqlite3_int64 offset)        = 0;
-	virtual void write(span<const std::uint8_t*> buffer, sqlite3_int64 offset) = 0;
+	virtual void read(Span<std::uint8_t*> buffer, sqlite3_int64 offset)        = 0;
+	virtual void write(Span<const std::uint8_t*> buffer, sqlite3_int64 offset) = 0;
 	virtual void truncate(sqlite3_int64 size)                                  = 0;
-	virtual void sync(sync_flag flag)                                          = 0;
+	virtual void sync(Sync_flag flag)                                          = 0;
 	virtual sqlite3_int64 file_size() const                                    = 0;
-	virtual void lock(lock_flag flag)                                          = 0;
-	virtual void unlock(lock_flag flag)                                        = 0;
+	virtual void lock(Lock_flag flag)                                          = 0;
+	virtual void unlock(Lock_flag flag)                                        = 0;
 	virtual bool has_reserved_lock() const                                     = 0;
-	virtual void file_control(file_cntl operation, void* arg)                  = 0;
-	/**
-	 * Returns the sector size for this file. The default implementation returns 4096.
-	 *
-	 * @return the sector size
-	 */
-	virtual int sector_size() const noexcept
-	{
-		return 4096;
-	}
-	/**
-	 * Returns SQLite specific device characteristics.
-	 *
-	 * @return device characteristics
-	 */
+	virtual void file_control(File_control operation, void* arg)                  = 0;
+	/// Returns the sector size for this file. The default implementation returns 4096.
+	virtual int sector_size() const noexcept;
+	/// Returns SQLite specific device characteristics.
 	virtual int device_characteristics() const noexcept                                         = 0;
 	virtual void shm_map(int page, int page_size, bool is_write, void volatile** mapped_memory) = 0;
 	virtual void shm_lock(int offset, int n, int flags)                                         = 0;
@@ -135,7 +118,7 @@ public:
 
 protected:
 	const char* const name;
-	const file_format format;
+	const File_format format;
 
 private:
 	sqlite3_io_methods _methods;

@@ -14,6 +14,8 @@ set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
 	STRINGS "none" "OpenSSL")
+set(YSQLITE3_CRYPT_VFS_NAME "ysqlite3-crypt"
+	CACHE STRING "The name of the crypt VFS.")
 #add_compile_options("-DPRINT_DEBUG")
 
 find_package(Threads REQUIRED)

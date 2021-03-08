@@ -5,24 +5,16 @@
 
 namespace ysqlite3 {
 
-class database;
+class Database;
 
-class transaction
+class Transaction
 {
 public:
-	transaction(std::shared_ptr<database> db) noexcept;
-	/**
-	 * Move-Constructor.
-	 *
-	 * @post move is invalid
-	 *
-	 * @param[in,out] move the transaction that should be moved
-	 */
-	transaction(transaction&& move) noexcept;
-	/**
-	 * Destructor. If the transaction was neither committed nor rolldd back, it will be rolled back.
-	 */
-	~transaction();
+	Transaction(std::shared_ptr<Database> db) noexcept;
+	/// The moved object will be invalid after the move operation.
+	Transaction(Transaction&& move) noexcept;
+	/// Rolls the transaction back if it was not committed.
+	~Transaction() noexcept;
 	/**
 	 * Commits the transaction.
 	 *
@@ -39,24 +31,15 @@ public:
 	 * @exception see database::execute()
 	 */
 	void rollback();
-	/**
-	 * Tests whether this transaction is open.
-	 *
-	 * @return `true` if it is open, otherwise `false`
-	 */
-	bool is_open() const noexcept;
-	/**
-	 * Tests whether this transaction is open.
-	 *
-	 * @return `true` if it is open, otherwise `false`
-	 */
+	bool is_active() const noexcept;
+	/// Calls is_active().
 	operator bool() const noexcept;
-	transaction& operator=(transaction&& move) noexcept;
+	Transaction& operator=(Transaction&& move) noexcept;
 
 private:
-	friend database;
+	friend Database;
 
-	std::shared_ptr<database> _db;
+	std::shared_ptr<Database> _db;
 };
 
 } // namespace ysqlite3

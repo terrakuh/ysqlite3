@@ -13,9 +13,9 @@ using namespace ysqlite3::vfs;
 
 namespace {
 
-vfs* self(sqlite3_vfs* vfs) noexcept
+VFS* self(sqlite3_vfs* vfs) noexcept
 {
-	return static_cast<class vfs*>(vfs->pAppData);
+	return static_cast<VFS*>(vfs->pAppData);
 }
 
 template<typename Action>
@@ -53,7 +53,7 @@ int open(sqlite3_vfs* vfs, const char* name, sqlite3_file* file, int flags, int*
 	std::memset(file, 0, vfs->szOsFile);
 	return wrap([&] {
 		int tmp = 0;
-		file_format format;
+		File_format format;
 		constexpr auto mask = SQLITE_OPEN_MAIN_DB | SQLITE_OPEN_TEMP_DB | SQLITE_OPEN_TRANSIENT_DB |
 		                      SQLITE_OPEN_MAIN_JOURNAL | SQLITE_OPEN_TEMP_JOURNAL | SQLITE_OPEN_SUBJOURNAL |
 		                      SQLITE_OPEN_MASTER_JOURNAL | SQLITE_OPEN_WAL;
@@ -66,7 +66,7 @@ int open(sqlite3_vfs* vfs, const char* name, sqlite3_file* file, int flags, int*
 		case SQLITE_OPEN_TEMP_JOURNAL:
 		case SQLITE_OPEN_SUBJOURNAL:
 		case SQLITE_OPEN_MASTER_JOURNAL:
-		case SQLITE_OPEN_WAL: format = static_cast<file_format>(flags & mask); break;
+		case SQLITE_OPEN_WAL: format = static_cast<File_format>(flags & mask); break;
 		default: return SQLITE_MISUSE;
 		}
 
@@ -86,12 +86,12 @@ int delete_(sqlite3_vfs* vfs, const char* name, int sync_directory) noexcept
 int access(sqlite3_vfs* vfs, const char* name, int flags, int* result) noexcept
 {
 	return wrap([&] {
-		access_flag flag;
+		Access_flag flag;
 
 		switch (flags) {
 		case SQLITE_ACCESS_EXISTS:
 		case SQLITE_ACCESS_READWRITE:
-		case SQLITE_ACCESS_READ: flag = static_cast<access_flag>(flags); break;
+		case SQLITE_ACCESS_READ: flag = static_cast<Access_flag>(flags); break;
 		default: return SQLITE_IOERR_ACCESS;
 		}
 
@@ -115,7 +115,7 @@ void dlerror(sqlite3_vfs* vfs, int size, char* buffer) noexcept
 	return self(vfs)->dlerror({ buffer, static_cast<std::size_t>(size) });
 }
 
-dlsym_type dlsym(sqlite3_vfs* vfs, void* handle, const char* symbol) noexcept
+Dl_symbol dlsym(sqlite3_vfs* vfs, void* handle, const char* symbol) noexcept
 {
 	if (handle) {
 		return self(vfs)->dlsym(handle, symbol);
@@ -138,7 +138,7 @@ int random_bytes(sqlite3_vfs* vfs, int size, char* buffer) noexcept
 
 int sleep(sqlite3_vfs* vfs, int microseconds) noexcept
 {
-	return self(vfs)->sleep(sleep_duration_type{ microseconds }).count();
+	return self(vfs)->sleep(Sleep_duration{ microseconds }).count();
 }
 
 int current_time64(sqlite3_vfs* vfs, sqlite3_int64* time) noexcept
@@ -176,7 +176,7 @@ const char* next_system_call(sqlite3_vfs* vfs, const char* name) noexcept
 
 } // namespace
 
-vfs::vfs(const char* name) : _name{ name }, _vfs{}
+VFS::VFS(const char* name) : _name{ name }, _vfs{}
 {
 	_vfs.iVersion = 3;
 	_vfs.szOsFile = sizeof(sqlite3_file) + sizeof(void*);
@@ -206,28 +206,80 @@ vfs::vfs(const char* name) : _name{ name }, _vfs{}
 	_vfs.xNextSystemCall = &::next_system_call;
 }
 
-int vfs::random(span<std::uint8_t*> buffer) noexcept
+bool VFS::is_registered() const noexcept
+{
+	return _registered != nullptr;
+}
+
+const std::string& VFS::name() const noexcept
+{
+	return _name;
+}
+
+sqlite3_vfs* VFS::handle() noexcept
+{
+	return &_vfs;
+}
+
+void* VFS::dlopen(const char* filename) noexcept
+{
+	return nullptr;
+}
+
+void VFS::dlerror(Span<char*> buffer) noexcept
+{}
+
+Dl_symbol VFS::dlsym(void* handle, const char* symbol) noexcept
+{
+	return nullptr;
+}
+
+void VFS::dlclose(void* handle) noexcept
+{}
+
+int VFS::random(Span<std::uint8_t*> buffer) noexcept
 {
 	std::default_random_engine engine;
 	std::uniform_int_distribution<int> distributor(std::numeric_limits<std::uint8_t>::min(),
 	                                               std::numeric_limits<std::uint8_t>::max());
-
 	for (auto& i : buffer) {
 		i = static_cast<std::uint8_t>(distributor(engine));
 	}
-
 	return static_cast<int>(buffer.size());
 }
 
-sleep_duration_type vfs::sleep(sleep_duration_type time) noexcept
+Sleep_duration VFS::sleep(Sleep_duration time) noexcept
 {
 	std::this_thread::sleep_for(time);
 	return time;
 }
 
-time_type vfs::current_time()
+Time VFS::current_time()
 {
 	using namespace std::chrono;
-	return duration_cast<time_type>(system_clock::now().time_since_epoch() +
-	                                std::chrono::milliseconds{ 210866760000000 });
+	return duration_cast<Time>(system_clock::now().time_since_epoch() +
+	                           std::chrono::milliseconds{ 210866760000000 });
+}
+
+int VFS::last_error(Span<char*> buffer) noexcept
+{
+	if (!buffer.empty()) {
+		*buffer.begin() = 0;
+	}
+	return 0;
+}
+
+int VFS::set_system_call(const char* name, sqlite3_syscall_ptr system_call) noexcept
+{
+	return SQLITE_OK;
+}
+
+sqlite3_syscall_ptr VFS::get_system_call(const char* name) noexcept
+{
+	return nullptr;
+}
+
+const char* VFS::next_system_call(const char* name) noexcept
+{
+	return nullptr;
 }

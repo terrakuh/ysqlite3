@@ -2,95 +2,86 @@
 
 using namespace ysqlite3;
 
-results::results(sqlite3_stmt* statement, sqlite3* database) noexcept
+Results::Results(sqlite3_stmt* statement, sqlite3* database) noexcept
 {
 	if (static_cast<bool>(statement) != static_cast<bool>(database)) {
-		throw std::system_error{ errc::bad_arguments };
+		throw std::system_error{ Error::bad_arguments };
 	}
-
 	_statement = statement;
 	_database  = database;
 }
 
-bool results::is_null(index index)
+bool Results::is_null(Index index)
 {
 	return type_of(index) == type::null;
 }
 
-sqlite3_int64 results::integer(index index)
+sqlite3_int64 Results::integer(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
-
 	return sqlite3_column_int64(_statement, _to_column_index(index));
 }
 
-double results::real(index index)
+double Results::real(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
-
 	return sqlite3_column_double(_statement, _to_column_index(index));
 }
 
-span<const std::uint8_t*> results::blob(index index)
+Span<const std::uint8_t*> Results::blob(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
 
 	const auto i    = _to_column_index(index);
 	const auto old  = sqlite3_errcode(_database);
 	const auto blob = static_cast<const std::uint8_t*>(sqlite3_column_blob(_statement, i));
 	const auto ec   = sqlite3_errcode(_database);
-
 	if (!blob && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+		throw std::system_error{ static_cast<SQLite3_code>(ec) };
 	}
-
 	return { blob, blob + sqlite3_column_bytes(_statement, i) };
 }
 
-const char* results::text(index index)
+const char* Results::text(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
 
 	const auto old = sqlite3_errcode(_database);
 	const auto str = reinterpret_cast<const char*>(sqlite3_column_text(_statement, _to_column_index(index)));
 	const auto ec  = sqlite3_errcode(_database);
-
 	if (!str && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+		throw std::system_error{ static_cast<SQLite3_code>(ec) };
 	}
-
 	return str;
 }
 
-int results::size_of(index index)
+int Results::size_of(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
 
 	const auto old  = sqlite3_errcode(_database);
 	const auto size = sqlite3_column_bytes(_statement, _to_column_index(index));
 	const auto ec   = sqlite3_errcode(_database);
-
 	if (!size && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<sqlite3_errc>(ec) };
+		throw std::system_error{ static_cast<SQLite3_code>(ec) };
 	}
-
 	return size;
 }
 
-results::type results::type_of(index index)
+Results::type Results::type_of(Index index)
 {
 	if (!*this) {
-		throw std::system_error{ errc::bad_result };
+		throw std::system_error{ Error::bad_result };
 	}
 
 	switch (sqlite3_column_type(_statement, _to_column_index(index))) {
@@ -102,12 +93,12 @@ results::type results::type_of(index index)
 	}
 }
 
-results::operator bool() const noexcept
+Results::operator bool() const noexcept
 {
 	return _statement;
 }
 
-int results::_to_column_index(index index)
+int Results::_to_column_index(Index index)
 {
 	if (index.name) {
 		const auto iequals = [](const char* left, const char* right, const std::locale& locale) {
@@ -116,7 +107,6 @@ int results::_to_column_index(index index)
 					return false;
 				}
 			}
-
 			return *left == *right;
 		};
 
@@ -126,10 +116,9 @@ int results::_to_column_index(index index)
 			}
 		}
 
-		throw std::system_error{ errc::unknown_parameter };
+		throw std::system_error{ Error::unknown_parameter };
 	} else if (index.value < 0 || index.value >= sqlite3_column_count(_statement)) {
-		throw std::system_error{ errc::parameter_out_of_range };
+		throw std::system_error{ Error::parameter_out_of_range };
 	}
-
 	return index.value;
 }

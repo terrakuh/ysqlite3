@@ -7,9 +7,9 @@ using namespace ysqlite3::vfs;
 
 namespace {
 
-file* self(sqlite3_file* file) noexcept
+File* self(sqlite3_file* file) noexcept
 {
-	return *reinterpret_cast<class file**>(file + 1);
+	return *reinterpret_cast<class File**>(file + 1);
 }
 
 template<typename Action>
@@ -25,15 +25,15 @@ int wrap(Action&& action, int default_error = SQLITE_ERROR) noexcept
 	}
 }
 
-enum lock_flag lock_flag(int flag)
+Lock_flag lock_flag(int flag)
 {
 	switch (flag) {
 	case SQLITE_LOCK_NONE:
 	case SQLITE_LOCK_SHARED:
 	case SQLITE_LOCK_RESERVED:
 	case SQLITE_LOCK_PENDING:
-	case SQLITE_LOCK_EXCLUSIVE: return static_cast<enum lock_flag>(flag);
-	default: throw std::system_error{ ysqlite3::sqlite3_errc::library_misuse };
+	case SQLITE_LOCK_EXCLUSIVE: return static_cast<Lock_flag>(flag);
+	default: throw std::system_error{ ysqlite3::SQLite3_code::library_misuse };
 	}
 }
 
@@ -69,14 +69,13 @@ int truncate(sqlite3_file* file, sqlite3_int64 size) noexcept
 int sync(sqlite3_file* file, int flag) noexcept
 {
 	return wrap([&] {
-		sync_flag sf;
+		Sync_flag sf;
 		switch (flag) {
 		case SQLITE_SYNC_NORMAL:
 		case SQLITE_SYNC_FULL:
-		case SQLITE_SYNC_DATAONLY: sf = static_cast<sync_flag>(flag); break;
-		default: throw std::system_error{ ysqlite3::sqlite3_errc::library_misuse };
+		case SQLITE_SYNC_DATAONLY: sf = static_cast<Sync_flag>(flag); break;
+		default: throw std::system_error{ ysqlite3::SQLite3_code::library_misuse };
 		}
-
 		self(file)->sync(sf);
 	});
 }
@@ -108,7 +107,7 @@ int check_reserved_lock(sqlite3_file* file, int* out) noexcept
 
 int file_control(sqlite3_file* file, int operation, void* arg) noexcept
 {
-	return wrap([&] { self(file)->file_control(static_cast<file_cntl>(operation), arg); });
+	return wrap([&] { self(file)->file_control(static_cast<File_control>(operation), arg); });
 }
 
 int sector_size(sqlite3_file* file) noexcept
@@ -153,7 +152,7 @@ int unfetch(sqlite3_file* file, sqlite3_int64 offset, void* buffer)
 
 } // namespace
 
-file::file(const char* name, file_format format) noexcept : name{ name }, format{ format }, _methods{}
+File::File(const char* name, File_format format) noexcept : name{ name }, format{ format }, _methods{}
 {
 	_methods.iVersion               = 3;
 	_methods.xClose                 = &::close;
@@ -174,4 +173,14 @@ file::file(const char* name, file_format format) noexcept : name{ name }, format
 	_methods.xShmUnmap              = &::shm_unmap;
 	_methods.xFetch                 = &::fetch; // if SQLITE_MAX_MMAP_SIZE > 0
 	_methods.xUnfetch               = &::unfetch;
+}
+
+sqlite3_io_methods* File::methods() noexcept
+{
+	return &_methods;
+}
+
+int File::sector_size() const noexcept
+{
+	return 4096;
 }

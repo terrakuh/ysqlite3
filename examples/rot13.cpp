@@ -8,20 +8,20 @@
 
 using namespace ysqlite3;
 
-class rot13_file : public vfs::page_transforming_file<vfs::sqlite3_file_wrapper>
+class Rot13_file : public vfs::Page_transforming_file<vfs::SQLite3_file_wrapper>
 {
 public:
-	using parent = vfs::page_transforming_file<vfs::sqlite3_file_wrapper>;
-	using parent::parent;
+	using Parent = vfs::Page_transforming_file<vfs::SQLite3_file_wrapper>;
+	using Parent::Parent;
 
 protected:
-	void encode_page(span<std::uint8_t*> page) override
+	void encode_page(Span<std::uint8_t*> page) override
 	{
 		for (auto& i : page) {
 			i += 13;
 		}
 	}
-	void decode_page(span<std::uint8_t*> page) override
+	void decode_page(Span<std::uint8_t*> page) override
 	{
 		for (auto& i : page) {
 			i -= 13;
@@ -31,20 +31,20 @@ protected:
 
 int main(int args, char** argv)
 try {
-	vfs::register_vfs(std::make_shared<vfs::sqlite3_vfs_wrapper<rot13_file>>(vfs::find_vfs(nullptr), "rot13"),
+	vfs::register_vfs(std::make_shared<vfs::SQLite3_vfs_wrapper<Rot13_file>>(vfs::find_vfs(nullptr), "rot13"),
 	                  false);
 
-	database db;
+	Database db;
 	db.open("test.db", open_flag_readwrite | open_flag_create, "rot13");
 	db.execute(R"(
 
-CREATE TABLE IF NOT EXISTS tast(noim text);
-INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
+	CREATE TABLE IF NOT EXISTS tast(noim text);
+	INSERT INTO tast(noim) VALUES('heyho'), ('Musik'), (NULL);
 
 )");
 
 	auto stmt = db.prepare_statement("SELECT * FROM tast");
-	results r;
+	Results r;
 
 	while ((r = stmt.step())) {
 		for (const auto& column : stmt.columns()) {

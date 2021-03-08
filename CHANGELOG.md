@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [0.5.0] - 2021-03-08
 ### Added
 - Additional extensions for shell like JSON, rtree, readline and FTS
 - Catch2 as 3rd party submodule
@@ -56,7 +58,8 @@
 - `backward.hpp` 3rd party
 - `microsoft/gsl` 3rd party
 
-[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.4.0...dev
+[Unreleased]: https://github.com/terrakuh/ysqlite3/compare/v0.5.0...dev
+[0.5.0]: https://github.com/terrakuh/ysqlite3/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/terrakuh/ysqlite3/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/terrakuh/ysqlite3/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/terrakuh/ysqlite3/compare/v0.1.0...v0.2.0

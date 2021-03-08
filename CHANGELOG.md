@@ -7,6 +7,9 @@
 - Capitalize all types
 - Upgrade SQLite3 to v3.34.1
 
+### Changed
+- Renamve crypt VFS from `ysqlite3-crypt-vfs` to `ysqlite3-crypt`
+
 ## [0.4.0] - 2020-10-17
 ### Added
 - File name to VFS file

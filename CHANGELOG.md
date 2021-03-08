@@ -5,6 +5,7 @@
 - Additional extensions for shell like JSON, rtree, readline and FTS
 - Catch2 as 3rd party submodule
 - Capitalize all types
+- Upgrade SQLite3 to v3.34.1
 
 ## [0.4.0] - 2020-10-17
 ### Added

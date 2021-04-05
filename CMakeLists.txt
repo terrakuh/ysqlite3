@@ -8,8 +8,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." ON)
 option(YSQLITE3_BUILD_EXTENSIONS "Build the extensions." ON)
-option(YSQLITE3_BUILD_TESTS "Build the tests." ON)
+option(YSQLITE3_BUILD_TESTS "Build the tests." OFF)
 option(YSQLITE3_BUILD_SHELL "Build the shell." ON)
+option(YSQLITE3_ENABLE_JSON "Enables the JSON extension for the shell." ON)
+option(YSQLITE3_ENABLE_EXPLAIN_COMMENTS "Enables extra commentary." ON)
+option(YSQLITE3_ENABLE_RTREE "Enables the rtree extension for the shell." ON)
+set(YSQLITE3_ENABLE_FULL_TEXT_SEARCH "FTS5" CACHE STRING "Enables and sets the FTS version.")
+set_property(CACHE YSQLITE3_ENABLE_FULL_TEXT_SEARCH
+	PROPERTY STRINGS "no" "FTS3" "FTS4" "FTS5")
 set(YSQLITE3_ENCRYPTION_BACKEND "OpenSSL"
 	CACHE STRING "The backend library for encryption/decryption ('none', 'OpenSSL').")
 set_property(CACHE YSQLITE3_ENCRYPTION_BACKEND PROPERTY
@@ -48,6 +54,33 @@ target_link_libraries(ysqlite3
 		Threads::Threads
 		"${CMAKE_DL_LIBS}")
 
+# json
+if(YSQLITE3_ENABLE_JSON)
+	target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_JSON1)
+endif()
+
+# comments
+if(YSQLITE3_ENABLE_EXPLAIN_COMMENTS)
+	target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_EXPLAIN_COMMENTS)
+endif()
+
+# rtree
+if(YSQLITE3_ENABLE_RTREE)
+	target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_RTREE)
+endif()
+
+# fts
+if(NOT YSQLITE3_ENABLE_FULL_TEXT_SEARCH STREQUAL "no")
+	# target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_FTS5)
+	target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_${YSQLITE3_ENABLE_FULL_TEXT_SEARCH})
+endif()
+
+# math
+if(YSQLITE3_ENABLE_MATH_FUNCTIONS)
+	target_compile_definitions(ysqlite3 PRIVATE SQLITE_ENABLE_MATH_FUNCTIONS)
+endif()
+
+# encryption
 if(YSQLITE3_ENCRYPTION_BACKEND_OPENSSL)
 	find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 	target_link_libraries(ysqlite3 PUBLIC OpenSSL::Crypto)
@@ -65,7 +98,7 @@ if(YSQLITE3_BUILD_SHELL)
 	add_subdirectory(shell)
 endif()
 
-if(YSQLITE3_BUILD_TESTS)	
+if(YSQLITE3_BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
 

@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- Upgrade SQLite3 to v3.35.4
 
 ## [0.5.0] - 2021-03-08
 ### Added

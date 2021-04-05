@@ -92,7 +92,7 @@ Results Statement::step()
 	if (ec == SQLITE_DONE) {
 		return {};
 	}
-	throw std::system_error{ static_cast<SQLite3_code>(ec) };
+	throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
 }
 
 Statement& Statement::bind_reference(Index index, const char* value)

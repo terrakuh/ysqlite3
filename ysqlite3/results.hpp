@@ -51,7 +51,7 @@ public:
 	 * @param[in] statement the statement
 	 * @param[in] database the database
 	 */
-	Results(sqlite3_stmt* statement, sqlite3* database) noexcept;
+	Results(sqlite3_stmt* statement, sqlite3* database);
 	/**
 	 * Checks if the value at the index is null.
 	 *

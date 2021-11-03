@@ -2,7 +2,7 @@
 
 using namespace ysqlite3;
 
-Results::Results(sqlite3_stmt* statement, sqlite3* database) noexcept
+Results::Results(sqlite3_stmt* statement, sqlite3* database)
 {
 	if (static_cast<bool>(statement) != static_cast<bool>(database)) {
 		throw std::system_error{ Error::bad_arguments };

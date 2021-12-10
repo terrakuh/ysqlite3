@@ -1,5 +1,7 @@
 #include "digest.hpp"
 
+#if YSQLITE3_ENCRYPTION_BACKEND_OPENSSL
+
 #include <cstdint>
 #include <memory>
 #include <openssl/evp.h>
@@ -68,3 +70,5 @@ void ysqlite3::function::sha3(sqlite3_context* context, int argc, sqlite3_value*
 	}
 	digest(md, context, argc - 1, argv + 1);
 }
+
+#endif

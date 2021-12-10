@@ -1,10 +1,13 @@
 #ifndef YSQLITE3_FUNCTION_DIGEST_HPP_
 #define YSQLITE3_FUNCTION_DIGEST_HPP_
 
+#include "../config.hpp"
 #include "../sqlite3.h"
 
 namespace ysqlite3 {
 namespace function {
+
+#if YSQLITE3_ENCRYPTION_BACKEND_OPENSSL
 
 /// In SQLite: DIGEST(<digset_name>, ...). Example: DIGEST("md5", "some test")
 void digest(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept;
@@ -16,6 +19,8 @@ void sha1(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept;
 void sha2(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept;
 /// In SQLite: SHA3(<size>, ...). Example: SHA2(256, "some test")
 void sha3(sqlite3_context* context, int argc, sqlite3_value** argv) noexcept;
+
+#endif
 
 } // namespace function
 } // namespace ysqlite3

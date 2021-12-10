@@ -1,0 +1,17 @@
+{
+	"name": "Ubuntu",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"settings": {},
+	"extensions": [
+		"ms-vscode.cpptools",
+		"twxs.cmake",
+		"ms-vscode.cmake-tools",
+		"cheshirekow.cmake-format",
+		"albert.TabOut"
+	],
+	"runArgs": [
+		"--cap-add=SYS_PTRACE"
+	]
+}

@@ -16,26 +16,6 @@ set_target_properties(shell PROPERTIES
 	SUFFIX ""
 	PREFIX "")
 
-# json
-if(YSQLITE3_SHELL_ENABLE_JSON)
-	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_JSON1)
-endif()
-
-# comments
-if(YSQLITE3_SHELL_ENABLE_EXPLAIN_COMMENTS)
-	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_EXPLAIN_COMMENTS)
-endif()
-
-# rtree
-if(YSQLITE3_SHELL_ENABLE_RTREE)
-	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_RTREE)
-endif()
-
-# fts
-if(NOT YSQLITE3_SHELL_ENABLE_FULL_TEXT_SEARCH STREQUAL "no")
-	target_compile_definitions(shell PRIVATE SQLITE_ENABLE_${YSQLITE3_SHELL_ENABLE_FULL_TEXT_SEARCH})
-endif()
-
 # readline
 if(YSQLITE3_SHELL_ENABLE_READLINE)
 	find_library(READLINE_LIBRARY readline REQUIRED)

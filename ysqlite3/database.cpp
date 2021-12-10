@@ -163,7 +163,7 @@ Statement Database::prepare_statement(const char* sql)
 	sqlite3_stmt* stmt = nullptr;
 	const char* tail   = nullptr;
 	if (const auto ec = sqlite3_prepare_v2(_database, sql, -1, &stmt, &tail)) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
 	}
 	return { stmt, _database };
 }

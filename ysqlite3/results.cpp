@@ -58,7 +58,7 @@ const char* Results::text(Index index)
 	const auto str = reinterpret_cast<const char*>(sqlite3_column_text(_statement, _to_column_index(index)));
 	const auto ec  = sqlite3_errcode(_database);
 	if (!str && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
 	}
 	return str;
 }

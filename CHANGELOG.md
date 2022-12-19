@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 ### Changed
-- Bump SQLite3 version from 3.34.1 to 3.37.0
+- Bump SQLite3 version from 3.34.1 to 3.40.0
 - Change CMake option `YSQLITE3_SHELL_DISABLE_READLINE` to `YSQLITE3_SHELL_ENABLE_READLINE`
 
 ### Fixed

@@ -5,7 +5,7 @@
 
 #include <utility>
 
-using namespace ysqlite3;
+namespace ysqlite3 {
 
 Database::Database(const char* file)
 {
@@ -38,20 +38,20 @@ std::uint8_t Database::set_reserved_size(std::uint8_t size, bool vacuum)
 		}
 	}
 	if (ec) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	return static_cast<std::uint8_t>(n);
 }
 
-void Database::set_journal_mode(Journal_mode mode)
+void Database::set_journal_mode(JournalMode mode)
 {
 	switch (mode) {
-	case Journal_mode::delete_: execute("PRAGMA journal_mode=DELETE;"); break;
-	case Journal_mode::truncate: execute("PRAGMA journal_mode=TRUNCATE;"); break;
-	case Journal_mode::persist: execute("PRAGMA journal_mode=PERSIST;"); break;
-	case Journal_mode::memory: execute("PRAGMA journal_mode=MEMORY;"); break;
-	case Journal_mode::wal: execute("PRAGMA journal_mode=WAL;"); break;
-	case Journal_mode::off: execute("PRAGMA journal_mode=OFF;"); break;
+	case JournalMode::delete_: execute("PRAGMA journal_mode=DELETE;"); break;
+	case JournalMode::truncate: execute("PRAGMA journal_mode=TRUNCATE;"); break;
+	case JournalMode::persist: execute("PRAGMA journal_mode=PERSIST;"); break;
+	case JournalMode::memory: execute("PRAGMA journal_mode=MEMORY;"); break;
+	case JournalMode::wal: execute("PRAGMA journal_mode=WAL;"); break;
+	case JournalMode::off: execute("PRAGMA journal_mode=OFF;"); break;
 	}
 }
 
@@ -67,7 +67,7 @@ void Database::close(bool force)
 			sqlite3_close_v2(_database);
 		} else {
 			if (const auto ec = sqlite3_close(_database)) {
-				throw std::system_error{ static_cast<SQLite3_code>(ec) };
+				throw std::system_error{ static_cast<SQLite3Error>(ec) };
 			}
 		}
 		_database = nullptr;
@@ -87,7 +87,7 @@ void Database::open(const char* file, Open_flags flags, const char* vfs)
 	close();
 	if (const auto ec = sqlite3_open_v2(file, &_database, flags, vfs)) {
 		_database = nullptr;
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 }
 
@@ -98,11 +98,11 @@ void Database::register_function(const char* name, std::unique_ptr<function::Fun
 	} else if (!function) {
 		throw std::system_error{ Error::null_function };
 	}
-	const auto ec = sqlite3_create_function_v2(
-	    _database, name, function->_argc, function->_flags, function.get(), &function::Function::xfunc,
-	    nullptr, nullptr, [](void* ptr) { delete static_cast<function::Function*>(ptr); });
+	const auto ec = sqlite3_create_function_v2(_database, name, function->_argc, function->_flags,
+	                                           function.get(), &function::Function::xfunc, nullptr, nullptr,
+	                                           [](void* ptr) { delete static_cast<function::Function*>(ptr); });
 	if (ec) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	function.release();
 }
@@ -116,11 +116,11 @@ void Database::register_function(const char* name, void (*function)(sqlite3_cont
 		throw std::system_error{ Error::null_function };
 	}
 	const auto ec = sqlite3_create_function_v2(
-	    _database, name, -1,
-	    static_cast<int>(encoding) | SQLITE_DETERMINISTIC * deterministic | SQLITE_DIRECTONLY * direct_only,
-	    nullptr, function, nullptr, nullptr, nullptr);
+	  _database, name, -1,
+	  static_cast<int>(encoding) | SQLITE_DETERMINISTIC * deterministic | SQLITE_DIRECTONLY * direct_only,
+	  nullptr, function, nullptr, nullptr, nullptr);
 	if (ec) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 }
 
@@ -133,18 +133,18 @@ std::size_t Database::execute(const char* sql)
 	char* message      = nullptr;
 	std::size_t result = 0;
 	const auto ec      = sqlite3_exec(
-        _database, sql,
-        [](void* result, int, char**, char**) {
-            *static_cast<std::size_t*>(result) += 1;
-            return SQLITE_OK;
-        },
-        &result, &message);
+    _database, sql,
+    [](void* result, int, char**, char**) {
+      *static_cast<std::size_t*>(result) += 1;
+      return SQLITE_OK;
+    },
+    &result, &message);
 	const auto _ = finally([message] { sqlite3_free(message); });
 	if (ec) {
 		if (message) {
-			throw std::system_error{ static_cast<SQLite3_code>(ec), message };
+			throw std::system_error{ static_cast<SQLite3Error>(ec), message };
 		}
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	return result;
 }
@@ -163,9 +163,14 @@ Statement Database::prepare_statement(const char* sql)
 	sqlite3_stmt* stmt = nullptr;
 	const char* tail   = nullptr;
 	if (const auto ec = sqlite3_prepare_v2(_database, sql, -1, &stmt, &tail)) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec), sqlite3_errmsg(_database) };
 	}
 	return { stmt, _database };
+}
+
+Transaction Database::begin_transaction()
+{
+	return Transaction{ *this };
 }
 
 sqlite3* Database::release_handle() noexcept
@@ -191,3 +196,5 @@ Database& Database::operator=(Database&& move) noexcept
 	std::swap(_database, move._database);
 	return *this;
 }
+
+} // namespace ysqlite3

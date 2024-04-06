@@ -101,7 +101,7 @@ inline typename std::enable_if<std::is_base_of<VFS, Derived>::value>::type
 
 	vfs->_vfs.mxPathname = vfs->max_pathname();
 	if (const auto ec = sqlite3_vfs_register(&vfs->_vfs, make_default)) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	vfs->_registered = vfs;
 }
@@ -109,7 +109,7 @@ template<typename Derived>
 inline typename std::enable_if<std::is_base_of<VFS, Derived>::value>::type unregister_vfs(Derived& vfs)
 {
 	if (const auto ec = sqlite3_vfs_unregister(&vfs._vfs)) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 }
 

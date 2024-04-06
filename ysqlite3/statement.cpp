@@ -50,7 +50,7 @@ void Statement::finish()
 			if (ec == SQLITE_DONE) {
 				return;
 			}
-			throw std::system_error{ static_cast<SQLite3_code>(ec) };
+			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}
 }
@@ -59,7 +59,7 @@ void Statement::reset()
 {
 	if (is_open()) {
 		if (const auto ec = sqlite3_reset(_statement)) {
-			throw std::system_error{ static_cast<SQLite3_code>(ec) };
+			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}
 }
@@ -69,7 +69,7 @@ void Statement::close()
 	const auto ec = sqlite3_finalize(_statement);
 	_statement    = nullptr;
 	if (ec) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 }
 
@@ -92,7 +92,7 @@ Results Statement::step()
 	if (ec == SQLITE_DONE) {
 		return {};
 	}
-	throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
+	throw std::system_error{ static_cast<SQLite3Error>(ec), sqlite3_errmsg(_database) };
 }
 
 Statement& Statement::bind_reference(Index index, const char* value)

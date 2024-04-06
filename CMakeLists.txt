@@ -1,17 +1,20 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.16)
 
 project(
   ysqlite3
   VERSION 0.5.0
   LANGUAGES C CXX
 )
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." OFF)
-option(YSQLITE3_BUILD_EXTENSIONS "Build the extensions." ON)
-option(YSQLITE3_BUILD_TESTS "Build the tests." OFF)
-option(YSQLITE3_BUILD_SHELL "Build the shell." ON)
+set(YSQLITE3_IS_TOP_LEVEL OFF)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(YSQLITE3_IS_TOP_LEVEL ON)
+endif()
+
+option(YSQLITE3_BUILD_EXAMPLES "Build the example projects." ${YSQLITE3_IS_TOP_LEVEL})
+option(YSQLITE3_BUILD_EXTENSIONS "Build the extensions." ${YSQLITE3_IS_TOP_LEVEL})
+option(YSQLITE3_BUILD_TESTS "Build the tests." ${YSQLITE3_IS_TOP_LEVEL})
+option(YSQLITE3_BUILD_SHELL "Build the shell." ${YSQLITE3_IS_TOP_LEVEL})
 option(YSQLITE3_ENABLE_JSON "Enables the JSON extension for the shell." ON)
 option(YSQLITE3_ENABLE_EXPLAIN_COMMENTS "Enables extra commentary." ON)
 option(YSQLITE3_ENABLE_RTREE "Enables the rtree extension for the shell." ON)
@@ -54,6 +57,7 @@ target_include_directories(
                   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>"
 )
 target_link_libraries(ysqlite3 PUBLIC Threads::Threads "${CMAKE_DL_LIBS}")
+target_compile_features(ysqlite3 PUBLIC cxx_std_17)
 
 # json
 if(YSQLITE3_ENABLE_JSON)
@@ -119,13 +123,15 @@ install(
 )
 
 # CPack
-set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_PACKAGE_CONTACT "Yunus Ayar")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
-set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-set(CPACK_GENERATOR DEB TGZ)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+if(YSQLITE3_IS_TOP_LEVEL)
+  set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+  set(CPACK_PACKAGE_CONTACT "Yunus Ayar")
+  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+  set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+  set(CPACK_GENERATOR DEB TGZ)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
-include(CPack)
+  include(CPack)
+endif()

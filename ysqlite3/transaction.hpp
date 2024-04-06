@@ -1,7 +1,4 @@
-#ifndef YSQLITE3_TRANSACTION_HPP_
-#define YSQLITE3_TRANSACTION_HPP_
-
-#include <memory>
+#pragma once
 
 namespace ysqlite3 {
 
@@ -10,38 +7,37 @@ class Database;
 class Transaction
 {
 public:
-	Transaction(std::shared_ptr<Database> db) noexcept;
-	/// The moved object will be invalid after the move operation.
+	/// Automatically begins a transaction. The database must be valid until this transaction completes i.e.
+	/// `is_active() == false`.
+	explicit Transaction(Database& db);
+	Transaction(const Transaction& copy) = delete;
 	Transaction(Transaction&& move) noexcept;
 	/// Rolls the transaction back if it was not committed.
 	~Transaction() noexcept;
+
 	/**
-	 * Commits the transaction.
+	 * Commits the transaction. If the transaction is not active, nothing happens.
 	 *
-	 * @post the transaction is not open
+	 * @post `is_active() == false`
 	 *
 	 * @exception see database::execute()
 	 */
 	void commit();
 	/**
-	 * Rollbacks the transaction.
+	 * Rollbacks the transaction. If the transaction is not active, nothing happens.
 	 *
-	 * @post the transaction is not open
+	 * @post `is_active() == false`
 	 *
 	 * @exception see database::execute()
 	 */
 	void rollback();
-	bool is_active() const noexcept;
-	/// Calls is_active().
-	operator bool() const noexcept;
-	Transaction& operator=(Transaction&& move) noexcept;
+	[[nodiscard]] bool is_active() const noexcept;
+
+	Transaction& operator=(const Transaction& copy) = delete;
+	Transaction& operator=(Transaction&& move);
 
 private:
-	friend Database;
-
-	std::shared_ptr<Database> _db;
+	Database* _db = nullptr;
 };
 
 } // namespace ysqlite3
-
-#endif

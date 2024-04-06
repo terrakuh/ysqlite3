@@ -186,14 +186,14 @@ VFS::VFS(const char* name) : _name{ name }, _vfs{}
 	// set functions
 	_vfs.xOpen         = &::open;
 	_vfs.xDelete       = &::delete_;
-	_vfs.xAccess       = &::access;
+	// _vfs.xAccess       = &::access;
 	_vfs.xFullPathname = &::full_pathname;
 	_vfs.xDlOpen       = &::dlopen; // for extensions
 	_vfs.xDlError      = &::dlerror;
 	_vfs.xDlSym        = &::dlsym;
 	_vfs.xDlClose      = &::dlclose;
 	_vfs.xRandomness   = &::random_bytes;
-	_vfs.xSleep        = &::sleep;
+	// _vfs.xSleep        = &::sleep;
 	_vfs.xCurrentTime  = &::current_time;
 	_vfs.xGetLastError = &::last_error;
 

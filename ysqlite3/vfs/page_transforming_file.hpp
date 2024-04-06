@@ -103,7 +103,7 @@ private:
 			// check reserve size
 			if (offset <= 20 && offset + buffer.size() >= 21 &&
 			    !check_reserve_size(buffer.begin()[20 - offset])) {
-				throw std::system_error{ SQLite3_code::generic, "bad reserve size" };
+				throw std::system_error{ SQLite3Error::generic, "bad reserve size" };
 			}
 		}
 	}

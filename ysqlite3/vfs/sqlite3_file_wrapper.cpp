@@ -8,7 +8,7 @@ using namespace ysqlite3::vfs;
 inline void assert_error(int ec)
 {
 	if (ec) {
-		throw std::system_error{ static_cast<ysqlite3::SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<ysqlite3::SQLite3Error>(ec) };
 	}
 }
 

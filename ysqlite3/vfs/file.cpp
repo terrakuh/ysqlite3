@@ -33,7 +33,7 @@ Lock_flag lock_flag(int flag)
 	case SQLITE_LOCK_RESERVED:
 	case SQLITE_LOCK_PENDING:
 	case SQLITE_LOCK_EXCLUSIVE: return static_cast<Lock_flag>(flag);
-	default: throw std::system_error{ ysqlite3::SQLite3_code::library_misuse };
+	default: throw std::system_error{ ysqlite3::SQLite3Error::library_misuse };
 	}
 }
 
@@ -74,7 +74,7 @@ int sync(sqlite3_file* file, int flag) noexcept
 		case SQLITE_SYNC_NORMAL:
 		case SQLITE_SYNC_FULL:
 		case SQLITE_SYNC_DATAONLY: sf = static_cast<Sync_flag>(flag); break;
-		default: throw std::system_error{ ysqlite3::SQLite3_code::library_misuse };
+		default: throw std::system_error{ ysqlite3::SQLite3Error::library_misuse };
 		}
 		self(file)->sync(sf);
 	});

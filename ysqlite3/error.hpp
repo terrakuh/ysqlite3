@@ -1,5 +1,4 @@
-#ifndef YSQLITE3_ERROR_HPP_
-#define YSQLITE3_ERROR_HPP_
+#pragma once
 
 #include "sqlite3.h"
 
@@ -8,7 +7,7 @@
 
 namespace ysqlite3 {
 
-enum class SQLite3_condition
+enum class SQLite3Condition
 {
 	success = 0,
 	/** Generic error */
@@ -69,7 +68,7 @@ enum class SQLite3_condition
 	warning = 28,
 };
 
-enum class SQLite3_code
+enum class SQLite3Error
 {
 	success = 0,
 	/** Generic error */
@@ -205,7 +204,7 @@ enum class SQLite3_code
 	symlink            = (success | (2 << 8)),
 };
 
-inline const std::error_category& sqlite3_category()
+[[nodiscard]] inline const std::error_category& sqlite3_category() noexcept
 {
 	static class : public std::error_category
 	{
@@ -225,7 +224,7 @@ inline const std::error_category& sqlite3_category()
 	return category;
 }
 
-inline std::error_code make_error_code(SQLite3_code ec) noexcept
+[[nodiscard]] inline std::error_code make_error_code(SQLite3Error ec) noexcept
 {
 	return { static_cast<int>(ec), sqlite3_category() };
 }
@@ -255,7 +254,7 @@ enum class Condition
 	bad_input,
 };
 
-inline std::error_code make_error_code(Error ec) noexcept
+[[nodiscard]] inline std::error_code make_error_code(Error ec) noexcept
 {
 	static class : public std::error_category
 	{
@@ -279,13 +278,19 @@ inline std::error_code make_error_code(Error ec) noexcept
 namespace std {
 
 template<>
+struct is_error_condition_enum<ysqlite3::SQLite3Condition> : true_type
+{};
+
+template<>
+struct is_error_code_enum<ysqlite3::SQLite3Error> : true_type
+{};
+
+template<>
 struct is_error_code_enum<ysqlite3::Error> : true_type
 {};
 
 template<>
-struct is_error_code_enum<ysqlite3::SQLite3_code> : true_type
+struct is_error_condition_enum<ysqlite3::Condition> : true_type
 {};
 
 } // namespace std
-
-#endif

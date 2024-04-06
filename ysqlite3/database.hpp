@@ -39,7 +39,7 @@ enum
 	open_flag_wal             = SQLITE_OPEN_WAL
 };
 
-enum class Journal_mode
+enum class JournalMode
 {
 	delete_,
 	truncate,
@@ -73,7 +73,7 @@ public:
 	/// Closes the database forcefully if it is open.
 	~Database() noexcept;
 	/**
-	 * Sets the reserved size and vacuums the database if requried/desired. The reserved size is required for
+	 * Sets the reserved size and vacuums the database if required/desired. The reserved size is required for
 	 * the encryption VFS in order to store some custom data like authentication tags or IVs.
 	 *
 	 * @exception std::system_error - see sqlite3_file_control() and sqlite3_exec() for error codes
@@ -83,25 +83,14 @@ public:
 	 * @return the old reserved size
 	 */
 	std::uint8_t set_reserved_size(std::uint8_t size, bool vacuum = true);
-	/**
-	 * Sets the database journaling mode.
-	 *
-	 * @exception see Database::execute()
-	 * @param mode the journal modus
-	 */
-	void set_journal_mode(Journal_mode mode);
-	/**
-	 * Enables or disables foreign key support.
-	 *
-	 * @exception see Database::execute()
-	 * @param enable whether to enable support or not
-	 */
+	void set_journal_mode(JournalMode mode);
+	/// Enables or disables foreign key support.
 	void enable_foreign_keys(bool enable = true);
 	/**
 	 * Closes this database. Closing a closed database is a noop.
 	 *
 	 * @exception std::system_error - see sqlite3_close() if *force* is `false`
-	 * @param force if `true` the database is closed when every statement was finalized and/or backups
+	 * @param force If `true` the database is closed when every statement was finalized and/or backups
 	 * finished
 	 */
 	void close(bool force = false);
@@ -162,7 +151,7 @@ public:
 	/// Returns the rowid of the last insert statement of this connection or 0 if no insert was made.
 	sqlite3_int64 last_insert_rowid() const noexcept;
 	/**
-	 * Creates a prepared statement. Prepared statement can have parameters descibed by any of the following:
+	 * Creates a prepared statement. Prepared statement can have parameters described by any of the following:
 	 *
 	 * - `?`
 	 * - `?NNN`
@@ -176,7 +165,8 @@ public:
 	 * @param sql the SQL statement
 	 * @return the prepared statement
 	 */
-	Statement prepare_statement(const char* sql);
+	[[nodiscard]] Statement prepare_statement(const char* sql);
+	[[nodiscard]] Transaction begin_transaction();
 	/**
 	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will
 	 * remain open.

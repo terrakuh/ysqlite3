@@ -2,23 +2,26 @@
 
 #include "database.hpp"
 
-using namespace ysqlite3;
+namespace ysqlite3 {
 
-Transaction::Transaction(std::shared_ptr<Database> db) noexcept : _db{ std::move(db) }
+Transaction::Transaction(Database& db) : _db{ &db }
 {
 	_db->execute("BEGIN TRANSACTION;");
 }
 
 Transaction::Transaction(Transaction&& move) noexcept
 {
-	_db      = move._db;
-	move._db = nullptr;
+	std::swap(_db, move._db);
 }
 
 Transaction::~Transaction() noexcept
 {
-	if (_db) {
-		rollback();
+	if (is_active()) {
+		try {
+			rollback();
+		} catch (...) {
+			// Fail silently instead of crashing the program.
+		}
 	}
 }
 
@@ -32,12 +35,7 @@ void Transaction::rollback()
 
 bool Transaction::is_active() const noexcept
 {
-	return static_cast<bool>(_db);
-}
-
-Transaction::operator bool() const noexcept
-{
-	return is_active();
+	return _db != nullptr;
 }
 
 void Transaction::commit()
@@ -48,9 +46,11 @@ void Transaction::commit()
 	}
 }
 
-Transaction& Transaction::operator=(Transaction&& move) noexcept
+Transaction& Transaction::operator=(Transaction&& move)
 {
 	rollback();
 	std::swap(_db, move._db);
 	return *this;
+}
+
 }

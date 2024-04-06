@@ -112,7 +112,7 @@ private:
 	static void _assert_error(int ec)
 	{
 		if (ec) {
-			throw std::system_error{ static_cast<SQLite3_code>(ec) };
+			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}
 };

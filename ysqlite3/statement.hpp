@@ -156,7 +156,7 @@ private:
 			throw std::system_error{ Error::statement_is_closed };
 		} else if (const auto ec =
 		               binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...)) {
-			throw std::system_error{ static_cast<SQLite3_code>(ec) };
+			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 		return *this;
 	}

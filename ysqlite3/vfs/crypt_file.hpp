@@ -120,14 +120,14 @@ private:
 		EVP_CIPHER_CTX_reset(_context);
 		if (!EVP_CipherInit_ex(_context, encryptor.cipher, nullptr, encryptor.key.data(), data.begin(),
 		                       encrypt)) {
-			throw std::system_error{ SQLite3_code::generic, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3Error::generic, "failed to encrypt/decrypt" };
 		}
 
 		int len = 0;
 		if (!EVP_CipherUpdate(_context, buffer.begin(), &len, buffer.begin(),
 		                      static_cast<int>(buffer.size())) ||
 		    len != static_cast<int>(buffer.size())) {
-			throw std::system_error{ SQLite3_code::generic, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3Error::generic, "failed to encrypt/decrypt" };
 		}
 
 		// set tag
@@ -136,7 +136,7 @@ private:
 		}
 
 		if (!EVP_CipherFinal_ex(_context, buffer.begin(), &len) || len) {
-			throw std::system_error{ SQLite3_code::not_a_database, "failed to encrypt/decrypt" };
+			throw std::system_error{ SQLite3Error::not_a_database, "failed to encrypt/decrypt" };
 		}
 	}
 	void _generate_iv(Span<std::uint8_t*> iv) const noexcept

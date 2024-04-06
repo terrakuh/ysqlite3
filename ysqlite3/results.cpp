@@ -43,7 +43,7 @@ Span<const std::uint8_t*> Results::blob(Index index)
 	const auto blob = static_cast<const std::uint8_t*>(sqlite3_column_blob(_statement, i));
 	const auto ec   = sqlite3_errcode(_database);
 	if (!blob && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	return { blob, blob + sqlite3_column_bytes(_statement, i) };
 }
@@ -58,7 +58,7 @@ const char* Results::text(Index index)
 	const auto str = reinterpret_cast<const char*>(sqlite3_column_text(_statement, _to_column_index(index)));
 	const auto ec  = sqlite3_errcode(_database);
 	if (!str && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec), sqlite3_errmsg(_database) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec), sqlite3_errmsg(_database) };
 	}
 	return str;
 }
@@ -73,7 +73,7 @@ int Results::size_of(Index index)
 	const auto size = sqlite3_column_bytes(_statement, _to_column_index(index));
 	const auto ec   = sqlite3_errcode(_database);
 	if (!size && ec != SQLITE_OK && ec != old) {
-		throw std::system_error{ static_cast<SQLite3_code>(ec) };
+		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
 	return size;
 }

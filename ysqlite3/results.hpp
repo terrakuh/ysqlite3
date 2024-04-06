@@ -41,7 +41,7 @@ public:
 		real,
 		text,
 		blob,
-		null
+		null,
 	};
 
 	Results() = default;

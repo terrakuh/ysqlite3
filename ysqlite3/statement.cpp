@@ -3,9 +3,7 @@
 #include "error.hpp"
 #include "finally.hpp"
 
-#include <limits>
-
-using namespace ysqlite3;
+namespace ysqlite3 {
 
 Statement::Statement(sqlite3_stmt* stmt, sqlite3* db)
 {
@@ -42,14 +40,12 @@ void Statement::finish()
 		throw std::system_error{ Error::statement_is_closed };
 	}
 
-	// step until SQLITE_DONE is returned
+	// Step until SQLITE_DONE is returned.
 	while (true) {
-		const auto ec = sqlite3_step(_statement);
-		if (ec != SQLITE_ROW) {
-			sqlite3_reset(_statement);
-			if (ec == SQLITE_DONE) {
-				return;
-			}
+		const int ec = sqlite3_step(_statement);
+		if (ec == SQLITE_DONE) {
+			break;
+		} else if (ec != SQLITE_ROW) {
 			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}
@@ -58,7 +54,7 @@ void Statement::finish()
 void Statement::reset()
 {
 	if (is_open()) {
-		if (const auto ec = sqlite3_reset(_statement)) {
+		if (const int ec = sqlite3_reset(_statement)) {
 			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}
@@ -66,8 +62,8 @@ void Statement::reset()
 
 void Statement::close()
 {
-	const auto ec = sqlite3_finalize(_statement);
-	_statement    = nullptr;
+	const int ec = sqlite3_finalize(_statement);
+	_statement   = nullptr;
 	if (ec) {
 		throw std::system_error{ static_cast<SQLite3Error>(ec) };
 	}
@@ -75,7 +71,7 @@ void Statement::close()
 
 bool Statement::is_open() const noexcept
 {
-	return _statement;
+	return _statement != nullptr;
 }
 
 Results Statement::step()
@@ -84,7 +80,7 @@ Results Statement::step()
 		throw std::system_error{ Error::statement_is_closed };
 	}
 
-	const auto ec = sqlite3_step(_statement);
+	const int ec = sqlite3_step(_statement);
 	if (ec == SQLITE_ROW) {
 		return { _statement, _database };
 	}
@@ -95,32 +91,22 @@ Results Statement::step()
 	throw std::system_error{ static_cast<SQLite3Error>(ec), sqlite3_errmsg(_database) };
 }
 
-Statement& Statement::bind_reference(Index index, const char* value)
+Statement& Statement::bind_reference(Index index, std::string_view value)
 {
-	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_STATIC);
-}
-
-Statement& Statement::bind_reference(Index index, const std::string& value)
-{
-	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_STATIC);
+	return _bind(index, sqlite3_bind_text, value.data(), numeric_cast<int>(value.size()), SQLITE_STATIC);
 }
 
 Statement& Statement::bind_reference(Index index, Span<const std::uint8_t*> blob)
 {
-	return _bind(index, sqlite3_bind_blob64, blob.begin(), blob.size(), SQLITE_STATIC);
+	return _bind(index, sqlite3_bind_blob64, blob.begin(), numeric_cast<int>(blob.size()), SQLITE_STATIC);
 }
 
-Statement& Statement::bind(Index index, const char* value)
+Statement& Statement::bind(Index index, std::string_view value)
 {
-	return _bind(index, sqlite3_bind_text, value, -1, SQLITE_TRANSIENT);
+	return _bind(index, sqlite3_bind_text, value.data(), numeric_cast<int>(value.size()), SQLITE_TRANSIENT);
 }
 
-Statement& Statement::bind(Index index, const std::string& value)
-{
-	return _bind(index, sqlite3_bind_text, value.c_str(), value.length(), SQLITE_TRANSIENT);
-}
-
-Statement& Statement::bind(Index index, std::nullptr_t)
+Statement& Statement::bind(Index index, std::nullptr_t /* value */)
 {
 	return _bind(index, sqlite3_bind_null);
 }
@@ -130,21 +116,11 @@ Statement& Statement::bind(Index index, double value)
 	return _bind(index, sqlite3_bind_double, value);
 }
 
-Statement& Statement::bind(Index index, sqlite3_int64 value)
-{
-	if (value >= std::numeric_limits<int>::min() && value <= std::numeric_limits<int>::max()) {
-		return _bind(index, sqlite3_bind_int, value);
-	}
-
-	return _bind(index, sqlite3_bind_int64, value);
-}
-
 Statement& Statement::bind_zeros(Index index, sqlite3_uint64 size)
 {
 	if (size <= std::numeric_limits<int>::max()) {
 		return _bind(index, sqlite3_bind_zeroblob, static_cast<int>(size));
 	}
-
 	return _bind(index, sqlite3_bind_zeroblob64, size);
 }
 
@@ -220,3 +196,5 @@ int Statement::_to_parameter_index(Index index)
 	}
 	return index.value + 1;
 }
+
+} // namespace ysqlite3

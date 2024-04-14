@@ -132,7 +132,7 @@ std::size_t Database::execute(const char* sql)
 
 	char* message      = nullptr;
 	std::size_t result = 0;
-	const auto ec      = sqlite3_exec(
+	const int ec       = sqlite3_exec(
     _database, sql,
     [](void* result, int, char**, char**) {
       *static_cast<std::size_t*>(result) += 1;

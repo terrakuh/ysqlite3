@@ -245,7 +245,8 @@ enum class Error
 	bad_arguments,
 	bad_result,
 	vfs_already_registered,
-	out_of_bounds
+	out_of_bounds,
+	numeric_narrowing,
 };
 
 enum class Condition

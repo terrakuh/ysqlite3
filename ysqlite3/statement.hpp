@@ -1,12 +1,15 @@
-#ifndef YSQLITE3_STATEMENT_HPP_
-#define YSQLITE3_STATEMENT_HPP_
+#pragma once
 
+#include "cast.hpp"
 #include "results.hpp"
 #include "span.hpp"
 #include "sqlite3.h"
 
 #include <cstddef>
+#include <limits>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -78,14 +81,21 @@ public:
 	 * @throw exception::database_exception if the step could not be executed properly
 	 */
 	Results step();
-	Statement& bind_reference(Index index, const char* value);
-	Statement& bind_reference(Index index, const std::string& value);
+	Statement& bind_reference(Index index, std::string_view value);
+	Statement& bind_reference(Index index, std::string&& value) = delete;
 	Statement& bind_reference(Index index, Span<const std::uint8_t*> blob);
-	Statement& bind(Index index, const char* value);
-	Statement& bind(Index index, const std::string& value);
-	Statement& bind(Index index, std::nullptr_t);
+	Statement& bind(Index index, std::string_view value);
+	Statement& bind(Index index, std::nullptr_t /* value */);
 	Statement& bind(Index index, double value);
-	Statement& bind(Index index, sqlite3_int64 value);
+	template<typename Type>
+	std::enable_if_t<std::is_integral_v<Type> && !std::is_same_v<Type, bool>, Statement&> bind(Index index,
+	                                                                                           Type value)
+	{
+		if (value >= std::numeric_limits<int>::min() && value <= std::numeric_limits<int>::max()) {
+			return _bind(index, sqlite3_bind_int, static_cast<int>(value));
+		}
+		return _bind(index, sqlite3_bind_int64, numeric_cast<sqlite3_int64>(value));
+	}
 	Statement& bind_zeros(Index index, sqlite3_uint64 size);
 	/// Returns whether the statement makes no direct changes to the database.
 	bool readonly();
@@ -154,8 +164,7 @@ private:
 	{
 		if (!is_open()) {
 			throw std::system_error{ Error::statement_is_closed };
-		} else if (const auto ec =
-		               binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...)) {
+		} else if (const auto ec = binder(_statement, _to_parameter_index(index), std::forward<Args>(args)...)) {
 			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 		return *this;
@@ -163,5 +172,3 @@ private:
 };
 
 } // namespace ysqlite3
-
-#endif

@@ -1,12 +1,14 @@
-#ifndef YSQLITE3_RESULTS_HPP_
-#define YSQLITE3_RESULTS_HPP_
+#pragma once
 
 #include "error.hpp"
+#include "cast.hpp"
 #include "span.hpp"
 #include "sqlite3.h"
 
 #include <cstdint>
 #include <locale>
+#include <type_traits>
+#include <tuple>
 
 namespace ysqlite3 {
 
@@ -17,7 +19,8 @@ struct Index
 	std::locale locale;
 
 	Index(int value) noexcept : value{ value }
-	{}
+	{
+	}
 	Index(const char* name, std::locale locale = {}) : name{ name }, locale{ std::move(locale) }
 	{
 		if (!name) {
@@ -122,6 +125,21 @@ public:
 	 * @return the type
 	 */
 	type type_of(Index index);
+	template<typename Type>
+	[[nodiscard]] Type get(Index index)
+	{
+		if constexpr (std::is_integral_v<Type> && !std::is_same_v<Type, bool>) {
+			return numeric_cast<Type>(integer(index));
+		} else if constexpr (std::is_floating_point_v<Type>) {
+			return static_cast<Type>(real(index));
+		}
+	}
+	template<typename... Types>
+	[[nodiscard]] std::tuple<Types...> get()
+	{
+		int index = 0;
+		return std::make_tuple(get<Types>(index++)...);
+	}
 	/**
 	 * Checks if this has a statement.
 	 *
@@ -144,5 +162,3 @@ private:
 };
 
 } // namespace ysqlite3
-
-#endif

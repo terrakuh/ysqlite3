@@ -93,9 +93,14 @@ Results::type Results::type_of(Index index)
 	}
 }
 
+bool ysqlite3::Results::is_valid() const noexcept
+{
+	return _statement != nullptr;
+}
+
 Results::operator bool() const noexcept
 {
-	return _statement;
+	return is_valid();
 }
 
 int Results::_to_column_index(Index index)

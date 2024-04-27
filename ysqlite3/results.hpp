@@ -1,14 +1,20 @@
 #pragma once
 
-#include "error.hpp"
 #include "cast.hpp"
+#include "error.hpp"
 #include "span.hpp"
 #include "sqlite3.h"
+#include "util/templated_of.hpp"
 
 #include <cstdint>
+#include <limits>
 #include <locale>
-#include <type_traits>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace ysqlite3 {
 
@@ -128,18 +134,28 @@ public:
 	template<typename Type>
 	[[nodiscard]] Type get(Index index)
 	{
-		if constexpr (std::is_integral_v<Type> && !std::is_same_v<Type, bool>) {
+		if constexpr (std::is_integral_v<Type>) {
 			return numeric_cast<Type>(integer(index));
 		} else if constexpr (std::is_floating_point_v<Type>) {
 			return static_cast<Type>(real(index));
+		} else if constexpr (std::is_same_v<Type, std::string> || std::is_same_v<Type, std::string_view>) {
+			const auto ptr = text(index);
+			return Type{ ptr, numeric_cast<std::size_t>(size_of(index)) };
+		} else if constexpr (util::TemplatedOf<Type, std::optional>::value) {
+			if (is_null(index)) {
+				return std::nullopt;
+			}
+			return get<typename Type::value_type>(index);
+		} else {
+			_assert_get();
 		}
 	}
 	template<typename... Types>
 	[[nodiscard]] std::tuple<Types...> get()
 	{
-		int index = 0;
-		return std::make_tuple(get<Types>(index++)...);
+		return _get<Types...>(std::make_integer_sequence<int, static_cast<int>(sizeof...(Types))>{});
 	}
+	[[nodiscard]] bool is_valid() const noexcept;
 	/**
 	 * Checks if this has a statement.
 	 *
@@ -159,6 +175,16 @@ private:
 	 * @return the integer index
 	 */
 	int _to_column_index(Index index);
+	template<typename... Types, int... Indices>
+	std::tuple<Types...> _get(std::integer_sequence<int, Indices...> /* indices */)
+	{
+		return std::make_tuple(get<Types>(Indices)...);
+	}
+	template<bool Flag = false>
+	void _assert_get()
+	{
+		static_assert(Flag, "Unsupported type.");
+	}
 };
 
 } // namespace ysqlite3

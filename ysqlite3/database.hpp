@@ -16,6 +16,8 @@ namespace ysqlite3 {
 
 typedef int Open_flags;
 
+using Id = sqlite3_int64;
+
 enum
 {
 	open_flag_readonly        = SQLITE_OPEN_READONLY,
@@ -56,6 +58,8 @@ enum class Text_encoding
 	utf16be = SQLITE_UTF16BE,
 	utf16le = SQLITE_UTF16LE
 };
+
+
 
 class Database
 {

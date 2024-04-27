@@ -43,9 +43,11 @@ void Statement::finish()
 	// Step until SQLITE_DONE is returned.
 	while (true) {
 		const int ec = sqlite3_step(_statement);
-		if (ec == SQLITE_DONE) {
-			break;
-		} else if (ec != SQLITE_ROW) {
+		if (ec != SQLITE_ROW) {
+			sqlite3_reset(_statement);
+			if (ec == SQLITE_DONE) {
+				return;
+			}
 			throw std::system_error{ static_cast<SQLite3Error>(ec) };
 		}
 	}

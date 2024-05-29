@@ -1,5 +1,4 @@
-#ifndef YSQLITE3_DATABASE_HPP_
-#define YSQLITE3_DATABASE_HPP_
+#pragma once
 
 #include "error.hpp"
 #include "function/function.hpp"
@@ -9,8 +8,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <tuple>
-#include <type_traits>
 
 namespace ysqlite3 {
 
@@ -170,7 +167,7 @@ public:
 	 * @param sql the SQL statement
 	 * @return the prepared statement
 	 */
-	[[nodiscard]] Statement prepare_statement(const char* sql);
+	[[nodiscard]] Statement prepare_statement(std::string_view sql);
 	[[nodiscard]] Transaction begin_transaction();
 	/**
 	 * Returns the SQLite database file handle. This database will be marked as closed, but the handle will
@@ -201,5 +198,3 @@ private:
 };
 
 } // namespace ysqlite3
-
-#endif

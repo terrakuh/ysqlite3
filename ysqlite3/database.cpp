@@ -154,7 +154,7 @@ sqlite3_int64 Database::last_insert_rowid() const noexcept
 	return is_open() ? sqlite3_last_insert_rowid(_database) : 0;
 }
 
-Statement Database::prepare_statement(const char* sql)
+Statement Database::prepare_statement(std::string_view sql)
 {
 	if (!is_open()) {
 		throw std::system_error{ Error::database_is_closed };
@@ -162,7 +162,8 @@ Statement Database::prepare_statement(const char* sql)
 
 	sqlite3_stmt* stmt = nullptr;
 	const char* tail   = nullptr;
-	if (const auto ec = sqlite3_prepare_v2(_database, sql, -1, &stmt, &tail)) {
+	if (const auto ec =
+	      sqlite3_prepare_v2(_database, sql.data(), numeric_cast<int>(sql.size()), &stmt, &tail)) {
 		throw std::system_error{ static_cast<SQLite3Error>(ec), sqlite3_errmsg(_database) };
 	}
 	return { stmt, _database };

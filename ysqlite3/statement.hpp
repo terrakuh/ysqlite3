@@ -18,6 +18,7 @@ namespace ysqlite3 {
 class Statement
 {
 public:
+	Statement() = default;
 	/**
 	 * Associates this object with an SQLite statement.
 	 *
@@ -27,6 +28,7 @@ public:
 	 * @param[in] db the database
 	 */
 	Statement(sqlite3_stmt* stmt, sqlite3* db);
+	Statement(const Statement& copy) = delete;
 	/**
 	 * Move-Constructor.
 	 *
@@ -145,6 +147,7 @@ public:
 	 * @return the handle
 	 */
 	sqlite3_stmt* release() noexcept;
+	Statement& operator=(const Statement& copy) = delete;
 	Statement& operator=(Statement&& move) noexcept;
 
 private:

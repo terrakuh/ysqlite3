@@ -1,10 +1,10 @@
 #ifndef YSQLITE_VFS_FILE_HPP_
 #define YSQLITE_VFS_FILE_HPP_
 
-#include "../span.hpp"
 #include "../sqlite3.h"
 
-#include <cstdint>
+#include <cstddef>
+#include <span>
 
 namespace ysqlite3 {
 namespace vfs {
@@ -95,16 +95,16 @@ public:
 	File(const char* name, File_format format) noexcept;
 	virtual ~File() = default;
 	sqlite3_io_methods* methods() noexcept;
-	virtual void close()                                                       = 0;
-	virtual void read(Span<std::uint8_t*> buffer, sqlite3_int64 offset)        = 0;
-	virtual void write(Span<const std::uint8_t*> buffer, sqlite3_int64 offset) = 0;
-	virtual void truncate(sqlite3_int64 size)                                  = 0;
-	virtual void sync(Sync_flag flag)                                          = 0;
-	virtual sqlite3_int64 file_size() const                                    = 0;
-	virtual void lock(Lock_flag flag)                                          = 0;
-	virtual void unlock(Lock_flag flag)                                        = 0;
-	virtual bool has_reserved_lock() const                                     = 0;
-	virtual void file_control(File_control operation, void* arg)                  = 0;
+	virtual void close()                                                        = 0;
+	virtual void read(std::span<std::byte> buffer, sqlite3_int64 offset)        = 0;
+	virtual void write(std::span<const std::byte> buffer, sqlite3_int64 offset) = 0;
+	virtual void truncate(sqlite3_int64 size)                                   = 0;
+	virtual void sync(Sync_flag flag)                                           = 0;
+	virtual sqlite3_int64 file_size() const                                     = 0;
+	virtual void lock(Lock_flag flag)                                           = 0;
+	virtual void unlock(Lock_flag flag)                                         = 0;
+	virtual bool has_reserved_lock() const                                      = 0;
+	virtual void file_control(File_control operation, void* arg)                = 0;
 	/// Returns the sector size for this file. The default implementation returns 4096.
 	virtual int sector_size() const noexcept;
 	/// Returns SQLite specific device characteristics.

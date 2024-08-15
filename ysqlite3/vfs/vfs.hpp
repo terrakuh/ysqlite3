@@ -2,12 +2,12 @@
 #define YSQLITE3_VFS_VFS_HPP_
 
 #include "../database.hpp"
-#include "../span.hpp"
 #include "../sqlite3.h"
 #include "file.hpp"
 
 #include <chrono>
 #include <memory>
+#include <span>
 
 namespace ysqlite3 {
 namespace vfs {
@@ -57,24 +57,24 @@ public:
 	 * @see for more information look at the official [SQLite page](https://www.sqlite.org/c3ref/vfs.html)
 	 */
 	virtual std::unique_ptr<File> open(const char* name, File_format format, Open_flags flags,
-	                                   Open_flags& output_flags)      = 0;
-	virtual void delete_file(const char* name, bool sync_directory)   = 0;
-	virtual bool access(const char* name, Access_flag flag)           = 0;
-	virtual void full_pathname(const char* input, Span<char*> output) = 0;
+	                                   Open_flags& output_flags)          = 0;
+	virtual void delete_file(const char* name, bool sync_directory)       = 0;
+	virtual bool access(const char* name, Access_flag flag)               = 0;
+	virtual void full_pathname(const char* input, std::span<char> output) = 0;
 	virtual void* dlopen(const char* filename) noexcept;
-	virtual void dlerror(Span<char*> buffer) noexcept;
+	virtual void dlerror(std::span<char> buffer) noexcept;
 	virtual Dl_symbol dlsym(void* handle, const char* symbol) noexcept;
 	virtual void dlclose(void* handle) noexcept;
-	virtual int random(Span<std::uint8_t*> buffer) noexcept;
+	virtual int random(std::span<std::uint8_t> buffer) noexcept;
 	virtual Sleep_duration sleep(Sleep_duration time) noexcept;
 	virtual Time current_time();
-	virtual int last_error(Span<char*> buffer) noexcept;
+	virtual int last_error(std::span<char> buffer) noexcept;
 	virtual int set_system_call(const char* name, sqlite3_syscall_ptr system_call) noexcept;
 	virtual sqlite3_syscall_ptr get_system_call(const char* name) noexcept;
 	virtual const char* next_system_call(const char* name) noexcept;
 	template<typename Derived>
 	friend typename std::enable_if<std::is_base_of<VFS, Derived>::value>::type
-	    register_vfs(std::shared_ptr<Derived> vfs, bool make_default);
+	  register_vfs(std::shared_ptr<Derived> vfs, bool make_default);
 	template<typename Derived>
 	friend typename std::enable_if<std::is_base_of<VFS, Derived>::value>::type unregister_vfs(Derived& vfs);
 
@@ -88,7 +88,7 @@ private:
 
 template<typename Derived>
 inline typename std::enable_if<std::is_base_of<VFS, Derived>::value>::type
-    register_vfs(std::shared_ptr<Derived> vfs, bool make_default)
+  register_vfs(std::shared_ptr<Derived> vfs, bool make_default)
 {
 	// static_assert(&vfs::dlopen == &Derived::dlopen, "all three dlopen, dlclose and dlsym must be
 	// overriden");

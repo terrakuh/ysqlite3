@@ -32,7 +32,7 @@ double Results::real(Index index)
 	return sqlite3_column_double(_statement, _to_column_index(index));
 }
 
-Span<const std::uint8_t*> Results::blob(Index index)
+std::span<const std::byte> Results::blob(Index index)
 {
 	if (!*this) {
 		throw std::system_error{ Error::bad_result };
@@ -40,7 +40,7 @@ Span<const std::uint8_t*> Results::blob(Index index)
 
 	const auto i    = _to_column_index(index);
 	const auto old  = sqlite3_errcode(_database);
-	const auto blob = static_cast<const std::uint8_t*>(sqlite3_column_blob(_statement, i));
+	const auto blob = static_cast<const std::byte*>(sqlite3_column_blob(_statement, i));
 	const auto ec   = sqlite3_errcode(_database);
 	if (!blob && ec != SQLITE_OK && ec != old) {
 		throw std::system_error{ static_cast<SQLite3Error>(ec) };

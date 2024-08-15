@@ -15,8 +15,8 @@ class SQLite3_file_wrapper : public File
 public:
 	SQLite3_file_wrapper(const char* name, File_format format, std::shared_ptr<sqlite3_file> parent) noexcept;
 	void close() override;
-	void read(Span<std::uint8_t*> buffer, sqlite3_int64 offset) override;
-	void write(Span<const std::uint8_t*> buffer, sqlite3_int64 offset) override;
+	void read(std::span<std::byte> buffer, sqlite3_int64 offset) override;
+	void write(std::span<const std::byte> buffer, sqlite3_int64 offset) override;
 	void truncate(sqlite3_int64 size) override;
 	void sync(Sync_flag flag) override;
 	sqlite3_int64 file_size() const override;

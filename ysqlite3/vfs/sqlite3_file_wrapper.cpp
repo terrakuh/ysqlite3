@@ -15,7 +15,8 @@ inline void assert_error(int ec)
 SQLite3_file_wrapper::SQLite3_file_wrapper(const char* name, File_format format,
                                            std::shared_ptr<sqlite3_file> parent) noexcept
     : File{ name, format }, _parent{ std::move(parent) }
-{}
+{
+}
 
 void SQLite3_file_wrapper::close()
 {
@@ -26,16 +27,16 @@ void SQLite3_file_wrapper::close()
 	assert_error(_parent->pMethods->xClose(_parent.get()));
 }
 
-void SQLite3_file_wrapper::read(Span<std::uint8_t*> buffer, sqlite3_int64 offset)
+void SQLite3_file_wrapper::read(std::span<std::byte> buffer, sqlite3_int64 offset)
 {
 	assert_error(
-	    _parent->pMethods->xRead(_parent.get(), buffer.begin(), static_cast<int>(buffer.size()), offset));
+	  _parent->pMethods->xRead(_parent.get(), buffer.data(), static_cast<int>(buffer.size()), offset));
 }
 
-void SQLite3_file_wrapper::write(Span<const std::uint8_t*> buffer, sqlite3_int64 offset)
+void SQLite3_file_wrapper::write(std::span<const std::byte> buffer, sqlite3_int64 offset)
 {
 	assert_error(
-	    _parent->pMethods->xWrite(_parent.get(), buffer.begin(), static_cast<int>(buffer.size()), offset));
+	  _parent->pMethods->xWrite(_parent.get(), buffer.data(), static_cast<int>(buffer.size()), offset));
 }
 
 void SQLite3_file_wrapper::truncate(sqlite3_int64 size)
@@ -79,8 +80,7 @@ void SQLite3_file_wrapper::file_control(File_control operation, void* arg)
 
 int SQLite3_file_wrapper::sector_size() const noexcept
 {
-	return _parent->pMethods->xSectorSize ? _parent->pMethods->xSectorSize(_parent.get())
-	                                      : File::sector_size();
+	return _parent->pMethods->xSectorSize ? _parent->pMethods->xSectorSize(_parent.get()) : File::sector_size();
 }
 
 int SQLite3_file_wrapper::device_characteristics() const noexcept

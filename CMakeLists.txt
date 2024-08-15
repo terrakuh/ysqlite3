@@ -57,7 +57,7 @@ target_include_directories(
                   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>"
 )
 target_link_libraries(ysqlite3 PUBLIC Threads::Threads "${CMAKE_DL_LIBS}")
-target_compile_features(ysqlite3 PUBLIC cxx_std_17)
+target_compile_features(ysqlite3 PUBLIC cxx_std_20)
 
 # json
 if(YSQLITE3_ENABLE_JSON)

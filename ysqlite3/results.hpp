@@ -2,14 +2,12 @@
 
 #include "cast.hpp"
 #include "error.hpp"
-#include "span.hpp"
 #include "sqlite3.h"
 #include "util/templated_of.hpp"
 
-#include <cstdint>
-#include <limits>
 #include <locale>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -100,7 +98,7 @@ public:
 	 * @param index the column
 	 * @return the blob of data
 	 */
-	Span<const std::uint8_t*> blob(Index index);
+	std::span<const std::byte> blob(Index index);
 	/**
 	 * Returns the value at the index as text.
 	 *

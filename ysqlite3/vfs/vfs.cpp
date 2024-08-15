@@ -21,7 +21,7 @@ VFS* self(sqlite3_vfs* vfs) noexcept
 template<typename Action>
 typename std::enable_if<std::is_void<decltype(std::declval<typename std::decay<Action>::type>()())>::value,
                         int>::type
-    wrap(Action&& action) noexcept
+  wrap(Action&& action) noexcept
 {
 	try {
 		action();
@@ -36,7 +36,7 @@ typename std::enable_if<std::is_void<decltype(std::declval<typename std::decay<A
 template<typename Action>
 typename std::enable_if<!std::is_void<decltype(std::declval<typename std::decay<Action>::type>()())>::value,
                         int>::type
-    wrap(Action&& action) noexcept
+  wrap(Action&& action) noexcept
 {
 	try {
 		return action();
@@ -71,8 +71,8 @@ int open(sqlite3_vfs* vfs, const char* name, sqlite3_file* file, int flags, int*
 		}
 
 		// open
-		auto f         = self(vfs)->open(name, format, flags, out_flags ? *out_flags : tmp);
-		file->pMethods = f->methods();
+		auto f                              = self(vfs)->open(name, format, flags, out_flags ? *out_flags : tmp);
+		file->pMethods                      = f->methods();
 		*reinterpret_cast<void**>(file + 1) = f.release();
 		return SQLITE_OK;
 	});
@@ -184,8 +184,8 @@ VFS::VFS(const char* name) : _name{ name }, _vfs{}
 	_vfs.pAppData = this;
 
 	// set functions
-	_vfs.xOpen         = &::open;
-	_vfs.xDelete       = &::delete_;
+	_vfs.xOpen   = &::open;
+	_vfs.xDelete = &::delete_;
 	// _vfs.xAccess       = &::access;
 	_vfs.xFullPathname = &::full_pathname;
 	_vfs.xDlOpen       = &::dlopen; // for extensions
@@ -226,8 +226,9 @@ void* VFS::dlopen(const char* filename) noexcept
 	return nullptr;
 }
 
-void VFS::dlerror(Span<char*> buffer) noexcept
-{}
+void VFS::dlerror(std::span<char> buffer) noexcept
+{
+}
 
 Dl_symbol VFS::dlsym(void* handle, const char* symbol) noexcept
 {
@@ -235,9 +236,10 @@ Dl_symbol VFS::dlsym(void* handle, const char* symbol) noexcept
 }
 
 void VFS::dlclose(void* handle) noexcept
-{}
+{
+}
 
-int VFS::random(Span<std::uint8_t*> buffer) noexcept
+int VFS::random(std::span<std::uint8_t> buffer) noexcept
 {
 	std::default_random_engine engine;
 	std::uniform_int_distribution<int> distributor(std::numeric_limits<std::uint8_t>::min(),
@@ -261,7 +263,7 @@ Time VFS::current_time()
 	                           std::chrono::milliseconds{ 210866760000000 });
 }
 
-int VFS::last_error(Span<char*> buffer) noexcept
+int VFS::last_error(std::span<char> buffer) noexcept
 {
 	if (!buffer.empty()) {
 		*buffer.begin() = 0;

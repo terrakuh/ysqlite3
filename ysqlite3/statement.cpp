@@ -98,9 +98,9 @@ Statement& Statement::bind_reference(Index index, std::string_view value)
 	return _bind(index, sqlite3_bind_text, value.data(), numeric_cast<int>(value.size()), SQLITE_STATIC);
 }
 
-Statement& Statement::bind_reference(Index index, Span<const std::uint8_t*> blob)
+Statement& Statement::bind_reference(Index index, std::span<const std::byte> blob)
 {
-	return _bind(index, sqlite3_bind_blob64, blob.begin(), numeric_cast<int>(blob.size()), SQLITE_STATIC);
+	return _bind(index, sqlite3_bind_blob64, blob.data(), numeric_cast<int>(blob.size()), SQLITE_STATIC);
 }
 
 Statement& Statement::bind(Index index, std::string_view value)

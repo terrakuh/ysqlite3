@@ -48,16 +48,14 @@ int close(sqlite3_file* file) noexcept
 
 int read(sqlite3_file* file, void* buffer, int size, sqlite3_int64 offset) noexcept
 {
-	return wrap([&] {
-		self(file)->read({ static_cast<std::uint8_t*>(buffer), static_cast<std::size_t>(size) }, offset);
-	});
+	return wrap(
+	  [&] { self(file)->read({ static_cast<std::byte*>(buffer), static_cast<std::size_t>(size) }, offset); });
 }
 
 int write(sqlite3_file* file, const void* buffer, int size, sqlite3_int64 offset) noexcept
 {
 	return wrap([&] {
-		self(file)->write({ static_cast<const std::uint8_t*>(buffer), static_cast<std::size_t>(size) },
-		                  offset);
+		self(file)->write({ static_cast<const std::byte*>(buffer), static_cast<std::size_t>(size) }, offset);
 	});
 }
 
@@ -98,11 +96,11 @@ int unlock(sqlite3_file* file, int flag) noexcept
 int check_reserved_lock(sqlite3_file* file, int* out) noexcept
 {
 	return wrap(
-	    [&] {
-		    *out = 0;
-		    *out = self(file)->has_reserved_lock();
-	    },
-	    SQLITE_IOERR_CHECKRESERVEDLOCK);
+	  [&] {
+		  *out = 0;
+		  *out = self(file)->has_reserved_lock();
+	  },
+	  SQLITE_IOERR_CHECKRESERVEDLOCK);
 }
 
 int file_control(sqlite3_file* file, int operation, void* arg) noexcept

@@ -2,11 +2,11 @@
 
 #include "cast.hpp"
 #include "results.hpp"
-#include "span.hpp"
 #include "sqlite3.h"
 
 #include <cstddef>
 #include <limits>
+#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -85,7 +85,7 @@ public:
 	Results step();
 	Statement& bind_reference(Index index, std::string_view value);
 	Statement& bind_reference(Index index, std::string&& value) = delete;
-	Statement& bind_reference(Index index, Span<const std::uint8_t*> blob);
+	Statement& bind_reference(Index index, std::span<const std::byte> blob);
 	Statement& bind(Index index, std::string_view value);
 	Statement& bind(Index index, std::nullptr_t /* value */);
 	Statement& bind(Index index, double value);

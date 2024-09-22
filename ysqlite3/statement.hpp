@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -89,6 +90,22 @@ public:
 	Statement& bind(Index index, std::string_view value);
 	Statement& bind(Index index, std::nullptr_t /* value */);
 	Statement& bind(Index index, double value);
+	template<typename Type>
+	Statement& bind(Index index, const std::optional<Type>& value)
+	{
+		if (value.has_value()) {
+			return bind(std::move(index), *value);
+		}
+		return bind(std::move(index), nullptr);
+	}
+	template<typename Type>
+	Statement& bind_reference(Index index, const std::optional<Type>& value)
+	{
+		if (value.has_value()) {
+			return bind_reference(std::move(index), *value);
+		}
+		return bind(std::move(index), nullptr);
+	}
 	template<typename Type>
 	std::enable_if_t<std::is_integral_v<Type> && !std::is_same_v<Type, bool>, Statement&> bind(Index index,
 	                                                                                           Type value)

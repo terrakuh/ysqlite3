@@ -267,6 +267,21 @@ enum class Condition
 		std::string message(int ec) const override
 		{
 			switch (static_cast<Error>(ec)) {
+			case Error::success: return "success";
+
+			case Error::bad_vfs_name: return "bad VFS name";
+			case Error::null_function: return "null function";
+
+			case Error::database_is_closed: return "database is closed";
+			case Error::statement_is_closed: return "statement is closed";
+			case Error::unknown_parameter: return "unknown parameter";
+			case Error::parameter_out_of_range: return "parameter is out of range";
+			case Error::bad_index_name: return "bad index name";
+			case Error::bad_arguments: return "bad argument";
+			case Error::bad_result: return "bad result";
+			case Error::vfs_already_registered: return "VFS is already registered";
+			case Error::out_of_bounds: return "out of bounds";
+			case Error::numeric_narrowing: return "numeric narrowing";
 			default: return "(unknown error code)";
 			}
 		}

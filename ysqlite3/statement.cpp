@@ -17,6 +17,7 @@ Statement::Statement(sqlite3_stmt* stmt, sqlite3* db)
 Statement::Statement(Statement&& move) noexcept
 {
 	std::swap(_statement, move._statement);
+	std::swap(_database, move._database);
 }
 
 Statement::~Statement()
@@ -181,8 +182,8 @@ sqlite3_stmt* Statement::release() noexcept
 
 Statement& Statement::operator=(Statement&& move) noexcept
 {
-	std::swap(_statement, move._statement);
-	return *this;
+	this->~Statement();
+	return *new (this) Statement{ std::move(move) };
 }
 
 int Statement::_to_parameter_index(Index index)
